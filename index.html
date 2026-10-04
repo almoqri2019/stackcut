@@ -29,7 +29,9 @@
       <button type="button" data-view="report" class="nav">Report</button>
     </nav>
     <div class="top-actions">
-      <button type="button" id="load-sample" class="ghost">Typical stack</button>
+      <span id="typical" style="display: contents">
+        <button type="button" id="load-sample" class="ghost">Typical stack</button>
+      </span>
       <button type="button" id="export" class="ghost">Export</button>
       <button type="button" id="import" class="ghost">Import</button>
       <button type="button" id="reset" class="ghost">Clear</button>
@@ -58,7 +60,7 @@
             <input name="price" type="number" min="0" step="1" value="20" aria-label="Monthly price" />
             <button type="submit">Add</button>
           </form>
-          <div id="picker" class="picker"></div>
+          <div id="stack" class="picker"></div>
         </div>
         <aside class="ledger" id="ledger"></aside>
       </div>
@@ -103,3 +105,7 @@
     <a href="outrank.html">All pages</a>
   </p>
 </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>

@@ -101,6 +101,7 @@ function money(n) {
 
 function toast(text) {
   const node = document.getElementById("toast");
+  if (!node) return;
   node.textContent = text;
   node.classList.add("show");
   clearTimeout(toast.timer);
@@ -135,12 +136,13 @@ function plan() {
 }
 
 function query() {
-  return document.getElementById("search").value.trim().toLowerCase();
+  return document.getElementById("search")?.value.trim().toLowerCase() || "";
 }
 
 function renderPicker() {
   const q = query();
-  const root = document.getElementById("picker");
+  const root = document.getElementById("stack");
+  if (!root) return;
   root.innerHTML = JOBS.map((job) => {
     const tools = catalog().filter((tool) => tool.job === job && (!q || tool.name.toLowerCase().includes(q)));
     if (!tools.length) return "";
@@ -222,7 +224,9 @@ function onEdit(event) {
 function renderStats() {
   const result = plan();
   const jobs = new Set(result.groups.map((group) => group.job)).size;
-  document.getElementById("stats").innerHTML = [
+  const root = document.getElementById("stats");
+  if (!root) return;
+  root.innerHTML = [
     [money(result.burn), "paid each month"],
     [String(result.tools.length), "tools selected"],
     [money(result.saved), "ready to cut"],
@@ -234,6 +238,7 @@ function renderStats() {
 function renderLedger() {
   const result = plan();
   const root = document.getElementById("ledger");
+  if (!root) return;
   if (!result.tools.length) {
     root.innerHTML = `<h2>Ledger</h2><p class="muted">Nothing selected. Load a typical stack or pick two chat tools.</p>`;
     return;
@@ -244,6 +249,7 @@ function renderLedger() {
 function renderCuts() {
   const result = plan();
   const root = document.getElementById("cuts");
+  if (!root) return;
   if (!result.groups.length) {
     root.innerHTML = `<p class="muted">No duplicate jobs yet. Two tools in the same job create a decision.</p>`;
     return;
@@ -285,6 +291,7 @@ Thank you.`;
 function renderLetters() {
   const cuts = plan().groups.flatMap((group) => group.cut);
   const root = document.getElementById("letters");
+  if (!root) return;
   if (!cuts.length) {
     root.innerHTML = `<p class="muted">Accepted cuts land here as notes you send yourself.</p>`;
     return;
@@ -344,7 +351,9 @@ function reportText() {
 function renderReport() {
   const result = plan();
   const width = result.burn ? Math.min(100, Math.round((result.saved / result.burn) * 100)) : 0;
-  document.getElementById("report").innerHTML = `
+  const root = document.getElementById("report");
+  if (!root) return;
+  root.innerHTML = `
     <p class="kicker">Local snapshot</p>
     <h2 class="report-title">${money(result.saved)} / month can go</h2>
     <div class="bar"><span style="width:${width}%"></span></div>
@@ -369,17 +378,18 @@ document.querySelectorAll(".nav").forEach((button) => {
     document.querySelectorAll(".nav").forEach((item) => item.classList.remove("on"));
     button.classList.add("on");
     ["stack", "cuts", "letters", "report"].forEach((view) => {
-      document.getElementById("view-" + view).classList.toggle("hidden", button.dataset.view !== view);
+      document.getElementById("view-" + view)?.classList.toggle("hidden", button.dataset.view !== view);
     });
   });
 });
 
-document.getElementById("search").addEventListener("input", renderPicker);
-document.getElementById("add-open").addEventListener("click", () => {
-  document.getElementById("add-form").classList.toggle("hidden");
+document.getElementById("search")?.addEventListener("input", renderPicker);
+document.getElementById("add-open")?.addEventListener("click", () => {
+  document.getElementById("add-form")?.classList.toggle("hidden");
 });
-document.querySelector("#add-form select").innerHTML = JOBS.map((job) => `<option>${job}</option>`).join("");
-document.getElementById("add-form").addEventListener("submit", (event) => {
+const jobSelect = document.querySelector("#add-form select");
+if (jobSelect) jobSelect.innerHTML = JOBS.map((job) => `<option>${job}</option>`).join("");
+document.getElementById("add-form")?.addEventListener("submit", (event) => {
   event.preventDefault();
   const data = new FormData(event.target);
   const tool = {
@@ -399,7 +409,7 @@ document.getElementById("add-form").addEventListener("submit", (event) => {
   toast("Tool added");
 });
 
-document.getElementById("load-sample").addEventListener("click", () => {
+document.getElementById("load-sample")?.addEventListener("click", () => {
   state.selected = {
     "chatgpt-plus": { price: 20, use: "weekly" },
     "claude-pro": { price: 20, use: "monthly" },
@@ -417,7 +427,7 @@ document.getElementById("load-sample").addEventListener("click", () => {
   toast("Typical stack loaded");
 });
 
-document.getElementById("reset").addEventListener("click", () => {
+document.getElementById("reset")?.addEventListener("click", () => {
   if (!state.custom.length && !Object.keys(state.selected).length) return;
   if (!window.confirm("Clear your whole stack, including tools you added? Export first if you want a copy.")) return;
   state.selected = {};
@@ -428,7 +438,7 @@ document.getElementById("reset").addEventListener("click", () => {
   toast("Cleared");
 });
 
-document.getElementById("export").addEventListener("click", () => {
+document.getElementById("export")?.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -439,10 +449,11 @@ document.getElementById("export").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 });
 
-document.getElementById("import").addEventListener("click", () => document.getElementById("import-file").click());
-document.getElementById("import-file").addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  event.target.value = "";
+document.getElementById("import")?.addEventListener("click", () => document.getElementById("import-file")?.click());
+document.getElementById("import-file")?.addEventListener("change", async (event) => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+  input.value = "";
   if (!file) return;
   try {
     if (file.size > 1000000) throw new Error("too big");
@@ -460,7 +471,6 @@ document.getElementById("import-file").addEventListener("change", async (event) 
   }
 });
 
-document.getElementById("print").addEventListener("click", () => window.print());
-document.getElementById("copy-report").addEventListener("click", () => copyText(reportText(), "Report copied"));
-
+document.getElementById("print")?.addEventListener("click", () => window.print());
+document.getElementById("copy-report")?.addEventListener("click", () => copyText(reportText(), "Report copied"));
 draw();
