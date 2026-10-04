@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stackcut — cut the AI tools you pay for twice</title>
+  <meta name="description" content="Local audit of overlapping AI subscriptions. No account, no server." />
+  <meta name="theme-color" content="#f2eee6" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Stackcut — cut the AI tools you pay for twice" />
+  <meta property="og:description" content="Pick the AI subscriptions you pay for. Stackcut finds the overlap and drafts the cancel notes. Runs entirely in your browser." />
+  <meta name="twitter:card" content="summary" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%231b1914'/%3E%3Cpath d='M8 18h16M18 10l6 8-6 8' stroke='%23f3efe6' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <strong>Stackcut</strong>
+        <em>v0.2 · local</em>
+      </div>
+    </div>
+    <nav aria-label="Views">
+      <button type="button" data-view="stack" class="nav on">Stack</button>
+      <button type="button" data-view="cuts" class="nav">Cuts</button>
+      <button type="button" data-view="letters" class="nav">Drafts</button>
+      <button type="button" data-view="report" class="nav">Report</button>
+    </nav>
+    <div class="top-actions">
+      <button type="button" id="load-sample" class="ghost">Typical stack</button>
+      <button type="button" id="export" class="ghost">Export</button>
+      <button type="button" id="import" class="ghost">Import</button>
+      <button type="button" id="reset" class="ghost">Clear</button>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+    </div>
+  </header>
+
+  <noscript><p style="padding:24px;font-family:sans-serif">Stackcut needs JavaScript. It runs entirely in your browser and sends nothing anywhere.</p></noscript>
+  <main>
+    <section id="view-stack">
+      <div class="hero">
+        <p class="kicker">Nothing leaves this browser</p>
+        <h1>Cut the second tool doing the same job.</h1>
+        <p class="lede">Select what you pay for, set the real price, and mark what you still open. Stackcut keeps one tool per job and drafts the cancel note. It does not log in, cancel, or read a bank.</p>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="layout">
+        <div>
+          <div class="toolbar">
+            <input id="search" type="search" placeholder="Search tools" aria-label="Search tools" />
+            <button type="button" id="add-open" class="ghost">Add a tool</button>
+          </div>
+          <form id="add-form" class="add-form hidden">
+            <input name="name" required maxlength="80" placeholder="Tool name" aria-label="Tool name" />
+            <select name="job" aria-label="Job"></select>
+            <input name="price" type="number" min="0" step="1" value="20" aria-label="Monthly price" />
+            <button type="submit">Add</button>
+          </form>
+          <div id="picker" class="picker"></div>
+        </div>
+        <aside class="ledger" id="ledger"></aside>
+      </div>
+    </section>
+
+    <section id="view-cuts" class="hidden">
+      <div class="panel-head">
+        <h2>Decisions</h2>
+        <p>Weekly tools are kept. Forgotten tools in a crowded job are the cut. Override any row. Savings count only accepted cuts.</p>
+      </div>
+      <div id="cuts"></div>
+    </section>
+
+    <section id="view-letters" class="hidden">
+      <div class="panel-head">
+        <h2>Cancel drafts</h2>
+        <p>Copy, send from your mail, and keep the reply. Stackcut never contacts a vendor.</p>
+      </div>
+      <div id="letters"></div>
+    </section>
+
+    <section id="view-report" class="hidden">
+      <div class="panel-head">
+        <h2>Report</h2>
+        <p>A one-page summary of the stack. Print it or copy it into a note.</p>
+      </div>
+      <div class="report-actions">
+        <button type="button" id="print" class="copy">Print</button>
+        <button type="button" id="copy-report" class="ghost">Copy text</button>
+      </div>
+      <article id="report" class="report"></article>
+    </section>
+  </main>
+  <footer>
+    <p>List prices are defaults as of 4 Oct 2026 where a public tier was published: ChatGPT Plus $20, Claude Pro $20, Google AI Pro $19.99, Perplexity Pro $20, SuperGrok $30, Microsoft 365 Copilot Business $21. Everything else is a common published tier. Edit the number you actually pay.</p>
+  </footer>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
