@@ -506,8 +506,8 @@ function renderUsage(rows) {
 function renderTax() {
   const values = Array.from(document.querySelectorAll(".tax-inputs input")).map((input) => Math.max(0, Number(input.value) || 0));
   const monthly = values.reduce((sum, value) => sum + value, 0);
-  const delta = monthly - 19;
-  document.getElementById("taxResult").textContent = `${money(monthly)}/mo (${money(monthly * 12)}/year) for this stack. Stackcutify Pro is $19/mo; the difference is ${money(delta)}/mo. This is a comparison, not a savings guarantee.`;
+  const delta = monthly - 8.84;
+  document.getElementById("taxResult").textContent = `${money(monthly)}/mo (${money(monthly * 12)}/year) for this stack. Stackcutify Pro is $8.84/mo; the difference is ${money(delta)}/mo. This is a comparison, not a savings guarantee.`;
 }
 
 function daysSince(dateString) {
@@ -605,7 +605,7 @@ function enableNotifications() {
 
 function generateDrafts() {
   if (!isPro()) {
-    showToast("Go Pro to unlock cancel drafts — $19/mo.");
+    showToast("Go Pro to unlock cancel drafts — $8.84/mo.");
     return;
   }
   const target = tools.filter((tool) => tool.decision === "Kill" || tool.status === "forgot");

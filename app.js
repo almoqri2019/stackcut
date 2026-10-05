@@ -203,7 +203,7 @@ function toggle(id) {
     delete state.decisions[id];
   } else {
     if (Object.keys(state.selected).length >= 5 && !isPro) {
-      toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+      toast("Free limit: 5 tools. Go Pro $8.84/mo at /pro.html to add unlimited");
       return;
     }
     const tool = catalog().find((item) => item.id === id);
@@ -407,7 +407,7 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
   tool.name = tool.name.slice(0, 80);
   if (!tool.name) return;
   if (Object.keys(state.selected).length >= 5 && !isPro) {
-    toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+    toast("Free limit: 5 tools. Go Pro $8.84/mo at /pro.html to add unlimited");
     return;
   }
   state.custom.push(tool);
@@ -420,7 +420,7 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
 
 document.getElementById("load-sample")?.addEventListener("click", () => {
   if (Object.keys(state.selected).length >= 5 && !isPro) {
-    toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+    toast("Free limit: 5 tools. Go Pro $8.84/mo at /pro.html to add unlimited");
     return;
   }
   const typicalStack = {

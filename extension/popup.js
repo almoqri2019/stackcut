@@ -26,7 +26,7 @@ function toast(msg) {
 
 async function requirePro(feature) {
   if (await isPro()) return true;
-  toast(`Go Pro to unlock ${feature} — $19/mo`);
+  toast(`Go Pro to unlock ${feature} — $8.84/mo`);
   setTimeout(() => chrome.tabs.create({ url: 'https://stackcutify.vercel.app/#pricing' }), 800);
   return false;
 }
