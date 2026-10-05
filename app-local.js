@@ -31,6 +31,13 @@ function isPro() {
   }
 }
 
+function requirePro() {
+  if (isPro()) return true;
+  alert("Pro $8.84/mo required — Go Pro");
+  location.href = "/pro.html?plan=P-6HT714478R159110WNLBOW4Q";
+  return false;
+}
+
 function showToast(message) {
   const node = document.getElementById("toast");
   if (!node) return;
@@ -114,7 +121,7 @@ function save() {
 function checkPro() {
   const pro = isPro();
   const badge = document.getElementById("proStatus");
-  badge.textContent = pro ? "PRO ACTIVE" : "FREE";
+  badge.textContent = pro ? "PRO ACTIVE" : "PRO $8.84/mo";
   badge.className = pro
     ? "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold"
     : "text-[10px] px-2 py-0.5 rounded-full bg-black/5";
@@ -383,6 +390,7 @@ function download(filename, content, type) {
 }
 
 function exportData(format) {
+  if (!requirePro()) return;
   const pro = isPro();
   const included = tools;
   if (format === "json") {
@@ -604,10 +612,7 @@ function enableNotifications() {
 }
 
 function generateDrafts() {
-  if (!isPro()) {
-    showToast("Go Pro to unlock cancel drafts — $8.84/mo.");
-    return;
-  }
+  if (!requirePro()) return;
   const target = tools.filter((tool) => tool.decision === "Kill" || tool.status === "forgot");
   if (!target.length) {
     showToast("No Kill / forgotten subscriptions to draft.");
