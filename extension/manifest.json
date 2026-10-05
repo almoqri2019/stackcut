@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Stackcutify - AI Subscription Tracker",
+  "version": "1.0.0",
+  "description": "Local-first AI subscription tracker. Detect, track, and cut wasted AI tools. No bank connection.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Stackcutify",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://*.openai.com/*",
+    "https://*.chatgpt.com/*",
+    "https://*.claude.ai/*",
+    "https://*.perplexity.ai/*",
+    "https://*.midjourney.com/*",
+    "https://*.cursor.com/*",
+    "https://stackcutify.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.openai.com/*",
+        "https://*.chatgpt.com/*",
+        "https://*.claude.ai/*",
+        "https://*.perplexity.ai/*",
+        "https://*.midjourney.com/*",
+        "https://*.cursor.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
