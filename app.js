@@ -29,6 +29,7 @@ const CATALOG = [
 
 const JOBS = ["Chat", "Search", "Code", "Image", "Meetings", "Writing", "Video", "Voice", "Other"];
 const KEY = "stackcut-v2";
+const isPro = localStorage.getItem("stackcut_pro") === "active";
 const state = load();
 
 function cleanPrice(value) {
@@ -201,6 +202,10 @@ function toggle(id) {
     delete state.selected[id];
     delete state.decisions[id];
   } else {
+    if (Object.keys(state.selected).length >= 5 && !isPro) {
+      toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+      return;
+    }
     const tool = catalog().find((item) => item.id === id);
     state.selected[id] = { price: tool.price, use: "monthly" };
   }
@@ -401,6 +406,10 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
   };
   tool.name = tool.name.slice(0, 80);
   if (!tool.name) return;
+  if (Object.keys(state.selected).length >= 5 && !isPro) {
+    toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+    return;
+  }
   state.custom.push(tool);
   state.selected[tool.id] = { price: tool.price, use: "monthly" };
   save();
@@ -410,6 +419,10 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
 });
 
 document.getElementById("load-sample")?.addEventListener("click", () => {
+  if (Object.keys(state.selected).length >= 5 && !isPro) {
+    toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
+    return;
+  }
   state.selected = {
     "chatgpt-plus": { price: 20, use: "weekly" },
     "claude-pro": { price: 20, use: "monthly" },
