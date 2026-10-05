@@ -1,4 +1,36 @@
 const STORAGE_KEY = 'stackcut_tools';
+const FREE_LIMIT = 5;
+
+async function isPro() {
+  const data = await chrome.storage.local.get(['stackcut_pro', 'stackcutify_pro']);
+  return data.stackcut_pro === 'active'
+    || data.stackcutify_pro === 'true'
+    || data.stackcutify_pro === true;
+}
+
+function toast(msg) {
+  let node = document.getElementById('pro-toast');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'pro-toast';
+    node.className = 'pro-toast';
+    document.body.appendChild(node);
+  }
+  node.textContent = msg;
+  node.style.display = 'block';
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => {
+    node.style.display = 'none';
+  }, 3000);
+}
+
+async function requirePro(feature) {
+  if (await isPro()) return true;
+  toast(`Go Pro to unlock ${feature} — $19/mo`);
+  setTimeout(() => chrome.tabs.create({ url: 'https://stackcutify.vercel.app/#pricing' }), 800);
+  return false;
+}
+
 const PRESET = {
   'ChatGPT Plus': 20,
   'Claude Pro': 20,
@@ -22,6 +54,7 @@ const burnEl = document.getElementById('burn');
 const wasteEl = document.getElementById('waste');
 const proBadge = document.getElementById('proBadge');
 const message = document.getElementById('message');
+let tools = [];
 
 function toMonthly(price, cycle) {
   if (cycle === 'weekly') return Number(price) * 4.333;
@@ -56,13 +89,16 @@ function getTools() {
   });
 }
 
-function render(tools = []) {
+function render(nextTools = tools) {
+  tools = nextTools;
   const { burn, waste } = calcTotals(tools);
   burnEl.textContent = `$${burn.toFixed(0)}`;
   wasteEl.textContent = `$${waste.toFixed(0)}`;
   document.getElementById('summary').textContent = `$${burn.toFixed(0)}/mo`;
-  proBadge.textContent = tools.length > 5 ? 'PRO' : 'FREE';
-  proBadge.className = `badge ${tools.length > 5 ? 'pro' : 'free'}`;
+  isPro().then((pro) => {
+    proBadge.textContent = pro ? 'PRO' : 'FREE';
+    proBadge.className = `badge ${pro ? 'pro' : 'free'}`;
+  });
 
   if (!tools.length) {
     list.innerHTML = '<div class="item"><div><strong>No tools yet</strong><small>Add your first AI subscription</small></div></div>';
@@ -99,8 +135,15 @@ function addCurrentTool() {
     return;
   }
 
-  chrome.storage.local.get([STORAGE_KEY], (result) => {
-    const tools = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+  chrome.storage.local.get([STORAGE_KEY], async (result) => {
+    tools = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
+    if (tools.length >= FREE_LIMIT) {
+      if (!await isPro()) {
+        toast('Free limit 5 — Go Pro');
+        document.getElementById('freeBanner').classList.remove('hidden');
+        return;
+      }
+    }
     tools.push({ id: Date.now(), name, price, cycle, status });
     saveTools(tools);
     setMessage(`${name} added`);
@@ -113,19 +156,21 @@ toolForm.addEventListener('submit', (event) => {
   addCurrentTool();
 });
 
-document.getElementById('exportBtn').addEventListener('click', () => {
-  chrome.storage.local.get([STORAGE_KEY], (result) => {
-    const text = JSON.stringify(result[STORAGE_KEY] || [], null, 2);
-    const blob = new Blob([text], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'stackcutify-tools.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    setMessage('Exported');
-  });
-});
+document.getElementById('exportBtn').onclick = async () => {
+  if (!await requirePro('Export')) return;
+  const blob = new Blob([JSON.stringify(tools, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  if (chrome.downloads?.download) {
+    chrome.downloads.download({ url, filename: 'stackcutify-export.json' });
+  } else {
+    window.open(url);
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+};
+
+document.getElementById('openApp').onclick = () => {
+  chrome.tabs.create({ url: 'https://stackcutify.vercel.app/app' });
+};
 
 document.getElementById('importBtn').addEventListener('click', () => {
   const input = document.createElement('input');

@@ -111,6 +111,35 @@ button.ghost {
   background: #fff;
   color: var(--ink);
 }
+.hidden { display: none !important; }
+.free-banner {
+  margin: -4px 0 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: #fbbf24;
+  color: #111;
+  font-size: 12px;
+  font-weight: 700;
+}
+.open-app {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.pro-toast {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: calc(100% - 24px);
+  padding: 10px 16px;
+  border-radius: 9999px;
+  background: #000;
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
