@@ -423,7 +423,7 @@ document.getElementById("load-sample")?.addEventListener("click", () => {
     toast("Free limit: 5 tools. Go Pro $19/mo at /pro.html to add unlimited");
     return;
   }
-  state.selected = {
+  const typicalStack = {
     "chatgpt-plus": { price: 20, use: "weekly" },
     "claude-pro": { price: 20, use: "monthly" },
     "supergrok": { price: 30, use: "forgot" },
@@ -435,6 +435,7 @@ document.getElementById("load-sample")?.addEventListener("click", () => {
     otter: { price: 17, use: "monthly" },
     fireflies: { price: 18, use: "forgot" }
   };
+  state.selected = isPro ? typicalStack : Object.fromEntries(Object.entries(typicalStack).slice(0, 5));
   save();
   draw();
   toast("Typical stack loaded");
