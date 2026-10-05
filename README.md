@@ -1,12 +1,14 @@
-# Stackcut
+# Stackcut / Stackcutify
 
-Local AI-subscription overlap audit. No account, no server, no API key, no third-party requests.
+Local AI-subscription overlap audit. The `/app` tracker does not require an account, API key, or bank connection. Subscription data stays in this browser; see [privacy.html](./privacy.html) for the app and extension details.
 
-Open `index.html`. Use **Typical stack** to see a $195/month example. Your stack stays in `localStorage` (`stackcut-v2`). **Export** writes `stackcut.json`; **Import** reads it back (validated, so a bad file is rejected).
+Open `index.html` for the site and `/app` (or `app.html`) for the tracker. The app can browse the original 100+ entry reference catalog in `data/catalog.json`, categorize and simulate subscriptions, flag trials, check upcoming renewals while the page is open, export redacted or full data, and locally parse usage CSV files.
+
+Catalog prices are estimates and may be inaccurate or out of date. Confirm actual vendor pricing and enter what you pay.
 
 ## Deploy
 
-It is three static files. Deploy the folder as-is.
+This is a static site with no build step. Deploy the folder as-is.
 
 - **Cloudflare Pages / Netlify:** drag the folder in. No build command, output directory is the root.
 - **GitHub Pages:** push the folder to a repo, Settings > Pages > Deploy from branch > `/ (root)`.
@@ -19,5 +21,7 @@ It is three static files. Deploy the folder as-is.
 
 ## Notes
 
-- Fonts are the system stack, so nothing loads from outside. To use a custom font, put the `.woff2` in this folder and add an `@font-face` in `styles.css`. Don't link to Google Fonts: it breaks the "nothing leaves this browser" claim.
-- Tool decisions: the keeper in each job is a tool you marked Keep, else the one you use most often (cheapest on a tie). An explicit **Cut** is always honoured. Everything else not used weekly is cut.
+- Tracker data is stored in browser local storage (web app) or Chrome local extension storage (extension). Browser notifications are checked only while the app is open.
+- The AI usage CSV parser operates in the page and does not persist the uploaded file.
+- Free JSON/CSV exports omit names, exact prices, and renewal dates. Pro exports include full records.
+- The extension checks hostnames on supported AI-service domains to identify tools; it does not read page content or connect to banks.

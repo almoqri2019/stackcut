@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy — Stackcutify</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#171717;background:#f5f3ef}
+    *{box-sizing:border-box}
+    body{margin:0}
+    header{padding:18px 24px;background:#fff;border-bottom:1px solid #e7e3dc}
+    header a{font-weight:800;letter-spacing:-.04em;color:inherit;text-decoration:none}
+    main{max-width:800px;margin:40px auto;padding:0 22px 56px}
+    h1{font-size:clamp(34px,6vw,52px);letter-spacing:-.05em;margin:0 0 12px}
+    h2{font-size:19px;margin:26px 0 8px}
+    p,li{line-height:1.65;color:#514d47}
+    .summary{padding:16px 18px;border:1px solid #dfd9cf;border-radius:14px;background:#fff}
+    a{color:#91512b}
+  </style>
+</head>
+<body>
+  <header><a href="/">stackcutify</a></header>
+  <main>
+    <p>PRIVACY, IN PLAIN LANGUAGE</p>
+    <h1>Your stack stays yours.</h1>
+    <p class="summary">The tracker has no Stackcutify account or subscription-data backend. Your subscription list and settings are stored in your browser. Stackcutify does not connect to banks.</p>
+
+    <h2>What the web app stores</h2>
+    <p>The app stores subscription names, prices, billing cycles, usage/category choices, trial flags, renewal dates, and audit decisions in this site's browser <code>localStorage</code>. It does not upload these records. Clearing app data removes the saved list. The AI usage CSV is parsed in memory in the current page and is not saved by the tracker.</p>
+
+    <h2>Browser extension</h2>
+    <p>The extension stores its tracked tools in Chrome's local extension storage. On its supported AI service domains, a small content script reads the current hostname to recognize a service and add its name locally. It does not read page contents, email, or billing data, and does not transmit browsing activity. The extension does not run on bank sites.</p>
+
+    <h2>Files and notifications</h2>
+    <p>Exports are created only when you click an export button. Free exports omit service names, exact prices, and renewal dates; Pro exports include the full records. Imported usage CSV content is processed locally. Renewal notifications use the browser Notification API and are checked only while the app is open; they are not scheduled by a server or background process.</p>
+
+    <h2>Email and bank access</h2>
+    <p>There is no Gmail integration and the app requests no Gmail permissions. There is no bank-linking integration or bank-connection code in the tracker or extension. If an optional Gmail connection is built in the future, its only requested Gmail scope will be <code>gmail.readonly</code>; raw email bodies will not be stored.</p>
+
+    <h2>Network requests and payments</h2>
+    <p>The tracker app itself uses locally served HTML, CSS, JavaScript, and catalog data. The separate Pro checkout page loads PayPal's checkout service when you visit it; PayPal processes payment under its own privacy terms. No tracker data is sent to PayPal by the app. The browser extension may contact the AI services you choose to visit as part of your ordinary browsing.</p>
+
+    <h2>Price estimates</h2>
+    <p>Catalog prices are reference estimates, not vendor quotes. Check the vendor's current plan and enter the amount you actually pay.</p>
+    <p><a href="/app">Back to the app</a></p>
+  </main>
+</body>
+</html>

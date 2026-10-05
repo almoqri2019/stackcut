@@ -4,28 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stackcutify App — Local AI Subscription Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="app-local.css">
 <style>
-body{font-family:Inter,sans-serif}
-.shadow-soft{box-shadow:0 24px 64px -24px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.04)}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 </style>
 </head>
 <body class="min-h-screen bg-[#F5F3EF] text-black">
 <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-black/5">
-<div class="max-w-[1240px] mx-auto px-6 h-[64px] flex items-center justify-between">
-<a href="/" class="text-[20px] font-[800] tracking-[-0.03em]">stackcutify</a>
+<div class="site-header-inner">
+<a href="/" class="brand">stackcutify</a>
 <div class="flex items-center gap-3">
 <span class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Local • No bank</span>
 <a href="/pro.html" class="h-9 px-4 rounded-full bg-black text-white text-[13px] font-semibold grid place-items-center">Go Pro $19/mo</a>
 </div>
 </div>
 </header>
+<div class="local-topline"><span><strong>No bank. No cloud account.</strong> Track your AI subscriptions in this browser.</span><a href="privacy.html">Privacy details</a></div>
 
-<main class="max-w-[1240px] mx-auto px-6 py-8 grid lg:grid-cols-[380px_1fr] gap-6">
+<main class="app-layout">
 <!-- left -->
-<div class="space-y-4">
-<div class="rounded-[20px] bg-black text-white p-6 shadow-soft">
+<div class="sidebar">
+<div class="summary-card">
 <div class="flex justify-between items-start">
 <div>
 <div class="text-[11px] uppercase tracking-widest text-white/50 font-semibold">Monthly burn</div>
@@ -33,21 +32,21 @@ body{font-family:Inter,sans-serif}
 </div>
 <div id="badge" class="px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold border border-white/10">0 tools</div>
 </div>
-<div class="mt-6 grid grid-cols-2 gap-3">
+<div class="summary-metrics">
 <div class="p-3 rounded-[14px] bg-white/10 border border-white/10"><div class="text-[11px] text-white/50 uppercase">Waste</div><div id="waste" class="text-[20px] font-bold mt-1">$0</div></div>
 <div class="p-3 rounded-[14px] bg-white text-black"><div class="text-[11px] text-black/50 uppercase">Savable</div><div id="savable" class="text-[20px] font-bold mt-1">$0</div></div>
 </div>
 <div id="proBanner" class="mt-4 p-3 rounded-[12px] bg-amber-400 text-black text-[12px] font-semibold hidden">Free: 5 tools max. <a href="/pro.html" class="underline">Go Pro for unlimited</a></div>
 </div>
 
-<div class="rounded-[20px] bg-white p-5 border border-black/5 shadow-soft">
+<div class="panel">
 <div class="text-[13px] font-semibold">Add AI tool</div>
-<div class="mt-4 space-y-3">
+<div class="tool-form">
 <input id="toolName" placeholder="e.g. ChatGPT Plus" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] focus:outline-none focus:border-black" list="presetList">
 <datalist id="presetList">
 <option value="ChatGPT Plus"><option value="Claude Pro"><option value="Perplexity Pro"><option value="Supergrok"><option value="Midjourney"><option value="Cursor"><option value="Copilot"><option value="Jasper"><option value="Notion AI"><option value="Canva Pro">
 </datalist>
-<div class="grid grid-cols-2 gap-2">
+<div class="form-pair">
 <input id="toolPrice" type="number" placeholder="Price $" class="h-11 px-4 rounded-full border border-black/10 text-[14px]">
 <select id="toolCycle" class="h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white">
 <option value="monthly">Monthly</option>
@@ -61,214 +60,96 @@ body{font-family:Inter,sans-serif}
 <option value="weekly">Used weekly</option>
 <option value="forgot">Forgot / Never used</option>
 </select>
+<select id="toolCategory" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white" aria-label="Subscription category">
+<option>Essential</option><option>Beloved</option><option selected>Discretionary</option><option>Thin Ice</option>
+</select>
+<div class="form-pair">
+<label class="local-field">Renewal date<input id="toolRenewal" type="date"></label>
+<label class="local-field">Last used<input id="toolLastUsed" type="date"></label>
+</div>
+<label class="local-check"><input id="toolTrial" type="checkbox"> This is a free trial</label>
 <button onclick="addTool()" class="w-full h-11 rounded-full bg-black text-white font-semibold text-[14px] hover:bg-black/90">+ Add tool</button>
 <div class="text-[11px] text-black/40 text-center">100% local — saved in browser only</div>
 </div>
 </div>
 
-<div class="rounded-[20px] bg-white p-5 border border-black/5 shadow-soft">
+<div class="panel">
 <div class="flex justify-between items-center"><div class="text-[13px] font-semibold">Actions</div><span id="proStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-black/5">FREE</span></div>
-<div class="mt-4 grid grid-cols-2 gap-2">
+<div class="action-grid">
 <button onclick="exportJSON()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📄 Export JSON</button>
 <button onclick="exportCSV()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📊 Export CSV</button>
 <button onclick="generateDrafts()" class="col-span-2 h-10 rounded-full bg-black text-white text-[12px] font-semibold">✉️ Copy cancel drafts</button>
 <button onclick="clearAll()" class="col-span-2 h-9 rounded-full text-[11px] text-black/40 hover:text-black">Clear all data</button>
 </div>
+<p class="local-note">Free exports redact names, exact prices, and renewal dates. Pro exports include full records.</p>
 </div>
 </div>
 
 <!-- right -->
-<div class="rounded-[24px] bg-white border border-black/5 shadow-soft overflow-hidden min-h-[600px] flex flex-col">
-<div class="h-[56px] px-6 flex items-center justify-between border-b border-black/5 bg-[#F5F3EF]/50">
+<div class="stack-panel">
+<div class="stack-heading">
 <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div><span class="text-[13px] font-semibold">Your AI stack — local only</span></div>
-<div class="flex gap-1.5">
+<div class="filters">
 <button onclick="filter='all';render()" class="filterBtn px-3 py-1 rounded-full bg-black text-white text-[11px]">All</button>
 <button onclick="filter='forgot';render()" class="filterBtn px-3 py-1 rounded-full bg-black/5 text-[11px]">Forgot</button>
 <button onclick="filter='weekly';render()" class="filterBtn px-3 py-1 rounded-full bg-black/5 text-[11px]">Weekly</button>
 </div>
 </div>
-<div id="toolList" class="p-4 space-y-2 flex-1 overflow-auto"></div>
-<div class="p-4 border-t border-black/5 bg-[#F5F3EF]/30">
-<div class="flex justify-between text-[11px] text-black/40 font-medium"><span id="footerInfo">stackcutify • local-first • 0 tools</span><span>41 tools tracked preset</span></div>
+<div id="toolList"></div>
+<div class="panel-footer">
+<div class="flex justify-between text-[11px] text-black/40 font-medium"><span id="footerInfo">stackcutify • local-first • 0 tools</span><span>115 reference catalog tools</span></div>
 </div>
 </div>
 </main>
 
+<section class="local-tools" aria-label="Local planning tools">
+  <article class="local-panel">
+    <div class="local-panel-head">
+      <div><h2>Subscription controls</h2><p>Categories, simulation, and renewal reminders stay on this device.</p></div>
+      <label class="local-check"><input id="simulationMode" type="checkbox"> Simulation mode</label>
+    </div>
+    <div class="local-pills" id="categoryFilters" aria-label="Filter subscriptions by category"></div>
+    <p class="local-note" id="simulationNote">Simulation is off. Your tracked subscriptions determine the totals.</p>
+    <div class="local-actions">
+      <button id="enableNotifications" type="button">Enable renewal notifications</button>
+      <span id="notificationStatus" role="status">Alerts are checked when this app is open.</span>
+    </div>
+  </article>
+
+  <article class="local-panel">
+    <div class="local-panel-head"><div><h2>AI tool catalog</h2><p>Search an original reference list and add a tool in one click. Prices are estimates; confirm your bill.</p></div></div>
+    <input id="catalogSearch" class="local-input" type="search" placeholder="Search AI tools" aria-label="Search catalog">
+    <p id="catalogStatus" class="local-note" role="status">Loading catalog…</p>
+    <div id="catalogList" class="catalog-grid"></div>
+  </article>
+
+  <article class="local-panel">
+    <div class="local-panel-head"><div><h2>AI usage cost tracker</h2><p>Import an OpenAI or Anthropic usage CSV. It is parsed in this page only; no API key is needed.</p></div></div>
+    <label class="local-file">Choose usage CSV<input id="usageFile" type="file" accept=".csv,text/csv"></label>
+    <p class="local-note">Expected columns: date, model, tokens (or input_tokens and output_tokens), and cost_usd or cost. Cost is read as dollars; token-only files show token counts without estimating a bill.</p>
+    <div id="usageResults" aria-live="polite"></div>
+  </article>
+
+  <article class="local-panel">
+    <div class="local-panel-head"><div><h2>AI stack tax calculator</h2><p>Estimate the monthly cost of a few AI plans against Stackcutify Pro at $19/month.</p></div></div>
+    <div class="tax-inputs">
+      <label>ChatGPT Plus<input type="number" min="0" step="0.01" value="20"></label>
+      <label>Claude Pro<input type="number" min="0" step="0.01" value="20"></label>
+      <label>Cursor Pro<input type="number" min="0" step="0.01" value="20"></label>
+      <label>Other AI tools<input type="number" min="0" step="0.01" value="67"></label>
+    </div>
+    <p id="taxResult" class="tax-result" aria-live="polite"></p>
+  </article>
+
+  <article class="local-panel">
+    <div class="local-panel-head"><div><h2>Keep / Kill / Test audit</h2><p>Mark each subscription deliberately. Tools not used in 30 days are flagged using your manual last-used date.</p></div></div>
+    <div id="auditNudges"></div>
+    <p class="local-note">Automatic billing-page visit tracking is not enabled. The optional extension recognizes selected AI-site hostnames locally; it does not inspect page content.</p>
+  </article>
+</section>
+
 <div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-3 rounded-full text-[13px] font-medium shadow-2xl z-[100]"></div>
 
-<script>
-const FREE_LIMIT = 5;
-const isPro = () => {
- try{
-  return localStorage.getItem('stackcutify_pro')==='true' || localStorage.getItem('stackcut_pro')==='active';
- }catch(e){
-  return false;
- }
-};
-const showToast = (m) => {
- let t = document.getElementById('pro-toast');
- if(!t){
-  t = document.createElement('div');
-  t.id='pro-toast';
-  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:13px;padding:10px 16px;border-radius:9999px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999';
-  document.body.appendChild(t);
- }
- t.textContent = m;
- t.style.display = 'block';
- clearTimeout(showToast.timer);
- showToast.timer = setTimeout(()=>t.style.display='none', 3000);
-};
-const requirePro = (feature) => {
- if(isPro()) return true;
- showToast(`Go Pro to unlock ${feature} — $19/mo`);
- setTimeout(()=>{ window.location.href = '/#pricing'; }, 900);
- return false;
-};
-const PRESET_PRICES = { "ChatGPT Plus":20, "Claude Pro":20, "Perplexity Pro":20, "Supergrok":30, "Midjourney":30, "Cursor":20, "Copilot":10, "Jasper":49, "Notion AI":8, "Canva Pro":13 };
-let tools = [];
-let filter='all';
-const PAYPAL_PLAN="P-6HT714478R159110WNLBOW4Q";
-
-function load(){
- try{
-  const s=localStorage.getItem('stackcut_tools');
-  if(s) tools=JSON.parse(s);
-  if(tools.length===0){
-   tools=[
-    {id:1,name:"ChatGPT Plus",price:20,cycle:"monthly",status:"used"},
-    {id:2,name:"Claude Pro",price:20,cycle:"monthly",status:"forgot"},
-    {id:3,name:"Perplexity Pro",price:20,cycle:"weekly",status:"forgot"},
-   ];
-  }
- }catch(e){ tools=[]; }
- checkPro();
- render();
-}
-function save(){ localStorage.setItem('stackcut_tools', JSON.stringify(tools)); }
-function checkPro(){
- const pro=isPro();
- document.getElementById('proStatus').textContent=pro?'PRO ACTIVE':'FREE';
- document.getElementById('proStatus').className=pro?'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold':'text-[10px] px-2 py-0.5 rounded-full bg-black/5';
- document.getElementById('proBanner').classList.toggle('hidden', pro || tools.length<FREE_LIMIT);
-}
-function toMonthly(price,cycle){
- if(cycle==='weekly') return price*4.333;
- if(cycle==='yearly') return price/12;
- if(cycle==='quarterly') return price/3;
- return price;
-}
-function addTool(){
- const name=document.getElementById('toolName').value.trim();
- if(!isPro() && Math.max(tools?.length || 0, document.querySelectorAll('[data-tool]').length) >= FREE_LIMIT){
-  showToast('Free: 5 tools max. Go Pro for unlimited');
-  document.getElementById('proBanner').classList.remove('hidden');
-  return;
- }
- let price=parseFloat(document.getElementById('toolPrice').value);
- const cycle=document.getElementById('toolCycle').value;
- const status=document.getElementById('toolStatus').value;
- if(!name){ toast('Enter tool name'); return; }
- if(!price){
-  price=PRESET_PRICES[name]||20;
- }
- tools.push({id:Date.now(), name, price, cycle, status});
- document.getElementById('toolName').value='';
- document.getElementById('toolPrice').value='';
- save(); render(); toast('Added '+name);
-}
-function del(id){ tools=tools.filter(t=>t.id!==id); save(); render(); }
-function toggleStatus(id){
- const t=tools.find(x=>x.id===id);
- if(!t) return;
- t.status = t.status==='used' ? 'forgot' : t.status==='forgot' ? 'weekly' : 'used';
- save(); render();
-}
-function render(){
- const list=document.getElementById('toolList');
- const q = tools.filter(t=> filter==='all' || t.status===filter);
- let burn=0,waste=0;
- tools.forEach(t=>{
-  const m=toMonthly(t.price,t.cycle);
-  burn+=m;
-  if(t.status==='forgot' || t.status==='weekly') waste+=m;
- });
- document.getElementById('burn').innerHTML=`$${burn.toFixed(0)}<span class="text-[16px] text-white/40">/mo</span>`;
- document.getElementById('waste').textContent=`$${waste.toFixed(0)}`;
- document.getElementById('savable').textContent=`$${waste.toFixed(0)}`;
- document.getElementById('badge').textContent=`${tools.length} tools`;
- document.getElementById('footerInfo').textContent=`stackcutify • local-first • ${tools.length} tools • ${filter}`;
- checkPro();
-
- if(q.length===0){
-  list.innerHTML=`<div class="h-[400px] grid place-items-center text-center"><div><div class="w-12 h-12 rounded-[12px] bg-[#F5F3EF] border grid place-items-center mx-auto">✦</div><div class="mt-3 text-[14px] font-semibold">No tools in this filter</div><div class="mt-1 text-[12px] text-black/50">Add your AI subscriptions — all stays in your browser</div></div></div>`;
-  return;
- }
- list.innerHTML=q.map(t=>{
-  const m=toMonthly(t.price,t.cycle);
-  const color = t.status==='forgot'?'bg-amber-100 text-amber-700 border-amber-200': t.status==='weekly'?'bg-[#7C8CFB]/15 text-[#7C8CFB] border-[#7C8CFB]/20':'bg-black/5 text-black/60 border-black/5';
-  const dot = t.status==='forgot'?'bg-amber-500': t.status==='weekly'?'bg-[#7C8CFB]':'bg-emerald-500';
-  return `<div class="group flex items-center justify-between p-3.5 rounded-[16px] border border-black/[0.06] hover:bg-[#F5F3EF]/60">
-  <div class="flex items-center gap-3">
-   <div class="w-9 h-9 rounded-[10px] bg-black text-white grid place-items-center text-[12px] font-bold">${t.name[0]}</div>
-   <div>
-    <div class="text-[14px] font-semibold leading-none">${t.name}</div>
-    <div class="mt-1 flex items-center gap-2">
-     <span class="w-2 h-2 rounded-full ${dot}"></span>
-     <span class="text-[11px] px-1.5 py-0.5 rounded-full border ${color} font-semibold">${t.status}</span>
-     <span class="text-[11px] text-black/40">${t.cycle} • $${t.price}</span>
-    </div>
-   </div>
-  </div>
-  <div class="flex items-center gap-3">
-   <div class="text-right"><div class="text-[14px] font-semibold">$${m.toFixed(0)}</div><div class="text-[11px] text-black/40">/mo</div></div>
-   <button onclick="toggleStatus(${t.id})" class="w-7 h-7 rounded-full border border-black/10 grid place-items-center text-[11px] hover:bg-black hover:text-white">↻</button>
-   <button onclick="del(${t.id})" class="w-7 h-7 rounded-full border border-black/10 grid place-items-center text-[11px] hover:bg-black hover:text-white">✕</button>
-  </div>
- </div>`;
- }).join('');
-}
-function toast(msg){
- const el=document.getElementById('toast');
- el.textContent='✓ '+msg;
- el.classList.remove('hidden');
- setTimeout(()=>el.classList.add('hidden'),2500);
-}
-function exportJSON(){
- if(!requirePro('Export')) return;
- const data=JSON.stringify(tools,null,2);
- const blob=new Blob([data],{type:'application/json'});
- const url=URL.createObjectURL(blob);
- const a=document.createElement('a'); a.href=url; a.download='stackcutify-audit.json'; a.click();
- URL.revokeObjectURL(url);
- toast('JSON exported');
-}
-function exportCSV(){
- if(!requirePro('Export')) return;
- let csv="name,price,cycle,status,monthly_equivalent\n";
- tools.forEach(t=>{ csv+=`${t.name},${t.price},${t.cycle},${t.status},${toMonthly(t.price,t.cycle).toFixed(2)}\n`; });
- const blob=new Blob([csv],{type:'text/csv'});
- const url=URL.createObjectURL(blob);
- const a=document.createElement('a'); a.href=url; a.download='stackcutify-audit.csv'; a.click();
- URL.revokeObjectURL(url);
- toast('CSV exported');
-}
-function generateDrafts(){
- if(!requirePro('Cancel drafts')) return;
- const forgot=tools.filter(t=>t.status==='forgot');
- if(forgot.length===0){ toast('No forgot tools to cancel'); return; }
- let txt="";
- forgot.forEach(t=>{
-  txt+=`Subject: Cancel ${t.name} subscription — $${t.price}/${t.cycle}\n\nHi team,\n\nPlease cancel my ${t.name} subscription ($${t.price}/${t.cycle}). My account email is [YOUR EMAIL].\n\nPlease confirm cancellation and that no further charges will occur. Renewal was set for soon — please process before next charge.\n\nThanks,\n[YOUR NAME]\n\n---\n\n`;
- });
- navigator.clipboard.writeText(txt).then(()=>toast(`${forgot.length} cancel drafts copied!`)).catch(()=>{
-  const w=window.open(); w.document.write(`<pre>${txt}</pre>`); toast('Drafts opened in new tab');
- });
-}
-function clearAll(){ if(confirm('Clear all local data?')){ tools=[]; save(); render(); toast('Cleared'); } }
-document.getElementById('toolName').addEventListener('change', e=>{
- const v=e.target.value; if(PRESET_PRICES[v]){ document.getElementById('toolPrice').value=PRESET_PRICES[v]; }
-});
-load();
-</script>
+<script src="app-local.js"></script>
 </body>
 </html>
