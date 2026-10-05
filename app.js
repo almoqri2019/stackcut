@@ -418,7 +418,9 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
 
 document.getElementById("load-sample")?.addEventListener("click", () => {
   if (Object.keys(state.selected).length >= 5 && !isPro) {
-    alert('P-6HT714478R159110WNLBOW4Q');window.location.href='/pro.html?plan=P-6HT714478R159110WNLBOW4Q';return;
+    alert('P-6HT714478R159110WNLBOW4Q');
+    window.location.href='/pro.html?plan=P-6HT714478R159110WNLBOW4Q';
+    return;
   }
   const typicalStack = {
     "chatgpt-plus": { price: 20, use: "weekly" },
