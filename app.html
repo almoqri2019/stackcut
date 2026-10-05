@@ -97,6 +97,33 @@ body{font-family:Inter,sans-serif}
 <div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-3 rounded-full text-[13px] font-medium shadow-2xl z-[100]"></div>
 
 <script>
+const FREE_LIMIT = 5;
+const isPro = () => {
+ try{
+  return localStorage.getItem('stackcutify_pro')==='true' || localStorage.getItem('stackcut_pro')==='active';
+ }catch(e){
+  return false;
+ }
+};
+const showToast = (m) => {
+ let t = document.getElementById('pro-toast');
+ if(!t){
+  t = document.createElement('div');
+  t.id='pro-toast';
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;color:#fff;font-size:13px;padding:10px 16px;border-radius:9999px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999';
+  document.body.appendChild(t);
+ }
+ t.textContent = m;
+ t.style.display = 'block';
+ clearTimeout(showToast.timer);
+ showToast.timer = setTimeout(()=>t.style.display='none', 3000);
+};
+const requirePro = (feature) => {
+ if(isPro()) return true;
+ showToast(`Go Pro to unlock ${feature} — $19/mo`);
+ setTimeout(()=>{ window.location.href = '/#pricing'; }, 900);
+ return false;
+};
 const PRESET_PRICES = { "ChatGPT Plus":20, "Claude Pro":20, "Perplexity Pro":20, "Supergrok":30, "Midjourney":30, "Cursor":20, "Copilot":10, "Jasper":49, "Notion AI":8, "Canva Pro":13 };
 let tools = [];
 let filter='all';
@@ -118,12 +145,11 @@ function load(){
  render();
 }
 function save(){ localStorage.setItem('stackcut_tools', JSON.stringify(tools)); }
-function isPro(){ try{ return localStorage.getItem('stackcut_pro')==='active'; }catch{ return false; } }
 function checkPro(){
  const pro=isPro();
  document.getElementById('proStatus').textContent=pro?'PRO ACTIVE':'FREE';
  document.getElementById('proStatus').className=pro?'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold':'text-[10px] px-2 py-0.5 rounded-full bg-black/5';
- document.getElementById('proBanner').classList.toggle('hidden', pro || tools.length<5);
+ document.getElementById('proBanner').classList.toggle('hidden', pro || tools.length<FREE_LIMIT);
 }
 function toMonthly(price,cycle){
  if(cycle==='weekly') return price*4.333;
@@ -133,6 +159,11 @@ function toMonthly(price,cycle){
 }
 function addTool(){
  const name=document.getElementById('toolName').value.trim();
+ if(!isPro() && Math.max(tools?.length || 0, document.querySelectorAll('[data-tool]').length) >= FREE_LIMIT){
+  showToast('Free: 5 tools max. Go Pro for unlimited');
+  document.getElementById('proBanner').classList.remove('hidden');
+  return;
+ }
  let price=parseFloat(document.getElementById('toolPrice').value);
  const cycle=document.getElementById('toolCycle').value;
  const status=document.getElementById('toolStatus').value;
@@ -140,7 +171,6 @@ function addTool(){
  if(!price){
   price=PRESET_PRICES[name]||20;
  }
- if(!isPro() && tools.length>=5){ toast('Free limit 5 tools. Go Pro for unlimited.'); document.getElementById('proBanner').classList.remove('hidden'); return; }
  tools.push({id:Date.now(), name, price, cycle, status});
  document.getElementById('toolName').value='';
  document.getElementById('toolPrice').value='';
@@ -204,7 +234,7 @@ function toast(msg){
  setTimeout(()=>el.classList.add('hidden'),2500);
 }
 function exportJSON(){
- if(!isPro() && tools.length>5){ toast('Pro required for export >5'); return; }
+ if(!requirePro('Export')) return;
  const data=JSON.stringify(tools,null,2);
  const blob=new Blob([data],{type:'application/json'});
  const url=URL.createObjectURL(blob);
@@ -213,7 +243,7 @@ function exportJSON(){
  toast('JSON exported');
 }
 function exportCSV(){
- if(!isPro() && tools.length>5){ toast('Pro required for export >5'); return; }
+ if(!requirePro('Export')) return;
  let csv="name,price,cycle,status,monthly_equivalent\n";
  tools.forEach(t=>{ csv+=`${t.name},${t.price},${t.cycle},${t.status},${toMonthly(t.price,t.cycle).toFixed(2)}\n`; });
  const blob=new Blob([csv],{type:'text/csv'});
@@ -223,6 +253,7 @@ function exportCSV(){
  toast('CSV exported');
 }
 function generateDrafts(){
+ if(!requirePro('Cancel drafts')) return;
  const forgot=tools.filter(t=>t.status==='forgot');
  if(forgot.length===0){ toast('No forgot tools to cancel'); return; }
  let txt="";
