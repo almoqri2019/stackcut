@@ -33,6 +33,7 @@ const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
 const BILLING_CYCLES = ["daily", "weekly", "monthly", "quarterly", "yearly"];
 const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: "quarter", yearly: "year" };
 const USAGE_FREQUENCIES = ["daily", "weekly", "monthly", "discretionary", "forgot"];
+const toolPageDrafts = {};
 const isPro = localStorage.getItem("stackcut_pro") === "active";
 const state = load();
 
@@ -190,14 +191,12 @@ function renderPicker() {
   root.querySelectorAll(".tool").forEach((node) => {
     node.addEventListener("click", (event) => {
       if (event.target.closest(".editor")) return;
-      toggle(node.dataset.id);
+      renderToolPage(node.dataset.id, true);
     });
     node.addEventListener("keydown", (event) => {
       if (event.target !== node || (event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
-      toggle(node.dataset.id);
-      const again = document.querySelector(`.tool[data-id="${node.dataset.id}"]`);
-      if (again) again.focus();
+      renderToolPage(node.dataset.id, true);
     });
   });
   root.querySelectorAll("[data-field]").forEach((node) => {
@@ -236,6 +235,128 @@ function card(tool) {
   </article>`;
 }
 
+function toolPageKey(tool) {
+  return tool.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function toolPageControls(tool, selected) {
+  return `<section class="tool-page-controls">
+    <div><span class="tool-page-label">YOUR BILL</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong>
+      <p>${money(tool.price)} per ${BILLING_UNITS[tool.billing]} · Used ${escapeHtml(tool.use)}</p></div>
+    <div class="tool-page-fields">
+      <label>Price <input type="number" min="0" step="0.01" data-page-field="price" value="${tool.price}"></label>
+      <label>Billing<select data-page-field="billing">${BILLING_CYCLES.map((cycle) => `<option value="${cycle}" ${tool.billing === cycle ? "selected" : ""}>${cycle}</option>`).join("")}</select></label>
+      <label>Usage<select data-page-field="use">${USAGE_FREQUENCIES.map((frequency) => `<option value="${frequency}" ${tool.use === frequency ? "selected" : ""}>${frequency}</option>`).join("")}</select></label>
+    </div>
+    <button type="button" class="tool-page-add" data-page-add="${escapeHtml(tool.id)}">${selected ? "Remove from my stack" : `Add ${escapeHtml(tool.name)} to my stack`}</button>
+  </section>`;
+}
+
+function renderChatGptLayout(tool) {
+  return `<article class="tool-page tool-page--chatgpt">
+    <button class="tool-page-back" type="button" data-page-back>← All subscriptions</button>
+    <div class="chatgpt-workspace"><div class="chatgpt-mark">◎ OpenAI · WORKSPACE</div><h1>Make room for<br><span>good questions.</span></h1><p>Your ChatGPT plan, usage rhythm, and normalized monthly cost in one place.</p><div class="chatgpt-prompt"><span>What are you working on today?</span><b>↑</b></div></div>
+    <div class="chatgpt-status"><div><span class="tool-page-label">PLAN</span><strong>${escapeHtml(tool.name)}</strong></div><div><span class="tool-page-label">USAGE</span><strong>${escapeHtml(tool.use)}</strong></div><div><span class="tool-page-label">MONTHLY BURN</span><strong>${money(toMonthly(tool.price, tool.billing))}/mo</strong></div></div>
+    ${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderClaudeLayout(tool) {
+  return `<article class="tool-page tool-page--claude">
+    <button class="tool-page-back" type="button" data-page-back>← Subscriptions</button>
+    <div class="claude-paper"><div class="claude-overline">A quieter look at your stack</div><div class="claude-spark">✳</div><h1>Thoughtful tools.<br><em>Clear decisions.</em></h1><p>${escapeHtml(tool.name)} is part of your writing and thinking toolkit. Give its cost the same careful attention as its output.</p><div class="claude-quote">“A subscription earns its place when it helps you do work you value.”</div><div class="claude-foot"><span>YOUR USAGE</span><strong>${escapeHtml(tool.use)}</strong><span>MONTHLY EQUIVALENT</span><strong>${money(toMonthly(tool.price, tool.billing))}</strong></div></div>
+    ${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderPerplexityLayout(tool) {
+  return `<article class="tool-page tool-page--perplexity">
+    <button class="tool-page-back" type="button" data-page-back>← Back to stack</button>
+    <div class="perplexity-heading"><span class="perplexity-mark">◉</span><div><span class="tool-page-label">SUBSCRIPTION ANSWER</span><h1>${escapeHtml(tool.name)}</h1></div></div>
+    <div class="perplexity-search">How much does this plan cost me each month?<span>⌕</span></div>
+    <div class="perplexity-answer"><span class="tool-page-label">THE SHORT ANSWER</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong><p>That is the normalized cost of a ${escapeHtml(tool.billing)} bill of ${money(tool.price)}. Your usage frequency is tracked separately as <b>${escapeHtml(tool.use)}</b>.</p><hr><div><span>Billing source</span><b>${money(tool.price)} / ${escapeHtml(tool.billing)}</b></div><div><span>Usage pattern</span><b>${escapeHtml(tool.use)}</b></div></div>
+    ${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderSupergrokLayout(tool) {
+  return `<article class="tool-page tool-page--supergrok">
+    <button class="tool-page-back" type="button" data-page-back>← Exit cost orbit</button>
+    <div class="grok-orbit"><div class="grok-orbit-ring"></div><span class="grok-kicker">STACK SIGNAL · LIVE</span><div class="grok-x">𝕏</div><h1>${escapeHtml(tool.name)}<br><span>in your orbit</span></h1><p>Annual charge <b>${money(tool.price)}</b> · usage marked <b>${escapeHtml(tool.use)}</b></p><div class="grok-cost"><span>MONTHLY GRAVITY</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong></div></div>
+    ${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderMidjourneyLayout(tool) {
+  return `<article class="tool-page tool-page--midjourney">
+    <button class="tool-page-back" type="button" data-page-back>← Return to gallery</button>
+    <div class="midjourney-studio"><div class="midjourney-canvas"><div class="midjourney-sun"></div><div class="midjourney-hill midjourney-hill--one"></div><div class="midjourney-hill midjourney-hill--two"></div><span>YOUR CREATIVE STACK</span></div><div class="midjourney-caption"><span class="tool-page-label">STUDIO / SUBSCRIPTION</span><h1>${escapeHtml(tool.name)}</h1><p>Creative budget, composed monthly.</p><div class="midjourney-price"><strong>${money(toMonthly(tool.price, tool.billing))}</strong><span>/ month<br>${money(tool.price)} / ${escapeHtml(tool.billing)}</span></div><div class="midjourney-usage">Usage intention <b>${escapeHtml(tool.use)}</b></div></div></div>
+    ${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderGenericToolLayout(tool) {
+  return `<article class="tool-page tool-page--generic">
+    <button class="tool-page-back" type="button" data-page-back>← All subscriptions</button>
+    <div class="generic-tool-mark">${escapeHtml(tool.name.slice(0, 1).toUpperCase())}</div><span class="tool-page-label">${escapeHtml(tool.job)} · SUBSCRIPTION DETAIL</span><h1>${escapeHtml(tool.name)}</h1><p>Billing and usage are tracked independently.</p>${toolPageControls(tool, state.selected[tool.id])}
+  </article>`;
+}
+
+function renderToolPage(id, pushRoute = false) {
+  const key = String(id || "");
+  const base = catalog().find((tool) => tool.id === key || toolPageKey(tool) === key);
+  const root = document.getElementById("ledger");
+  if (!root) return;
+  if (!base) {
+    root.innerHTML = `<section class="tool-page tool-page--generic"><button class="tool-page-back" type="button" data-page-back>← All subscriptions</button><h1>Tool not found</h1></section>`;
+    root.querySelector("[data-page-back]").addEventListener("click", closeToolPage);
+    return;
+  }
+  if (pushRoute) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tool", toolPageKey(base));
+    window.history.pushState({}, "", url);
+  }
+  const selected = selectedTools().find((item) => item.id === base.id);
+  const tool = selected || {
+    ...base, ...(toolPageDrafts[base.id] || {}), billing: toolPageDrafts[base.id]?.billing || "monthly",
+    use: toolPageDrafts[base.id]?.use || "monthly", decision: "auto"
+  };
+  const layouts = {
+    "chatgpt-plus": renderChatGptLayout,
+    "claude-pro": renderClaudeLayout,
+    "perplexity-pro": renderPerplexityLayout,
+    perplexity: renderPerplexityLayout,
+    supergrok: renderSupergrokLayout,
+    midjourney: renderMidjourneyLayout
+  };
+  root.innerHTML = (layouts[base.id] || layouts[toolPageKey(base)] || renderGenericToolLayout)(tool);
+  root.querySelector("[data-page-back]").addEventListener("click", closeToolPage);
+  root.querySelectorAll("[data-page-add]").forEach((button) => button.addEventListener("click", () => {
+    toggle(button.dataset.pageAdd);
+    renderToolPage(toolPageKey(base));
+  }));
+  root.querySelectorAll("[data-page-field]").forEach((input) => input.addEventListener("change", () => {
+    const field = input.dataset.pageField;
+    const value = field === "price" ? cleanPrice(input.value) : input.value;
+    if (state.selected[base.id]) {
+      state.selected[base.id][field] = value;
+      save();
+      draw();
+    } else {
+      toolPageDrafts[base.id] = { ...toolPageDrafts[base.id], [field]: value };
+      renderToolPage(toolPageKey(base));
+    }
+  }));
+}
+
+function closeToolPage() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("tool");
+  window.history.pushState({}, "", url);
+  draw();
+}
+
 function escapeHtml(value) {
   const named = { "&": "amp", "<": "lt", ">": "gt", '"': "quot", "'": "#39" };
   return String(value).replace(/[&<>"']/g, (ch) => "&" + named[ch] + ";");
@@ -245,13 +366,20 @@ function toggle(id) {
   if (state.selected[id]) {
     delete state.selected[id];
     delete state.decisions[id];
+    delete toolPageDrafts[id];
   } else {
     if (Object.keys(state.selected).length >= 5 && !isPro) {
       requirePro();
       return;
     }
     const tool = catalog().find((item) => item.id === id);
-    state.selected[id] = { price: tool.price, billing: "monthly", use: "monthly" };
+    const draft = toolPageDrafts[id] || {};
+    state.selected[id] = {
+      price: draft.price ?? tool.price,
+      billing: draft.billing || "monthly",
+      use: draft.use || "monthly"
+    };
+    delete toolPageDrafts[id];
   }
   save();
   draw();
@@ -290,17 +418,17 @@ function renderLedger() {
   const result = plan();
   const root = document.getElementById("ledger");
   if (!root) return;
+  const routedTool = new URLSearchParams(window.location.search).get("tool");
+  if (routedTool) {
+    renderToolPage(routedTool);
+    return;
+  }
   if (!result.tools.length) {
     root.innerHTML = `<h2>Ledger</h2><p class="muted">Nothing selected. Load a typical stack or pick two chat tools.</p>`;
     return;
   }
-  root.innerHTML = `<h2>Ledger</h2><ul>${result.tools.map((tool) => {
-    const monthly = toMonthly(tool.price, tool.billing);
-    const price = tool.billing === "monthly"
-      ? `${money(tool.price)}/mo`
-      : `${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(monthly)}/mo)`;
-    return `<li><span>${escapeHtml(tool.name)}</span><span>${price}</span></li>`;
-  }).join("")}</ul><p><strong>${money(result.burn)}/mo</strong> <span class="muted">this month · ${money(result.left)}/mo if you take the cuts</span></p>`;
+  root.innerHTML = `<h2>Subscriptions</h2><div class="tool-route-list">${result.tools.map((tool) => `<button type="button" data-open-tool="${escapeHtml(tool.id)}"><span>${escapeHtml(tool.name)}</span><strong>${money(toMonthly(tool.price, tool.billing))}/mo</strong></button>`).join("")}</div><p><strong>${money(result.burn)}/mo</strong> <span class="muted">this month · ${money(result.left)}/mo if you take the cuts</span></p>`;
+  root.querySelectorAll("[data-open-tool]").forEach((button) => button.addEventListener("click", () => renderToolPage(button.dataset.openTool, true)));
 }
 
 function renderCuts() {
@@ -431,6 +559,8 @@ function draw() {
   renderReport();
 }
 
+window.addEventListener("popstate", draw);
+
 document.querySelectorAll(".nav").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".nav").forEach((item) => item.classList.remove("on"));
@@ -481,16 +611,11 @@ document.getElementById("load-sample")?.addEventListener("click", () => {
     return;
   }
   const typicalStack = {
-    "chatgpt-plus": { price: 20, billing: "monthly", use: "weekly" },
-    "claude-pro": { price: 20, billing: "monthly", use: "monthly" },
-    "supergrok": { price: 30, billing: "monthly", use: "forgot" },
-    "perplexity": { price: 20, billing: "monthly", use: "weekly" },
-    cursor: { price: 20, billing: "monthly", use: "weekly" },
-    copilot: { price: 10, billing: "monthly", use: "forgot" },
-    midjourney: { price: 30, billing: "monthly", use: "monthly" },
-    firefly: { price: 10, billing: "monthly", use: "forgot" },
-    otter: { price: 17, billing: "monthly", use: "monthly" },
-    fireflies: { price: 18, billing: "monthly", use: "forgot" }
+    "chatgpt-plus": { price: 20, billing: "monthly", use: "daily" },
+    "claude-pro": { price: 20, billing: "monthly", use: "weekly" },
+    perplexity: { price: 20, billing: "weekly", use: "monthly" },
+    supergrok: { price: 30, billing: "yearly", use: "forgot" },
+    midjourney: { price: 30, billing: "monthly", use: "discretionary" }
   };
   state.selected = isPro ? typicalStack : Object.fromEntries(Object.entries(typicalStack).slice(0, 5));
   save();

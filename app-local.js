@@ -13,11 +13,11 @@ const PRESET_PRICES = {
   Midjourney: 30, Cursor: 20, Copilot: 10, Jasper: 49, "Notion AI": 10, "Canva Pro": 13
 };
 const DEFAULT_TOOLS = [
-  { id: 1, name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" },
-  { id: 2, name: "Claude Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" },
-  { id: 3, name: "Perplexity Pro", price: 20, billing: "weekly", use: "monthly", category: "Discretionary", decision: "Test" },
-  { id: 4, name: "Supergrok", price: 30, billing: "yearly", use: "forgot", category: "Thin Ice", decision: "Kill" },
-  { id: 5, name: "Midjourney", price: 30, billing: "monthly", use: "discretionary", category: "Discretionary", decision: "Test" }
+  { id: "chatgpt-plus", name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" },
+  { id: "claude-pro", name: "Claude Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" },
+  { id: "perplexity-pro", name: "Perplexity Pro", price: 20, billing: "weekly", use: "monthly", category: "Discretionary", decision: "Test" },
+  { id: "supergrok", name: "Supergrok", price: 30, billing: "yearly", use: "forgot", category: "Thin Ice", decision: "Kill" },
+  { id: "midjourney", name: "Midjourney", price: 30, billing: "monthly", use: "discretionary", category: "Discretionary", decision: "Test" }
 ];
 
 let tools = [];
@@ -193,6 +193,7 @@ function renderCategoryFilters() {
 
 function render() {
   const list = document.getElementById("toolList");
+  const routedTool = new URLSearchParams(window.location.search).get("tool");
   const filtered = tools.filter((tool) => (
     (filter === "all" || tool.use === filter)
     && (categoryFilter === "all" || tool.category === categoryFilter)
@@ -209,6 +210,15 @@ function render() {
     : "Simulation is off. Your tracked subscriptions determine the totals.";
   checkPro();
 
+  if (routedTool) {
+    list.classList.add("tool-page-active");
+    renderToolPage(routedTool);
+    return;
+  }
+  list.classList.remove("tool-page-active");
+  document.querySelector(".stack-heading")?.classList.remove("hidden");
+  document.querySelector(".panel-footer")?.classList.remove("hidden");
+
   if (!filtered.length) {
     list.innerHTML = `<div class="empty-stack"><strong>No tools in this filter</strong><span>Add AI subscriptions to start your local audit.</span></div>`;
     renderTax();
@@ -224,7 +234,7 @@ function render() {
     const trial = tool.trial ? `<span class="tool-trial">FREE TRIAL</span>` : "";
     const dormant = daysSince(tool.lastUsed) >= 30
       ? `<span class="tool-alert">Not used in 30+ days</span>` : "";
-    return `<article class="subscription-card ${includedInSimulation ? "" : "tool-simulated-off"}">
+    return `<article class="subscription-card ${includedInSimulation ? "" : "tool-simulated-off"}" data-tool-id="${escapeHtml(tool.id)}" role="link" tabindex="0" aria-label="Open ${escapeHtml(tool.name)} details">
       <div class="subscription-main">
         <div class="tool-icon">${escapeHtml(tool.name.slice(0, 1).toUpperCase())}</div>
           <div class="subscription-title"><strong>${escapeHtml(tool.name)}</strong>
@@ -250,6 +260,20 @@ function render() {
       </div>
     </article>`;
   }).join("");
+
+  list.querySelectorAll("[data-tool-id]").forEach((card) => {
+    const open = (event) => {
+      if (event.target.closest("button, input, select, label, a")) return;
+      renderToolPage(card.dataset.toolId, true);
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.target === card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        renderToolPage(card.dataset.toolId, true);
+      }
+    });
+  });
 
   list.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", () => {
     const tool = tools.find((item) => item.id === button.dataset.id);
@@ -301,6 +325,135 @@ function render() {
   }));
   renderTax();
   renderAuditNudges();
+}
+
+function toolPageKey(tool) {
+  return tool.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function toolPageControls(tool) {
+  return `<section class="tool-page-controls">
+    <div><span class="tool-page-label">YOUR BILL</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong>
+      <p>${money(tool.price)} per ${BILLING_UNITS[tool.billing]} · Used ${escapeHtml(tool.use)}</p></div>
+    <div class="tool-page-fields">
+      <label>Price <input type="number" min="0" step="0.01" data-page-field="price" value="${tool.price}"></label>
+      <label>Billing<select data-page-field="billing">${BILLING_CYCLES.map((cycle) => `<option value="${cycle}" ${tool.billing === cycle ? "selected" : ""}>${cycle}</option>`).join("")}</select></label>
+      <label>Usage<select data-page-field="use">${USAGE_FREQUENCIES.map((frequency) => `<option value="${frequency}" ${tool.use === frequency ? "selected" : ""}>${frequency}</option>`).join("")}</select></label>
+    </div>
+    <button type="button" class="tool-page-remove" data-page-remove="${escapeHtml(tool.id)}">Remove subscription</button>
+  </section>`;
+}
+
+function renderChatGptLayout(tool) {
+  return `<article class="tool-page tool-page--chatgpt">
+    <button class="tool-page-back" type="button" data-page-back>← All subscriptions</button>
+    <div class="chatgpt-workspace"><div class="chatgpt-mark">◎ OpenAI · WORKSPACE</div><h1>Make room for<br><span>good questions.</span></h1><p>Your ChatGPT plan, usage rhythm, and normalized monthly cost in one place.</p><div class="chatgpt-prompt"><span>What are you working on today?</span><b>↑</b></div></div>
+    <div class="chatgpt-status"><div><span class="tool-page-label">PLAN</span><strong>${escapeHtml(tool.name)}</strong></div><div><span class="tool-page-label">USAGE</span><strong>${escapeHtml(tool.use)}</strong></div><div><span class="tool-page-label">MONTHLY BURN</span><strong>${money(toMonthly(tool.price, tool.billing))}/mo</strong></div></div>
+    ${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderClaudeLayout(tool) {
+  return `<article class="tool-page tool-page--claude">
+    <button class="tool-page-back" type="button" data-page-back>← Subscriptions</button>
+    <div class="claude-paper"><div class="claude-overline">A quieter look at your stack</div><div class="claude-spark">✳</div><h1>Thoughtful tools.<br><em>Clear decisions.</em></h1><p>${escapeHtml(tool.name)} is part of your writing and thinking toolkit. Give its cost the same careful attention as its output.</p><div class="claude-quote">“A subscription earns its place when it helps you do work you value.”</div><div class="claude-foot"><span>YOUR USAGE</span><strong>${escapeHtml(tool.use)}</strong><span>MONTHLY EQUIVALENT</span><strong>${money(toMonthly(tool.price, tool.billing))}</strong></div></div>
+    ${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderPerplexityLayout(tool) {
+  return `<article class="tool-page tool-page--perplexity">
+    <button class="tool-page-back" type="button" data-page-back>← Back to stack</button>
+    <div class="perplexity-heading"><span class="perplexity-mark">◉</span><div><span class="tool-page-label">SUBSCRIPTION ANSWER</span><h1>${escapeHtml(tool.name)}</h1></div></div>
+    <div class="perplexity-search">How much does this plan cost me each month?<span>⌕</span></div>
+    <div class="perplexity-answer"><span class="tool-page-label">THE SHORT ANSWER</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong><p>That is the normalized cost of a ${escapeHtml(tool.billing)} bill of ${money(tool.price)}. Your usage frequency is tracked separately as <b>${escapeHtml(tool.use)}</b>.</p><hr><div><span>Billing source</span><b>${money(tool.price)} / ${escapeHtml(tool.billing)}</b></div><div><span>Usage pattern</span><b>${escapeHtml(tool.use)}</b></div></div>
+    ${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderSupergrokLayout(tool) {
+  return `<article class="tool-page tool-page--supergrok">
+    <button class="tool-page-back" type="button" data-page-back>← Exit cost orbit</button>
+    <div class="grok-orbit"><div class="grok-orbit-ring"></div><span class="grok-kicker">STACK SIGNAL · LIVE</span><div class="grok-x">𝕏</div><h1>${escapeHtml(tool.name)}<br><span>in your orbit</span></h1><p>Annual charge <b>${money(tool.price)}</b> · usage marked <b>${escapeHtml(tool.use)}</b></p><div class="grok-cost"><span>MONTHLY GRAVITY</span><strong>${money(toMonthly(tool.price, tool.billing))}<small>/mo</small></strong></div></div>
+    ${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderMidjourneyLayout(tool) {
+  return `<article class="tool-page tool-page--midjourney">
+    <button class="tool-page-back" type="button" data-page-back>← Return to gallery</button>
+    <div class="midjourney-studio"><div class="midjourney-canvas"><div class="midjourney-sun"></div><div class="midjourney-hill midjourney-hill--one"></div><div class="midjourney-hill midjourney-hill--two"></div><span>YOUR CREATIVE STACK</span></div><div class="midjourney-caption"><span class="tool-page-label">STUDIO / SUBSCRIPTION 05</span><h1>${escapeHtml(tool.name)}</h1><p>Creative budget, composed monthly.</p><div class="midjourney-price"><strong>${money(toMonthly(tool.price, tool.billing))}</strong><span>/ month<br>${money(tool.price)} / ${escapeHtml(tool.billing)}</span></div><div class="midjourney-usage">Usage intention <b>${escapeHtml(tool.use)}</b></div></div></div>
+    ${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderGenericToolLayout(tool) {
+  return `<article class="tool-page tool-page--generic">
+    <button class="tool-page-back" type="button" data-page-back>← All subscriptions</button>
+    <div class="generic-tool-mark">${escapeHtml(tool.name.slice(0, 1).toUpperCase())}</div><span class="tool-page-label">${escapeHtml(tool.category)} · SUBSCRIPTION DETAIL</span><h1>${escapeHtml(tool.name)}</h1><p>Billing and usage are tracked independently.</p>${toolPageControls(tool)}
+  </article>`;
+}
+
+function renderToolPage(id, pushRoute = false) {
+  const key = String(id || "");
+  const tool = tools.find((item) => String(item.id) === key || toolPageKey(item) === key);
+  const root = document.getElementById("toolList");
+  if (!root) return;
+  root.classList.add("tool-page-active");
+  document.querySelector(".stack-heading")?.classList.add("hidden");
+  document.querySelector(".panel-footer")?.classList.add("hidden");
+  if (!tool) {
+    root.innerHTML = `<section class="tool-page tool-page--generic"><button class="tool-page-back" type="button" data-page-back>← All subscriptions</button><h1>Subscription not found</h1><p>This tool may have been removed from your local stack.</p></section>`;
+    root.querySelector("[data-page-back]").addEventListener("click", closeToolPage);
+    root.querySelector("[data-page-remove]")?.addEventListener("click", () => {
+      tools = tools.filter((item) => String(item.id) !== String(tool.id));
+      delete simulation[tool.id];
+      save();
+      closeToolPage();
+    });
+    return;
+  }
+  if (pushRoute) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tool", toolPageKey(tool));
+    window.history.pushState({}, "", url);
+  }
+  const layouts = {
+    "chatgpt-plus": renderChatGptLayout,
+    "claude-pro": renderClaudeLayout,
+    "perplexity-pro": renderPerplexityLayout,
+    perplexity: renderPerplexityLayout,
+    supergrok: renderSupergrokLayout,
+    midjourney: renderMidjourneyLayout
+  };
+  root.innerHTML = (layouts[tool.id] || layouts[toolPageKey(tool)] || renderGenericToolLayout)(tool);
+  root.querySelector("[data-page-back]").addEventListener("click", closeToolPage);
+  root.querySelectorAll("[data-page-field]").forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.dataset.pageField === "price") {
+        const price = Number(input.value);
+        if (!Number.isFinite(price) || price < 0 || input.value === "") {
+          showToast("Enter a valid non-negative price.");
+          input.value = String(tool.price);
+          return;
+        }
+        tool.price = Math.min(price, 100000);
+      } else if (input.dataset.pageField === "billing" && BILLING_CYCLES.includes(input.value)) {
+        tool.billing = input.value;
+      } else if (input.dataset.pageField === "use" && USAGE_FREQUENCIES.includes(input.value)) {
+        tool.use = input.value;
+      }
+      save();
+      render();
+    });
+  });
+}
+
+function closeToolPage() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("tool");
+  window.history.pushState({}, "", url);
+  render();
 }
 
 function cents(value) {
@@ -724,6 +877,7 @@ window.toggleUse = (id) => {
   save();
   render();
 };
+window.addEventListener("popstate", render);
 
 document.querySelectorAll(".filterBtn").forEach((button) => {
   const match = button.getAttribute("onclick")?.match(/filter='([^']+)'/);
