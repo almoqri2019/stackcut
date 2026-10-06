@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to Calculate Your Real AI Subscription Burn | Stackcutify</title>
+  <meta name="description" content="Normalize weekly and yearly AI subscriptions to a true monthly cost. Try the calculator and learn why $20/week is $86.67/month, not $80.">
+  <link rel="canonical" href="https://stackcutify.vercel.app/articles/calculate-real-burn.html">
+  <meta property="og:title" content="How to Calculate Your Real AI Subscription Burn">
+  <meta property="og:description" content="Weekly × 52 ÷ 12. Yearly ÷ 12. Calculate your real monthly AI spend.">
+  <meta property="og:type" content="article">
+  <link rel="stylesheet" href="/articles/article.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type":"Question","name":"What is real monthly burn?","acceptedAnswer":{"@type":"Answer","text":"Real monthly burn is every subscription normalized to a monthly cost. Weekly prices are multiplied by 52 and divided by 12; yearly prices are divided by 12."}},
+      {"@type":"Question","name":"How do you normalize weekly to monthly?","acceptedAnswer":{"@type":"Answer","text":"Multiply the weekly price by 52 weeks and divide by 12 months. A $20 weekly subscription is $86.67 per month before rounding conventions."}},
+      {"@type":"Question","name":"How do you normalize a yearly subscription?","acceptedAnswer":{"@type":"Answer","text":"Divide the yearly price by 12. A $200 yearly plan is about $16.67 per month."}},
+      {"@type":"Question","name":"Why is my AI spend higher than I thought?","acceptedAnswer":{"@type":"Answer","text":"Weekly prices can look smaller than their monthly equivalent, several tools can accumulate, and subscriptions that are no longer used can be overlooked."}},
+      {"@type":"Question","name":"Is this calculator private?","acceptedAnswer":{"@type":"Answer","text":"The calculator runs in your browser. Values you enter are not sent to a server by this page."}}
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="article-header">
+    <div class="header-inner">
+      <div class="header-brand"><a class="brand" href="/">stackcutify</a></div>
+      <nav aria-label="Main navigation"><a href="/#features">Features</a><a href="/#pricing">Pricing</a><a href="/vs/rocket-money.html">vs Rocket Money</a></nav>
+      <div class="header-actions"><a class="open-app" href="/app.html">Open App</a><a class="pro-link" href="/#pricing">Go Pro $8.84/mo</a></div>
+    </div>
+  </header>
+  <main class="page">
+    <section class="article-head">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/#articles">Articles</a><span>/</span><span>Calculate real burn</span></nav>
+      <div class="eyebrow"><span class="pill">AI Spend Audit</span><span class="canonical">Canonical: /articles/calculate-real-burn.html</span></div>
+      <h1 class="serif">How to Calculate Your Real AI Burn: <em>Weekly vs Monthly vs Yearly Math Done Right</em></h1>
+      <p class="dek">A $20 weekly plan does not cost $80 per month. Normalize every billing cycle to see the real monthly cost of your AI stack.</p>
+      <div class="byline"><strong>By Stackcutify Team</strong><span>•</span><span>6 min read</span><span>•</span><span>Updated Oct 6, 2026</span><span class="local-badge">100% local calculator</span></div>
+    </section>
+    <aside class="toc"><strong>On this page</strong><ol><li><a href="#why-math">Why $20/week is not $80/month</a></li><li><a href="#calculator">Calculate your real burn</a></li><li><a href="#billing-traps">Three billing traps</a></li><li><a href="#billing-vs-usage">Billing vs. usage</a></li><li><a href="#faq">FAQ</a></li></ol></aside>
+    <article class="article-body">
+      <section id="why-math"><h2 class="serif">Why $20/week is not $80/month</h2>
+        <p>A month is not exactly four weeks. There are 52 weeks in a year and 12 months, so the average month contains about 4.333 weeks. Multiplying a weekly subscription by four misses the extra weeks spread throughout the year.</p>
+        <p>For a $20/week plan, the annualized calculation is $20 × 52 ÷ 12 = $86.67 per month. The difference from the rough $80 estimate is small for one subscription, but it compounds across multiple weekly plans.</p>
+        <div class="note"><strong>Use a consistent unit.</strong> Normalize all recurring subscriptions to a monthly equivalent before comparing totals. Do not add an annual charge directly to a monthly charge.</div>
+      </section>
+      <section id="calculator"><h2 class="serif">Calculate your real burn</h2>
+        <p>Adjust either amount to see the monthly equivalent. The calculation stays in this page and runs locally in your browser.</p>
+        <div class="calculator">
+          <div class="calc-inner">
+            <div class="calc-title"><span>Real burn calculator</span><span class="live">LIVE</span></div>
+            <div class="calc-grid">
+              <div class="calc-control">
+                <label for="weekly-price">Weekly price</label>
+                <div class="calc-value">$<span id="weekly-value">20</span><small>/week</small></div>
+                <input id="weekly-price" type="range" min="1" max="50" value="20">
+                <div class="range-labels"><span>$1</span><span>$25</span><span>$50</span></div>
+                <div class="quick-values"><button type="button" data-weekly-preset="10">$10/wk</button><button type="button" data-weekly-preset="20">$20/wk</button><button type="button" data-weekly-preset="30">$30/wk</button></div>
+              </div>
+              <div class="calc-output">
+                <label>Weekly normalized monthly</label><strong>$<span id="weekly-monthly">86.67</span>/mo</strong>
+                <p>Formula: <span id="weekly-formula">$20 × 52 ÷ 12</span></p>
+                <div class="calc-comparison"><div>You might estimate<strong>$<span id="weekly-estimate">80.00</span>/mo</strong></div><div>Additional monthly cost<strong>+$<span id="weekly-leak">6.67</span>/mo</strong></div></div>
+                <a href="/app.html#burn">Open in Stackcutify →</a>
+              </div>
+            </div>
+            <div class="calc-grid">
+              <div class="calc-control">
+                <label for="yearly-price">Yearly price</label>
+                <div class="calc-value">$<span id="yearly-value">200</span><small>/year</small></div>
+                <input id="yearly-price" type="range" min="12" max="600" step="4" value="200">
+                <div class="range-labels"><span>$12</span><span>$300</span><span>$600</span></div>
+              </div>
+              <div class="calc-output"><label>Yearly normalized monthly</label><strong>$<span id="yearly-monthly">16.67</span>/mo</strong><p>Formula: <span id="yearly-formula">$200 ÷ 12</span></p></div>
+            </div>
+          </div>
+          <div class="calc-private">Private by default. This math runs 100% locally in your browser.</div>
+        </div>
+      </section>
+      <section id="billing-traps"><h2 class="serif">The three billing traps</h2>
+        <h3>1. Treating every month as four weeks</h3><p>Four weeks is 28 days, not an average calendar month. Use 52 ÷ 12 for weekly plans so your annual budget includes all 52 charges.</p>
+        <h3>2. Comparing a yearly sticker price with a monthly bill</h3><p>A $200 annual payment may feel large on renewal day but represents $16.67 per month when spread across 12 months. Track the cash-flow date separately from the normalized cost.</p>
+        <h3>3. Counting the price but not the usage</h3><p>A correct monthly total tells you what you pay. It does not tell you whether a tool still earns a place in your workflow. Track usage frequency separately.</p>
+      </section>
+      <section id="billing-vs-usage"><h2 class="serif">Billing cycle and usage are different facts</h2>
+        <p>Billing describes when and how much a vendor charges: weekly, monthly, quarterly, or yearly. Usage describes how often you actually use the product: daily, weekly, monthly, discretionary, or not at all.</p>
+        <p>Keep those fields separate. A tool billed yearly can be used every day, and a monthly subscription can be forgotten. Monthly normalization helps compare cost; usage helps decide whether the subscription is worthwhile.</p>
+      </section>
+      <section id="audit"><h2 class="serif">Audit your stack in 30 seconds</h2>
+        <ol><li>List each recurring AI plan and its actual charge.</li><li>Record its billing cycle and normalize the price.</li><li>Mark how often you use it, separately from billing.</li><li>Review forgotten or duplicate tools before their next renewal.</li></ol>
+        <p>Stackcutify keeps the list in your browser and shows billing and usage as separate values.</p>
+      </section>
+      <section class="faq" id="faq"><h2 class="serif">FAQ</h2>
+        <div class="faq-item"><h3>What is real monthly burn?</h3><p>It is the combined monthly equivalent of recurring subscriptions after normalizing each billing cycle.</p></div>
+        <div class="faq-item"><h3>How do you normalize weekly to monthly?</h3><p>Multiply by 52 and divide by 12. A $20 weekly price is $86.67 per month when rounded to cents.</p></div>
+        <div class="faq-item"><h3>How do you normalize a yearly subscription?</h3><p>Divide the yearly price by 12. A $200 yearly plan is about $16.67 per month.</p></div>
+        <div class="faq-item"><h3>Why is my AI spend higher than I thought?</h3><p>Weekly costs can be underestimated, several plans can add up, and unused subscriptions may continue renewing.</p></div>
+        <div class="faq-item"><h3>Is this calculator private?</h3><p>Yes. This calculator performs its arithmetic in your browser and does not submit the entered amounts.</p></div>
+        <pre class="schema" id="schema-preview" aria-label="FAQ structured data preview"></pre>
+      </section>
+      <aside class="author-card"><div class="author-mark">S</div><div><strong>Stackcutify — indie hackers building a local-first audit</strong><p>We built a simple way to understand recurring AI costs, without a bank connection. <a href="/app.html"><u>Open the local tracker</u></a>.</p></div></aside>
+      <section class="related"><h2 class="serif">Related audits</h2><div class="related-grid">
+        <a href="/articles/cancel-chatgpt-plus.html"><small>Cancel guide</small><strong>How to Cancel ChatGPT Plus: Step-by-Step + Email Template</strong></a>
+        <a href="/articles/claude-vs-chatgpt-cost.html"><small>Compare</small><strong>Claude Pro vs ChatGPT Plus: Real Monthly Cost Breakdown</strong></a>
+        <a href="/articles/rocket-money-ai-subscriptions.html"><small>Comparison</small><strong>Rocket Money for AI Subscriptions?</strong></a>
+        <a href="/articles/stop-paying-forgotten-ai-tools.html"><small>Audit guide</small><strong>Stop Paying for Forgotten AI Tools</strong></a>
+      </div></section>
+    </article>
+  </main>
+  <footer class="article-footer"><div class="footer-inner"><span>© 2026 Stackcutify • Local-only audit • No bank connection</span><a href="/#pricing">Pricing</a></div></footer>
+  <script src="/articles/article.js"></script>
+</body>
+</html>
