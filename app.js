@@ -29,12 +29,33 @@ const CATALOG = [
 
 const JOBS = ["Chat", "Search", "Code", "Image", "Meetings", "Writing", "Video", "Voice", "Other"];
 const KEY = "stackcut-v2";
+const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
+const BILLING_CYCLES = ["daily", "weekly", "monthly", "quarterly", "yearly"];
+const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: "quarter", yearly: "year" };
+const USAGE_FREQUENCIES = ["daily", "weekly", "monthly", "discretionary", "forgot"];
 const isPro = localStorage.getItem("stackcut_pro") === "active";
 const state = load();
 
 function cleanPrice(value) {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? Math.min(n, 100000) : 0;
+}
+
+function toMonthly(price, billing) {
+  const cycle = String(billing || "monthly").toLowerCase();
+  const amount = Number(price) || 0;
+  if (cycle === "weekly") return amount * 4.333333;
+  if (cycle === "yearly") return amount / 12;
+  if (cycle === "quarterly") return amount / 3;
+  if (cycle === "daily") return amount * 30.44;
+  return amount;
+}
+
+function requirePro() {
+  if (isPro) return true;
+  alert(PLAN_ID);
+  window.location.href = `/pro.html?plan=${PLAN_ID}`;
+  return false;
 }
 
 // Accepts anything (localStorage, imported file) and returns a safe state object.
@@ -60,7 +81,8 @@ function sanitize(parsed) {
       if (!known.has(id) || !entry || typeof entry !== "object") return;
       out.selected[id] = {
         price: cleanPrice(entry.price),
-        use: ["weekly", "monthly", "forgot"].includes(entry.use) ? entry.use : "monthly"
+        billing: BILLING_CYCLES.includes(entry.billing) ? entry.billing : "monthly",
+        use: USAGE_FREQUENCIES.includes(entry.use) ? entry.use : "monthly"
       };
     });
   }
@@ -95,9 +117,13 @@ function catalog() {
   return CATALOG.concat(state.custom);
 }
 
-function money(n) {
-  const value = Math.round(Number(n) || 0);
-  return "$" + value.toLocaleString("en-US");
+function cents(value) {
+  const amount = Number(value) || 0;
+  return Math.trunc((amount + Math.sign(amount) * Number.EPSILON) * 100) / 100;
+}
+
+function money(value) {
+  return "$" + cents(value).toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
 function toast(text) {
@@ -113,14 +139,26 @@ function selectedTools() {
   return catalog().filter((tool) => state.selected[tool.id]).map((tool) => ({
     ...tool,
     price: cleanPrice(state.selected[tool.id].price),
+    billing: state.selected[tool.id].billing || "monthly",
     use: state.selected[tool.id].use || "monthly",
     decision: state.decisions[tool.id] || "auto"
   }));
 }
 
+function getBurn() {
+  let total = 0;
+  let waste = 0;
+  Object.values(state.selected).forEach((tool) => {
+    const monthly = toMonthly(tool.price, tool.billing);
+    total += monthly;
+    if ((tool.use || "").toLowerCase() === "forgot") waste += monthly;
+  });
+  return { total, waste };
+}
+
 function plan() {
   const tools = selectedTools();
-  const burn = tools.reduce((sum, tool) => sum + tool.price, 0);
+  const { total: burn, waste } = getBurn();
   const groups = JOBS.map((job) => {
     const members = tools.filter((tool) => tool.job === job);
     if (members.length < 2) return null;
@@ -129,11 +167,11 @@ function plan() {
     const candidates = members.filter((tool) => tool.decision !== "cut");
     const keep = candidates.slice().sort((a, b) => rank(a) - rank(b) || a.price - b.price)[0] || null;
     const cut = members.filter((tool) => (!keep || tool.id !== keep.id) && tool.decision !== "keep" && (tool.decision === "cut" || tool.use !== "weekly"));
-    const saved = cut.reduce((sum, tool) => sum + tool.price, 0);
+    const saved = cut.reduce((sum, tool) => sum + toMonthly(tool.price, tool.billing), 0);
     return { job, members, keep, cut, saved };
   }).filter(Boolean);
   const saved = groups.reduce((sum, group) => sum + group.saved, 0);
-  return { tools, burn, groups, saved, left: burn - saved };
+  return { tools, burn, waste, groups, saved, left: burn - saved };
 }
 
 function query() {
@@ -175,17 +213,23 @@ function renderPicker() {
 function card(tool) {
   const on = state.selected[tool.id];
   const price = on ? on.price : tool.price;
+  const billing = on ? on.billing || "monthly" : "monthly";
   const use = on ? on.use : "monthly";
+  const monthly = toMonthly(price, billing);
   return `<article class="tool ${on ? "on" : ""}" data-id="${escapeHtml(tool.id)}" role="button" tabindex="0" aria-pressed="${on ? "true" : "false"}">
     <div class="name">${escapeHtml(tool.name)}</div>
     <div class="meta"><span>${tool.job}</span><span>list ${money(tool.price)}</span></div>
+    <div class="meta"><span>${money(price)}/${BILLING_UNITS[billing]} billed</span><span>${money(monthly)}/mo</span></div>
     <div class="editor">
-      <label>You pay / mo<input data-field="price" data-id="${tool.id}" type="number" min="0" step="1" value="${price}" /></label>
-      <label>Still using
+      <label>You pay<input data-field="price" data-id="${tool.id}" type="number" min="0" step="0.01" value="${price}" /></label>
+      <label>Billing cycle
+        <select data-field="billing" data-id="${tool.id}">
+          ${BILLING_CYCLES.map((cycle) => `<option value="${cycle}" ${billing === cycle ? "selected" : ""}>${cycle}</option>`).join("")}
+        </select>
+      </label>
+      <label>Usage frequency
         <select data-field="use" data-id="${tool.id}">
-          <option value="weekly" ${use === "weekly" ? "selected" : ""}>Every week</option>
-          <option value="monthly" ${use === "monthly" ? "selected" : ""}>Some months</option>
-          <option value="forgot" ${use === "forgot" ? "selected" : ""}>Forgot it</option>
+          ${USAGE_FREQUENCIES.map((frequency) => `<option value="${frequency}" ${use === frequency ? "selected" : ""}>${frequency}</option>`).join("")}
         </select>
       </label>
     </div>
@@ -203,10 +247,11 @@ function toggle(id) {
     delete state.decisions[id];
   } else {
     if (Object.keys(state.selected).length >= 5 && !isPro) {
-      alert('P-6HT714478R159110WNLBOW4Q');window.location.href='/pro.html?plan=P-6HT714478R159110WNLBOW4Q';return;
+      requirePro();
+      return;
     }
     const tool = catalog().find((item) => item.id === id);
-    state.selected[id] = { price: tool.price, use: "monthly" };
+    state.selected[id] = { price: tool.price, billing: "monthly", use: "monthly" };
   }
   save();
   draw();
@@ -223,6 +268,7 @@ function onEdit(event) {
   renderCuts();
   renderLetters();
   renderReport();
+  if (event.type === "change") renderPicker();
 }
 
 function renderStats() {
@@ -231,7 +277,8 @@ function renderStats() {
   const root = document.getElementById("stats");
   if (!root) return;
   root.innerHTML = [
-    [money(result.burn), "paid each month"],
+    [`${money(result.burn)}/mo`, "paid each month"],
+    [`${money(result.waste)}/mo`, "wasted each month"],
     [String(result.tools.length), "tools selected"],
     [money(result.saved), "ready to cut"],
     [money(result.saved * 12), "over a year"]
@@ -247,7 +294,13 @@ function renderLedger() {
     root.innerHTML = `<h2>Ledger</h2><p class="muted">Nothing selected. Load a typical stack or pick two chat tools.</p>`;
     return;
   }
-  root.innerHTML = `<h2>Ledger</h2><ul>${result.tools.map((tool) => `<li><span>${escapeHtml(tool.name)}</span><span>${money(tool.price)}</span></li>`).join("")}</ul><p><strong>${money(result.burn)}</strong> <span class="muted">this month · ${money(result.left)} if you take the cuts</span></p>`;
+  root.innerHTML = `<h2>Ledger</h2><ul>${result.tools.map((tool) => {
+    const monthly = toMonthly(tool.price, tool.billing);
+    const price = tool.billing === "monthly"
+      ? `${money(tool.price)}/mo`
+      : `${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(monthly)}/mo)`;
+    return `<li><span>${escapeHtml(tool.name)}</span><span>${price}</span></li>`;
+  }).join("")}</ul><p><strong>${money(result.burn)}/mo</strong> <span class="muted">this month · ${money(result.left)}/mo if you take the cuts</span></p>`;
 }
 
 function renderCuts() {
@@ -260,7 +313,7 @@ function renderCuts() {
   }
   root.innerHTML = result.groups.map((group) => `<article class="cut-card">
     <header><div><strong>${group.job}</strong><div class="keep">${group.keep ? "Keep " + escapeHtml(group.keep.name) : "Cutting every tool in this job"}</div></div><div class="save">${money(group.saved)}<div class="muted">/ month</div></div></header>
-    ${group.members.map((tool) => `<div class="row"><span>${escapeHtml(tool.name)} · ${money(tool.price)}</span><span class="muted">${tool.use}</span>
+    ${group.members.map((tool) => `<div class="row"><span>${escapeHtml(tool.name)} · ${money(toMonthly(tool.price, tool.billing))}/mo</span><span class="muted">${tool.use}</span>
       <select data-decision="${tool.id}">
         <option value="auto" ${tool.decision === "auto" ? "selected" : ""}>Auto</option>
         <option value="keep" ${tool.decision === "keep" ? "selected" : ""}>Keep</option>
@@ -338,16 +391,17 @@ function reportText() {
   const lines = [
     "Stackcut report",
     `Monthly burn: ${money(result.burn)}`,
+    `Monthly waste: ${money(result.waste)}`,
     `Ready to cut: ${money(result.saved)}`,
     `Left if you cut: ${money(result.left)}`,
     `Year returned: ${money(result.saved * 12)}`,
     "",
     "Stack"
   ];
-  result.tools.forEach((tool) => lines.push(`- ${tool.name} (${tool.job}) ${money(tool.price)} / ${tool.use}`));
+  result.tools.forEach((tool) => lines.push(`- ${tool.name} (${tool.job}) ${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(toMonthly(tool.price, tool.billing))}/mo) / ${tool.use}`));
   result.groups.forEach((group) => {
     lines.push("", group.keep ? `${group.job}: keep ${group.keep.name}` : `${group.job}: cut all`);
-    group.cut.forEach((tool) => lines.push(`  cut ${tool.name} ${money(tool.price)}`));
+    group.cut.forEach((tool) => lines.push(`  cut ${tool.name} ${money(toMonthly(tool.price, tool.billing))}/mo`));
   });
   return lines.join("\n");
 }
@@ -363,9 +417,9 @@ function renderReport() {
     <div class="bar"><span style="width:${width}%"></span></div>
     <p>${width}% of this stack is overlap. ${money(result.left)} remains if you take every cut.</p>
     <h3>Keep</h3>
-    <ul>${result.tools.filter((tool) => !result.groups.some((group) => group.cut.find((cut) => cut.id === tool.id))).map((tool) => `<li>${escapeHtml(tool.name)} · ${money(tool.price)}</li>`).join("") || "<li>None yet</li>"}</ul>
+    <ul>${result.tools.filter((tool) => !result.groups.some((group) => group.cut.find((cut) => cut.id === tool.id))).map((tool) => `<li>${escapeHtml(tool.name)} · ${money(toMonthly(tool.price, tool.billing))}/mo</li>`).join("") || "<li>None yet</li>"}</ul>
     <h3>Cut</h3>
-    <ul>${result.groups.flatMap((group) => group.cut).map((tool) => `<li>${escapeHtml(tool.name)} · ${money(tool.price)} · ${tool.job}</li>`).join("") || "<li>None yet</li>"}</ul>`;
+    <ul>${result.groups.flatMap((group) => group.cut).map((tool) => `<li>${escapeHtml(tool.name)} · ${money(toMonthly(tool.price, tool.billing))}/mo · ${tool.job}</li>`).join("") || "<li>None yet</li>"}</ul>`;
 }
 
 function draw() {
@@ -406,10 +460,15 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
   tool.name = tool.name.slice(0, 80);
   if (!tool.name) return;
   if (Object.keys(state.selected).length >= 5 && !isPro) {
-    alert('P-6HT714478R159110WNLBOW4Q');window.location.href='/pro.html?plan=P-6HT714478R159110WNLBOW4Q';return;
+    requirePro();
+    return;
   }
   state.custom.push(tool);
-  state.selected[tool.id] = { price: tool.price, use: "monthly" };
+  state.selected[tool.id] = {
+    price: tool.price,
+    billing: BILLING_CYCLES.includes(data.get("billing")) ? data.get("billing") : "monthly",
+    use: USAGE_FREQUENCIES.includes(data.get("use")) ? data.get("use") : "monthly"
+  };
   save();
   event.target.reset();
   draw();
@@ -418,21 +477,20 @@ document.getElementById("add-form")?.addEventListener("submit", (event) => {
 
 document.getElementById("load-sample")?.addEventListener("click", () => {
   if (Object.keys(state.selected).length >= 5 && !isPro) {
-    alert('P-6HT714478R159110WNLBOW4Q');
-    window.location.href='/pro.html?plan=P-6HT714478R159110WNLBOW4Q';
+    requirePro();
     return;
   }
   const typicalStack = {
-    "chatgpt-plus": { price: 20, use: "weekly" },
-    "claude-pro": { price: 20, use: "monthly" },
-    "supergrok": { price: 30, use: "forgot" },
-    "perplexity": { price: 20, use: "weekly" },
-    cursor: { price: 20, use: "weekly" },
-    copilot: { price: 10, use: "forgot" },
-    midjourney: { price: 30, use: "monthly" },
-    firefly: { price: 10, use: "forgot" },
-    otter: { price: 17, use: "monthly" },
-    fireflies: { price: 18, use: "forgot" }
+    "chatgpt-plus": { price: 20, billing: "monthly", use: "weekly" },
+    "claude-pro": { price: 20, billing: "monthly", use: "monthly" },
+    "supergrok": { price: 30, billing: "monthly", use: "forgot" },
+    "perplexity": { price: 20, billing: "monthly", use: "weekly" },
+    cursor: { price: 20, billing: "monthly", use: "weekly" },
+    copilot: { price: 10, billing: "monthly", use: "forgot" },
+    midjourney: { price: 30, billing: "monthly", use: "monthly" },
+    firefly: { price: 10, billing: "monthly", use: "forgot" },
+    otter: { price: 17, billing: "monthly", use: "monthly" },
+    fireflies: { price: 18, billing: "monthly", use: "forgot" }
   };
   state.selected = isPro ? typicalStack : Object.fromEntries(Object.entries(typicalStack).slice(0, 5));
   save();

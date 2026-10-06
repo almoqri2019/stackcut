@@ -1,9 +1,12 @@
 const FREE_LIMIT = 5;
+const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
 const STORAGE_KEY = "stackcut_tools";
 const CATEGORY_KEY = "stackcut_category";
 const SIMULATION_KEY = "stackcut_simulation";
 const CATEGORIES = ["Essential", "Beloved", "Discretionary", "Thin Ice"];
-const STATUSES = ["used", "weekly", "forgot"];
+const BILLING_CYCLES = ["daily", "weekly", "monthly", "quarterly", "yearly"];
+const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: "quarter", yearly: "year" };
+const USAGE_FREQUENCIES = ["daily", "weekly", "monthly", "discretionary", "forgot"];
 const DECISIONS = ["Keep", "Kill", "Test"];
 const PRESET_PRICES = {
   "ChatGPT Plus": 20, "Claude Pro": 20, "Perplexity Pro": 20, Supergrok: 30,
@@ -33,8 +36,8 @@ function isPro() {
 
 function requirePro() {
   if (isPro()) return true;
-  alert("Pro $8.84/mo required — Go Pro");
-  location.href = "/pro.html?plan=P-6HT714478R159110WNLBOW4Q";
+  alert(PLAN_ID);
+  window.location.href = `/pro.html?plan=${PLAN_ID}`;
   return false;
 }
 
@@ -53,24 +56,30 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function toMonthly(price, cycle) {
+function toMonthly(price, billing) {
+  const cycle = String(billing || "monthly").toLowerCase();
   const amount = Number(price) || 0;
-  if (cycle === "weekly") return amount * 52 / 12;
+  if (cycle === "weekly") return amount * 4.333333;
   if (cycle === "yearly") return amount / 12;
   if (cycle === "quarterly") return amount / 3;
+  if (cycle === "daily") return amount * 30.44;
   return amount;
 }
 
 function normalizeTool(tool, index) {
   if (!tool || typeof tool !== "object" || typeof tool.name !== "string" || !tool.name.trim()) return null;
   const price = Number(tool.price);
-  const cycle = ["monthly", "weekly", "yearly", "quarterly"].includes(tool.cycle) ? tool.cycle : "monthly";
+  const legacyBilling = tool.cycle;
+  const billingValue = String(tool.billing ?? legacyBilling ?? "monthly").toLowerCase();
+  const billing = BILLING_CYCLES.includes(billingValue) ? billingValue : "monthly";
+  const legacyUse = tool.status === "used" ? "daily" : tool.status;
+  const useValue = String(tool.use ?? legacyUse ?? "monthly").toLowerCase();
   return {
     id: String(tool.id ?? `tool-${index}-${Date.now()}`),
     name: tool.name.trim().slice(0, 100),
     price: Number.isFinite(price) && price >= 0 ? Math.min(price, 100000) : 0,
-    cycle,
-    status: STATUSES.includes(tool.status) ? tool.status : "used",
+    billing,
+    use: USAGE_FREQUENCIES.includes(useValue) ? useValue : "monthly",
     category: CATEGORIES.includes(tool.category) ? tool.category : "Discretionary",
     trial: tool.trial === true,
     renewalDate: typeof tool.renewalDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(tool.renewalDate) ? tool.renewalDate : "",
@@ -80,23 +89,31 @@ function normalizeTool(tool, index) {
 }
 
 function load() {
+  let migrationRequired = false;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === null) {
       tools = [
-        normalizeTool({ id: 1, name: "ChatGPT Plus", price: 20, cycle: "monthly", status: "used", category: "Essential", decision: "Keep" }, 0),
-        normalizeTool({ id: 2, name: "Claude Pro", price: 20, cycle: "monthly", status: "forgot", category: "Thin Ice", decision: "Kill" }, 1),
-        normalizeTool({ id: 3, name: "Perplexity Pro", price: 20, cycle: "monthly", status: "weekly", category: "Beloved", decision: "Test" }, 2)
+        normalizeTool({ id: 1, name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" }, 0),
+        normalizeTool({ id: 2, name: "Claude Pro", price: 20, billing: "monthly", use: "forgot", category: "Thin Ice", decision: "Kill" }, 1),
+        normalizeTool({ id: 3, name: "Perplexity Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" }, 2)
       ];
     } else {
       const parsed = JSON.parse(stored);
       if (!Array.isArray(parsed)) throw new Error("Saved subscriptions are not a list.");
+      migrationRequired = parsed.some((tool) => tool && (
+        !Object.prototype.hasOwnProperty.call(tool, "billing")
+        || !Object.prototype.hasOwnProperty.call(tool, "use")
+        || Object.prototype.hasOwnProperty.call(tool, "cycle")
+        || Object.prototype.hasOwnProperty.call(tool, "status")
+      ));
       tools = parsed.map(normalizeTool).filter(Boolean);
     }
     const savedSimulation = localStorage.getItem(SIMULATION_KEY);
     simulation = savedSimulation ? JSON.parse(savedSimulation) : {};
     if (!simulation || typeof simulation !== "object" || Array.isArray(simulation)) simulation = {};
     categoryFilter = CATEGORIES.includes(localStorage.getItem(CATEGORY_KEY)) ? localStorage.getItem(CATEGORY_KEY) : "all";
+    if (migrationRequired) save();
   } catch (error) {
     tools = [];
     showToast(`Could not load saved data: ${error.message}`);
@@ -132,14 +149,22 @@ function toolIncluded(tool) {
   return !simulationMode || simulation[tool.id] !== false;
 }
 
+function getBurn(included = tools.filter((tool) => toolIncluded(tool)
+  && (categoryFilter === "all" || tool.category === categoryFilter))) {
+  let total = 0;
+  let waste = 0;
+  included.forEach((tool) => {
+    const monthly = toMonthly(tool.price, tool.billing);
+    total += monthly;
+    if ((tool.use || "").toLowerCase() === "forgot") waste += monthly;
+  });
+  return { total, waste };
+}
+
 function totals() {
   const included = tools.filter((tool) => toolIncluded(tool)
     && (categoryFilter === "all" || tool.category === categoryFilter));
-  const burn = included.reduce((sum, tool) => sum + toMonthly(tool.price, tool.cycle), 0);
-  const waste = included.reduce((sum, tool) => (
-    sum + (tool.status === "forgot" || tool.category === "Thin Ice" || tool.decision === "Kill"
-      ? toMonthly(tool.price, tool.cycle) : 0)
-  ), 0);
+  const { total: burn, waste } = getBurn(included);
   return { included, burn, waste };
 }
 
@@ -166,7 +191,7 @@ function renderCategoryFilters() {
 function render() {
   const list = document.getElementById("toolList");
   const filtered = tools.filter((tool) => (
-    (filter === "all" || tool.status === filter)
+    (filter === "all" || tool.use === filter)
     && (categoryFilter === "all" || tool.category === categoryFilter)
   ));
   const { included, burn, waste } = totals();
@@ -189,7 +214,7 @@ function render() {
   }
 
   list.innerHTML = filtered.map((tool) => {
-    const monthly = toMonthly(tool.price, tool.cycle);
+    const monthly = toMonthly(tool.price, tool.billing);
     const includedInSimulation = toolIncluded(tool);
     const renewal = tool.renewalDate
       ? `<span class="tool-alert">${tool.trial ? "Trial ends" : "Renews"} ${escapeHtml(tool.renewalDate)}</span>` : "";
@@ -200,15 +225,19 @@ function render() {
       <div class="subscription-main">
         <div class="tool-icon">${escapeHtml(tool.name.slice(0, 1).toUpperCase())}</div>
           <div class="subscription-title"><strong>${escapeHtml(tool.name)}</strong>
-            <div class="subscription-meta"><span>${escapeHtml(tool.status)}</span><span>${escapeHtml(tool.cycle)} • ${money(tool.price)}</span>${trial}${renewal}${dormant}</div>
+            <div class="subscription-meta"><span>Used ${escapeHtml(tool.use)}</span><span>${tool.billing === "monthly"
+              ? `${money(tool.price)}/mo billed`
+              : `${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(monthly)}/mo)`}</span>${trial}${renewal}${dormant}</div>
           </div>
         <div class="subscription-actions"><div class="monthly-price"><strong>${money(monthly)}</strong><small>/mo</small></div>
-          <button type="button" data-action="status" data-id="${escapeHtml(tool.id)}" aria-label="Cycle usage status for ${escapeHtml(tool.name)}">↻</button>
+          <button type="button" data-action="use" data-id="${escapeHtml(tool.id)}" aria-label="Cycle usage frequency for ${escapeHtml(tool.name)}">↻</button>
           <button type="button" data-action="delete" data-id="${escapeHtml(tool.id)}" aria-label="Remove ${escapeHtml(tool.name)}">✕</button>
         </div>
       </div>
       <div class="tool-control">
-        <label>Price <input type="number" min="0" step="0.01" data-field="price" data-id="${escapeHtml(tool.id)}" value="${tool.price}"></label>
+        <label>Billing price <input type="number" min="0" step="0.01" data-field="price" data-id="${escapeHtml(tool.id)}" value="${tool.price}"></label>
+        <label>Billing <select data-field="billing" data-id="${escapeHtml(tool.id)}">${BILLING_CYCLES.map((value) => `<option value="${value}" ${value === tool.billing ? "selected" : ""}>${value}</option>`).join("")}</select></label>
+        <label>Usage <select data-field="use" data-id="${escapeHtml(tool.id)}">${USAGE_FREQUENCIES.map((value) => `<option value="${value}" ${value === tool.use ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Category <select data-field="category" data-id="${escapeHtml(tool.id)}">${CATEGORIES.map((value) => `<option ${value === tool.category ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Audit <select data-field="decision" data-id="${escapeHtml(tool.id)}">${DECISIONS.map((value) => `<option ${value === tool.decision ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Renewal <input type="date" data-field="renewalDate" data-id="${escapeHtml(tool.id)}" value="${escapeHtml(tool.renewalDate)}"></label>
@@ -225,7 +254,8 @@ function render() {
       tools = tools.filter((item) => item.id !== button.dataset.id);
       delete simulation[button.dataset.id];
     } else if (tool) {
-      tool.status = tool.status === "used" ? "forgot" : tool.status === "forgot" ? "weekly" : "used";
+      const index = USAGE_FREQUENCIES.indexOf(tool.use);
+      tool.use = USAGE_FREQUENCIES[(index + 1) % USAGE_FREQUENCIES.length];
     }
     save();
     render();
@@ -246,6 +276,10 @@ function render() {
         tool.price = Math.min(value, 100000);
       } else if (field === "trial") {
         tool.trial = input.checked;
+      } else if (field === "billing" && BILLING_CYCLES.includes(input.value)) {
+        tool.billing = input.value;
+      } else if (field === "use" && USAGE_FREQUENCIES.includes(input.value)) {
+        tool.use = input.value;
       } else if (field === "category" && CATEGORIES.includes(input.value)) {
         tool.category = input.value;
       } else if (field === "decision" && DECISIONS.includes(input.value)) {
@@ -266,8 +300,13 @@ function render() {
   renderAuditNudges();
 }
 
+function cents(value) {
+  const amount = Number(value) || 0;
+  return Math.trunc((amount + Math.sign(amount) * Number.EPSILON) * 100) / 100;
+}
+
 function money(value) {
-  return `$${(Number(value) || 0).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  return `$${cents(value).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 function addTool(source = null) {
@@ -294,8 +333,8 @@ function addTool(source = null) {
     id: source ? `catalog-${source.id}` : `custom-${Date.now()}`,
     name,
     price,
-    cycle: source ? "monthly" : document.getElementById("toolCycle").value,
-    status: source ? "used" : document.getElementById("toolStatus").value,
+    billing: source ? "monthly" : document.getElementById("toolBilling").value,
+    use: source ? "monthly" : document.getElementById("toolUse").value,
     category: source ? "Discretionary" : document.getElementById("toolCategory").value,
     trial: source ? false : document.getElementById("toolTrial").checked,
     renewalDate: source ? "" : document.getElementById("toolRenewal").value,
@@ -400,11 +439,11 @@ function exportData(format) {
         version: 2,
         redacted: true,
         exportedAt: new Date().toISOString(),
-        summary: { toolCount: included.length, monthlyTotal: Number(included.reduce((sum, tool) => sum + toMonthly(tool.price, tool.cycle), 0).toFixed(2)) },
+        summary: { toolCount: included.length, monthlyTotal: cents(included.reduce((sum, tool) => sum + toMonthly(tool.price, tool.billing), 0)) },
         tools: included.map((tool, index) => ({
           name: `Subscription ${index + 1}`,
           category: tool.category,
-          status: tool.status,
+          use: tool.use,
           trial: tool.trial,
           decision: tool.decision
         }))
@@ -412,11 +451,11 @@ function exportData(format) {
     download("stackcutify-audit.json", JSON.stringify(payload, null, 2), "application/json");
   } else {
     const headers = pro
-      ? ["name", "price", "cycle", "status", "category", "trial", "renewal_date", "monthly_equivalent", "decision"]
-      : ["name", "category", "status", "trial", "decision"];
+      ? ["name", "price", "billing", "use", "category", "trial", "renewal_date", "monthly_equivalent", "decision"]
+      : ["name", "category", "use", "trial", "decision"];
     const rows = included.map((tool, index) => pro
-      ? [tool.name, tool.price, tool.cycle, tool.status, tool.category, tool.trial, tool.renewalDate, toMonthly(tool.price, tool.cycle).toFixed(2), tool.decision]
-      : [`Subscription ${index + 1}`, tool.category, tool.status, tool.trial, tool.decision]);
+      ? [tool.name, tool.price, tool.billing, tool.use, tool.category, tool.trial, tool.renewalDate, cents(toMonthly(tool.price, tool.billing)).toFixed(2), tool.decision]
+      : [`Subscription ${index + 1}`, tool.category, tool.use, tool.trial, tool.decision]);
     const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
     download("stackcutify-audit.csv", csv, "text/csv;charset=utf-8");
   }
@@ -613,7 +652,7 @@ function enableNotifications() {
 
 function generateDrafts() {
   if (!requirePro()) return;
-  const target = tools.filter((tool) => tool.decision === "Kill" || tool.status === "forgot");
+  const target = tools.filter((tool) => tool.decision === "Kill" || tool.use === "forgot");
   if (!target.length) {
     showToast("No Kill / forgotten subscriptions to draft.");
     return;
@@ -650,7 +689,7 @@ function clearAll() {
   showToast("Local data cleared.");
 }
 
-function setStatusFilter(value) {
+function setUsageFilter(value) {
   filter = value;
   document.querySelectorAll(".filterBtn").forEach((button) => {
     const active = button.getAttribute("onclick")?.includes(`'${value}'`);
@@ -672,17 +711,18 @@ window.del = (id) => {
   save();
   render();
 };
-window.toggleStatus = (id) => {
+window.toggleUse = (id) => {
   const tool = tools.find((item) => item.id === String(id));
   if (!tool) return;
-  tool.status = tool.status === "used" ? "forgot" : tool.status === "forgot" ? "weekly" : "used";
+  const index = USAGE_FREQUENCIES.indexOf(tool.use);
+  tool.use = USAGE_FREQUENCIES[(index + 1) % USAGE_FREQUENCIES.length];
   save();
   render();
 };
 
 document.querySelectorAll(".filterBtn").forEach((button) => {
   const match = button.getAttribute("onclick")?.match(/filter='([^']+)'/);
-  if (match) button.addEventListener("click", () => setStatusFilter(match[1]));
+  if (match) button.addEventListener("click", () => setUsageFilter(match[1]));
 });
 document.getElementById("toolName").addEventListener("change", (event) => {
   const price = PRESET_PRICES[event.target.value.trim()];
