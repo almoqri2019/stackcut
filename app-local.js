@@ -12,6 +12,13 @@ const PRESET_PRICES = {
   "ChatGPT Plus": 20, "Claude Pro": 20, "Perplexity Pro": 20, Supergrok: 30,
   Midjourney: 30, Cursor: 20, Copilot: 10, Jasper: 49, "Notion AI": 10, "Canva Pro": 13
 };
+const DEFAULT_TOOLS = [
+  { id: 1, name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" },
+  { id: 2, name: "Claude Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" },
+  { id: 3, name: "Perplexity Pro", price: 20, billing: "weekly", use: "monthly", category: "Discretionary", decision: "Test" },
+  { id: 4, name: "Supergrok", price: 30, billing: "yearly", use: "forgot", category: "Thin Ice", decision: "Kill" },
+  { id: 5, name: "Midjourney", price: 30, billing: "monthly", use: "discretionary", category: "Discretionary", decision: "Test" }
+];
 
 let tools = [];
 let filter = "all";
@@ -93,11 +100,7 @@ function load() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === null) {
-      tools = [
-        normalizeTool({ id: 1, name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" }, 0),
-        normalizeTool({ id: 2, name: "Claude Pro", price: 20, billing: "monthly", use: "forgot", category: "Thin Ice", decision: "Kill" }, 1),
-        normalizeTool({ id: 3, name: "Perplexity Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" }, 2)
-      ];
+      tools = DEFAULT_TOOLS.map(normalizeTool);
     } else {
       const parsed = JSON.parse(stored);
       if (!Array.isArray(parsed)) throw new Error("Saved subscriptions are not a list.");
@@ -165,7 +168,7 @@ function totals() {
   const included = tools.filter((tool) => toolIncluded(tool)
     && (categoryFilter === "all" || tool.category === categoryFilter));
   const { total: burn, waste } = getBurn(included);
-  return { included, burn, waste };
+  return { included, burn, waste, savable: Math.max(0, burn - waste) };
 }
 
 function renderCategoryFilters() {
@@ -194,10 +197,10 @@ function render() {
     (filter === "all" || tool.use === filter)
     && (categoryFilter === "all" || tool.category === categoryFilter)
   ));
-  const { included, burn, waste } = totals();
+  const { included, burn, waste, savable } = totals();
   document.getElementById("burn").innerHTML = `${money(burn)}<span class="text-[16px] text-white/40">/mo</span>`;
   document.getElementById("waste").textContent = money(waste);
-  document.getElementById("savable").textContent = money(waste);
+  document.getElementById("savable").textContent = money(savable);
   document.getElementById("badge").textContent = `${included.length} active / ${tools.length} total`;
   document.getElementById("footerInfo").textContent = `stackcutify • local-first • ${tools.length} tools • ${simulationMode ? "simulation" : "actual"} view`;
   document.getElementById("simulationMode").checked = simulationMode;
@@ -347,6 +350,8 @@ function addTool(source = null) {
   if (!source) {
     document.getElementById("toolName").value = "";
     document.getElementById("toolPrice").value = "";
+    document.getElementById("toolBilling").value = "monthly";
+    document.getElementById("toolUse").value = "monthly";
     document.getElementById("toolRenewal").value = "";
     document.getElementById("toolLastUsed").value = "";
     document.getElementById("toolTrial").checked = false;
