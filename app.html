@@ -47,11 +47,13 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 </div>
 <div id="badge" class="px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold border border-white/10">0 tools</div>
 </div>
-<div class="summary-metrics">
+<div id="burnScore" class="summary-metrics">
 <div class="p-3 rounded-[14px] bg-white/10 border border-white/10"><div class="text-[11px] text-white/50 uppercase">Waste</div><div class="flex items-baseline gap-1 mt-1"><div id="waste" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-white/40">/mo</span></div></div>
 <div class="p-3 rounded-[14px] bg-white text-black"><div class="text-[11px] text-black/50 uppercase">Savable</div><div class="flex items-baseline gap-1 mt-1"><div id="savable" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-black/40">/mo</span></div></div>
 </div>
-<div id="proBanner" class="mt-4 p-3 rounded-[12px] bg-amber-400 text-black text-[12px] font-semibold hidden">Free: 5 tools max. <a href="/pro.html" class="underline">Go Pro for unlimited</a></div>
+<a id="auditUnlockCta" class="audit-lock-cta hidden" href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Unlock your savable $$ → Go Pro $8.84/mo</a>
+<button type="button" onclick="calculateAudit()" class="calculate-audit-button">Calculate burn audit</button>
+<div id="proBanner" class="mt-4 p-3 rounded-[12px] bg-amber-400 text-black text-[12px] font-semibold hidden">Free: 3 tools max. <a href="/pro.html" class="underline">Go Pro for unlimited</a></div>
 </div>
 
 <div class="panel">
@@ -73,8 +75,8 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 </div>
 <select id="toolUse" name="use" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white" aria-label="Usage frequency">
 <option value="daily">Used daily</option>
-<option value="weekly">Used weekly</option>
-<option value="monthly" selected>Used monthly</option>
+<option value="weekly" selected>Used weekly</option>
+<option value="monthly">Used monthly</option>
 <option value="discretionary">Discretionary</option>
 <option value="forgot">Forgot / Never used</option>
 </select>
@@ -161,11 +163,13 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 
   <article class="local-panel">
     <div class="local-panel-head"><div><h2>Keep / Kill / Test audit</h2><p>Mark each subscription deliberately. Tools not used in 30 days are flagged using your manual last-used date.</p></div></div>
-    <div id="auditNudges"></div>
+      <p id="lockedAuditNote" class="audit-lock-cta hidden">Unlock your savable $$ → <a href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Go Pro $8.84/mo</a></p>
+      <div id="auditNudges"></div>
     <p class="local-note">Automatic billing-page visit tracking is not enabled. The optional extension recognizes selected AI-site hostnames locally; it does not inspect page content.</p>
   </article>
 </section>
 
+<div id="upgradeModalRoot"></div>
 <div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-3 rounded-full text-[13px] font-medium shadow-2xl z-[100]"></div>
 
 <script src="app-local.js"></script>

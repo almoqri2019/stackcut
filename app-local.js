@@ -1,6 +1,10 @@
-const FREE_LIMIT = 5;
+const FREE_LIMIT = 3;
+const LAUNCH_WEEK_OPEN = true;
 const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
-const STORAGE_KEY = "stackcut_tools";
+const STORAGE_KEY = "stack_tools";
+const LEGACY_STORAGE_KEY = "stackcut_tools";
+const AUDIT_COUNT_KEY = "audit_count";
+const AUDIT_HISTORY_KEY = "audit_history";
 const CATEGORY_KEY = "stackcut_category";
 const SIMULATION_KEY = "stackcut_simulation";
 const CATEGORIES = ["Essential", "Beloved", "Discretionary", "Thin Ice"];
@@ -9,15 +13,22 @@ const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: 
 const USAGE_FREQUENCIES = ["daily", "weekly", "monthly", "discretionary", "forgot"];
 const DECISIONS = ["Keep", "Kill", "Test"];
 const PRESET_PRICES = {
-  "ChatGPT Plus": 20, "Claude Pro": 20, "Perplexity Pro": 20, Supergrok: 30,
-  Midjourney: 30, Cursor: 20, Copilot: 10, Jasper: 49, "Notion AI": 10, "Canva Pro": 13
+  "chatgpt plus": 20, "chatgpt pro": 200, chatgpt: 20,
+  "claude pro": 20, "claude team": 30, "claude max": 100, claude: 20,
+  "perplexity pro": 20, perplexity: 20,
+  "gemini advanced": 19.99, gemini: 19.99,
+  "midjourney basic": 10, "midjourney standard": 30, "midjourney pro": 60, midjourney: 30,
+  "cursor pro": 20, cursor: 20,
+  "copilot pro": 20, "github copilot": 19, copilot: 20,
+  "notion ai": 10, "canva pro": 12.99,
+  jasper: 49, "copy.ai": 49,
+  supergrok: 30
 };
+const PRICE_MATCHES = Object.entries(PRESET_PRICES).sort(([a], [b]) => b.length - a.length);
 const DEFAULT_TOOLS = [
   { id: "chatgpt-plus", name: "ChatGPT Plus", price: 20, billing: "monthly", use: "daily", category: "Essential", decision: "Keep" },
   { id: "claude-pro", name: "Claude Pro", price: 20, billing: "monthly", use: "weekly", category: "Beloved", decision: "Test" },
-  { id: "perplexity-pro", name: "Perplexity Pro", price: 20, billing: "weekly", use: "monthly", category: "Discretionary", decision: "Test" },
-  { id: "supergrok", name: "Supergrok", price: 30, billing: "yearly", use: "forgot", category: "Thin Ice", decision: "Kill" },
-  { id: "midjourney", name: "Midjourney", price: 30, billing: "monthly", use: "discretionary", category: "Discretionary", decision: "Test" }
+  { id: "perplexity-pro", name: "Perplexity Pro", price: 20, billing: "weekly", use: "monthly", category: "Discretionary", decision: "Test" }
 ];
 
 let tools = [];
@@ -27,11 +38,45 @@ let simulationMode = false;
 let simulation = {};
 let catalog = [];
 let storageWarningShown = false;
+let auditCount = 0;
+let showPaywall = false;
+
+function priceForTool(name) {
+  const normalizedName = name.toLowerCase().trim();
+  return PRICE_MATCHES.find(([toolName]) => normalizedName.includes(toolName))?.[1];
+}
+
+function localDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function setFormDefaults() {
+  const billing = document.getElementById("toolBilling");
+  const use = document.getElementById("toolUse");
+  const category = document.getElementById("toolCategory");
+  const renewal = document.getElementById("toolRenewal");
+  const lastUsed = document.getElementById("toolLastUsed");
+  const today = new Date();
+  const nextRenewal = new Date(today);
+  const day = today.getDate();
+  nextRenewal.setDate(1);
+  nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+  const lastDayOfNextMonth = new Date(nextRenewal.getFullYear(), nextRenewal.getMonth() + 1, 0).getDate();
+  nextRenewal.setDate(Math.min(day, lastDayOfNextMonth));
+
+  if (billing && !billing.value) billing.value = "monthly";
+  if (use && !use.value) use.value = "weekly";
+  if (category && !category.value) category.value = "Discretionary";
+  if (renewal && !renewal.value) renewal.value = localDateString(nextRenewal);
+  if (lastUsed && !lastUsed.value) lastUsed.value = localDateString(today);
+}
 
 function isPro() {
   try {
-    return localStorage.getItem("stackcutify_pro") === "true"
-      || localStorage.getItem("stackcut_pro") === "active";
+    return localStorage.getItem("isPro") === "true";
   } catch (error) {
     if (!storageWarningShown) {
       storageWarningShown = true;
@@ -98,13 +143,28 @@ function normalizeTool(tool, index) {
 function load() {
   let migrationRequired = false;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const rawAuditCount = localStorage.getItem(AUDIT_COUNT_KEY);
+    const savedAuditCount = rawAuditCount !== null && /^\d+$/.test(rawAuditCount)
+      ? Number(rawAuditCount)
+      : 0;
+    auditCount = Number.isSafeInteger(savedAuditCount) && savedAuditCount >= 0 ? savedAuditCount : 0;
+    if (rawAuditCount !== String(auditCount)) {
+      localStorage.setItem(AUDIT_COUNT_KEY, String(auditCount));
+    }
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (localStorage.getItem("isPro") === null) {
+      const legacyPro = localStorage.getItem("stackcutify_pro") === "true"
+        || localStorage.getItem("stackcut_pro") === "active";
+      localStorage.setItem("isPro", String(legacyPro));
+    }
     if (stored === null) {
       tools = DEFAULT_TOOLS.map(normalizeTool);
+      migrationRequired = true;
     } else {
+      migrationRequired = localStorage.getItem(STORAGE_KEY) === null;
       const parsed = JSON.parse(stored);
       if (!Array.isArray(parsed)) throw new Error("Saved subscriptions are not a list.");
-      migrationRequired = parsed.some((tool) => tool && (
+      migrationRequired = migrationRequired || parsed.some((tool) => tool && (
         !Object.prototype.hasOwnProperty.call(tool, "billing")
         || !Object.prototype.hasOwnProperty.call(tool, "use")
         || Object.prototype.hasOwnProperty.call(tool, "cycle")
@@ -132,6 +192,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tools));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
     localStorage.setItem(SIMULATION_KEY, JSON.stringify(simulation));
   } catch (error) {
     showToast(`Could not save changes: ${error.message}`);
@@ -146,6 +207,54 @@ function checkPro() {
     ? "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold"
     : "text-[10px] px-2 py-0.5 rounded-full bg-black/5";
   document.getElementById("proBanner").classList.toggle("hidden", pro || tools.length < FREE_LIMIT);
+}
+
+function isAuditLocked() {
+  return !isPro() && (tools.length > FREE_LIMIT || (!LAUNCH_WEEK_OPEN && auditCount > 0));
+}
+
+function setPaywall(open) {
+  showPaywall = open;
+  const modal = document.getElementById("upgradeModal");
+  if (modal) modal.hidden = !showPaywall;
+}
+
+function UpgradeModal() {
+  return `<div id="upgradeModal" class="upgrade-modal" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle" hidden>
+    <div class="upgrade-modal-backdrop" data-dismiss-paywall></div>
+    <section class="upgrade-modal-card">
+      <div class="upgrade-modal-icon" aria-hidden="true">✂️</div>
+      <h2 id="upgradeTitle">That cold sweat audit is free once. Want to track it weekly?</h2>
+      <p>Free shows your total. Pro shows what to cut, when it renews, and how much you'll save. $8.84/mo — less than 1 forgotten tool.</p>
+      <div class="upgrade-modal-actions">
+        <a href="/pro.html?plan=${PLAN_ID}">Go Pro $8.84/mo →</a>
+        <button type="button" data-dismiss-paywall>Maybe later</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function calculateAudit() {
+  const pro = isPro();
+  if (!pro && (auditCount >= 1 || tools.length > FREE_LIMIT)) {
+    setPaywall(true);
+    return;
+  }
+  auditCount += 1;
+  try {
+    localStorage.setItem(AUDIT_COUNT_KEY, String(auditCount));
+    if (pro) {
+      const { included, burn, waste, savable } = totals();
+      const history = JSON.parse(localStorage.getItem(AUDIT_HISTORY_KEY) || "[]");
+      if (!Array.isArray(history)) throw new Error("Saved audit history is not a list.");
+      history.push({ completedAt: new Date().toISOString(), toolCount: included.length, burn, waste, savable });
+      localStorage.setItem(AUDIT_HISTORY_KEY, JSON.stringify(history));
+    }
+  } catch (error) {
+    showToast(`Could not save audit history: ${error.message}`);
+  }
+  render();
+  document.getElementById("toolList").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function toolIncluded(tool) {
@@ -199,9 +308,20 @@ function render() {
     && (categoryFilter === "all" || tool.category === categoryFilter)
   ));
   const { included, burn, waste, savable } = totals();
+  const auditLocked = isAuditLocked();
+  document.getElementById("burnScore").classList.toggle("blur-lock", auditLocked);
   document.getElementById("burn").innerHTML = `${money(burn)}<span class="text-[16px] text-white/40">/mo</span>`;
   document.getElementById("waste").textContent = money(waste);
   document.getElementById("savable").textContent = money(savable);
+  document.getElementById("waste").classList.toggle("blur-lock", auditLocked);
+  document.getElementById("savable").classList.toggle("blur-lock", auditLocked);
+  document.getElementById("auditUnlockCta").classList.toggle("hidden", !auditLocked);
+  document.getElementById("auditNudges").classList.toggle("blur-lock", auditLocked);
+  document.getElementById("lockedAuditNote").classList.toggle("hidden", !auditLocked);
+  const lastUsedField = document.getElementById("toolLastUsed");
+  lastUsedField.closest("label").classList.toggle("blur-lock", auditLocked);
+  lastUsedField.disabled = auditLocked;
+  setPaywall(showPaywall);
   document.getElementById("badge").textContent = `${included.length} active / ${tools.length} total`;
   document.getElementById("footerInfo").textContent = `stackcutify • local-first • ${tools.length} tools • ${simulationMode ? "simulation" : "actual"} view`;
   document.getElementById("simulationMode").checked = simulationMode;
@@ -212,7 +332,11 @@ function render() {
 
   if (routedTool) {
     list.classList.add("tool-page-active");
-    renderToolPage(routedTool);
+    if (auditLocked) {
+      list.innerHTML = `<div class="empty-stack"><strong>Audit details are locked</strong><span>Go Pro to see renewal timing, last-used dates, and what to cut.</span><a class="audit-lock-cta" href="/pro.html?plan=${PLAN_ID}">Go Pro $8.84/mo</a></div>`;
+    } else {
+      renderToolPage(routedTool);
+    }
     return;
   }
   list.classList.remove("tool-page-active");
@@ -229,10 +353,10 @@ function render() {
   list.innerHTML = filtered.map((tool) => {
     const monthly = toMonthly(tool.price, tool.billing);
     const includedInSimulation = toolIncluded(tool);
-    const renewal = tool.renewalDate
+    const renewal = !auditLocked && tool.renewalDate
       ? `<span class="tool-alert">${tool.trial ? "Trial ends" : "Renews"} ${escapeHtml(tool.renewalDate)}</span>` : "";
     const trial = tool.trial ? `<span class="tool-trial">FREE TRIAL</span>` : "";
-    const dormant = daysSince(tool.lastUsed) >= 30
+    const dormant = !auditLocked && daysSince(tool.lastUsed) >= 30
       ? `<span class="tool-alert">Not used in 30+ days</span>` : "";
     return `<article class="subscription-card ${includedInSimulation ? "" : "tool-simulated-off"}" data-tool-id="${escapeHtml(tool.id)}" role="link" tabindex="0" aria-label="Open ${escapeHtml(tool.name)} details">
       <div class="subscription-main">
@@ -240,7 +364,7 @@ function render() {
           <div class="subscription-title"><strong>${escapeHtml(tool.name)}</strong>
             <div class="subscription-meta"><span>Used ${escapeHtml(tool.use)}</span><span>${tool.billing === "monthly"
               ? `${money(tool.price)}/mo billed`
-              : `${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(monthly)}/mo)`}</span>${trial}${renewal}${dormant}</div>
+              : `${money(tool.price)}/${BILLING_UNITS[tool.billing]} billed (${money(monthly)}/mo)`}</span>${trial}<span class="${auditLocked ? "blur-lock" : ""}">${renewal}${dormant}</span></div>
           </div>
         <div class="subscription-actions"><div class="monthly-price"><strong>${money(monthly)}</strong><small>/mo</small></div>
           <button type="button" data-action="use" data-id="${escapeHtml(tool.id)}" aria-label="Cycle usage frequency for ${escapeHtml(tool.name)}">↻</button>
@@ -252,9 +376,9 @@ function render() {
         <label>Billing <select data-field="billing" data-id="${escapeHtml(tool.id)}">${BILLING_CYCLES.map((value) => `<option value="${value}" ${value === tool.billing ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Usage <select data-field="use" data-id="${escapeHtml(tool.id)}">${USAGE_FREQUENCIES.map((value) => `<option value="${value}" ${value === tool.use ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Category <select data-field="category" data-id="${escapeHtml(tool.id)}">${CATEGORIES.map((value) => `<option ${value === tool.category ? "selected" : ""}>${value}</option>`).join("")}</select></label>
-        <label>Audit <select data-field="decision" data-id="${escapeHtml(tool.id)}">${DECISIONS.map((value) => `<option ${value === tool.decision ? "selected" : ""}>${value}</option>`).join("")}</select></label>
+        <label class="${auditLocked ? "blur-lock" : ""}">Audit <select data-field="decision" data-id="${escapeHtml(tool.id)}" ${auditLocked ? "disabled" : ""}>${DECISIONS.map((value) => `<option ${value === tool.decision ? "selected" : ""}>${value}</option>`).join("")}</select></label>
         <label>Renewal <input type="date" data-field="renewalDate" data-id="${escapeHtml(tool.id)}" value="${escapeHtml(tool.renewalDate)}"></label>
-        <label>Last used <input type="date" data-field="lastUsed" data-id="${escapeHtml(tool.id)}" value="${escapeHtml(tool.lastUsed)}"></label>
+        <label class="${auditLocked ? "blur-lock" : ""}">Last used <input type="date" data-field="lastUsed" data-id="${escapeHtml(tool.id)}" value="${escapeHtml(tool.lastUsed)}" ${auditLocked ? "disabled" : ""}></label>
         <label><input type="checkbox" data-field="trial" data-id="${escapeHtml(tool.id)}" ${tool.trial ? "checked" : ""}> Free trial</label>
         ${simulationMode ? `<label><input type="checkbox" data-simulation="${escapeHtml(tool.id)}" ${includedInSimulation ? "checked" : ""}> Include in preview</label>` : ""}
       </div>
@@ -472,15 +596,15 @@ function addTool(source = null) {
     return false;
   }
   if (!isPro() && tools.length >= FREE_LIMIT) {
-    showToast("Free: 5 tools max. Go Pro for unlimited.");
     document.getElementById("proBanner").classList.remove("hidden");
+    setPaywall(true);
     return false;
   }
   const match = findDuplicate(name);
   if (match && !window.confirm(`This looks like a duplicate of “${match.name}”. Add it anyway?`)) return false;
 
   const rawPrice = source ? source.price : document.getElementById("toolPrice").value;
-  const price = rawPrice === "" || rawPrice == null ? (PRESET_PRICES[name] ?? 20) : Number(rawPrice);
+  const price = rawPrice === "" || rawPrice == null ? (priceForTool(name) ?? 20) : Number(rawPrice);
   if (!Number.isFinite(price) || price < 0) {
     showToast("Enter a valid non-negative price.");
     return false;
@@ -503,10 +627,7 @@ function addTool(source = null) {
   if (!source) {
     document.getElementById("toolName").value = "";
     document.getElementById("toolPrice").value = "";
-    document.getElementById("toolBilling").value = "monthly";
-    document.getElementById("toolUse").value = "monthly";
-    document.getElementById("toolRenewal").value = "";
-    document.getElementById("toolLastUsed").value = "";
+    setFormDefaults();
     document.getElementById("toolTrial").checked = false;
   }
   showToast(`${name} added${price === 0 ? " — set your actual price" : ""}.`);
@@ -831,13 +952,16 @@ function clearAll() {
   try {
     for (let index = localStorage.length - 1; index >= 0; index -= 1) {
       const key = localStorage.key(index);
-      if (typeof key === "string" && (key === STORAGE_KEY || key === SIMULATION_KEY || key === CATEGORY_KEY
+      if (typeof key === "string" && (key === STORAGE_KEY || key === LEGACY_STORAGE_KEY || key === SIMULATION_KEY || key === CATEGORY_KEY
+        || key === AUDIT_COUNT_KEY || key === AUDIT_HISTORY_KEY
         || key === "stackcut_last_audit" || key.startsWith("stackcut_notice_"))) {
         localStorage.removeItem(key);
       }
     }
     localStorage.setItem(STORAGE_KEY, "[]");
     localStorage.setItem(SIMULATION_KEY, "{}");
+    auditCount = 0;
+    setPaywall(false);
   } catch (error) {
     showToast(`Could not clear all browser data: ${error.message}`);
   }
@@ -860,6 +984,7 @@ function setUsageFilter(value) {
 
 window.addTool = addTool;
 window.render = render;
+window.calculateAudit = calculateAudit;
 window.exportJSON = () => exportData("json");
 window.exportCSV = () => exportData("csv");
 window.generateDrafts = generateDrafts;
@@ -883,9 +1008,17 @@ document.querySelectorAll(".filterBtn").forEach((button) => {
   const match = button.getAttribute("onclick")?.match(/filter='([^']+)'/);
   if (match) button.addEventListener("click", () => setUsageFilter(match[1]));
 });
-document.getElementById("toolName").addEventListener("change", (event) => {
-  const price = PRESET_PRICES[event.target.value.trim()];
+document.getElementById("toolName").addEventListener("input", (event) => {
+  setFormDefaults();
+  const price = priceForTool(event.target.value);
   if (price !== undefined) document.getElementById("toolPrice").value = price;
+});
+document.getElementById("upgradeModalRoot").innerHTML = UpgradeModal();
+document.querySelectorAll("[data-dismiss-paywall]").forEach((button) => {
+  button.addEventListener("click", () => setPaywall(false));
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && showPaywall) setPaywall(false);
 });
 document.getElementById("simulationMode").addEventListener("change", (event) => {
   simulationMode = event.target.checked;
@@ -911,4 +1044,5 @@ document.getElementById("usageFile").addEventListener("change", async (event) =>
 });
 
 renderTax();
+setFormDefaults();
 load();
