@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Stackcutify - AI Subscription Tracker Pro",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Local-first AI subscription tracker — Pro $2.84/mo, founding price locked forever. Unlimited tools, exports, cancel drafts. No bank connection. PayPal Plan P-6HT714478R159110WNLBOW4Q",
   "action": {
     "default_popup": "popup.html",
