@@ -6,7 +6,7 @@ Open `index.html` for the site and `/app` (or `app.html`) for the tracker. The a
 
 Catalog prices are estimates and may be inaccurate or out of date. Confirm actual vendor pricing and enter what you pay.
 
-The tracker stores subscriptions (`stack_tools`), completed audit count (`audit_count`), and Pro status (`isPro`) in localStorage. Free accounts can track up to three tools and complete one audit; the launch-week flag in `app-local.js` keeps that first audit fully open. Pro checkout enables unlimited tools and audits, with audit snapshots stored locally.
+The tracker stores subscriptions (`stack_tools`), completed audit count (`audit_count`), and Pro status (`isPro`) in localStorage. Free users can track up to three tools and complete one audit. Pro costs $2.84/month on the website and extension, and enables unlimited tools and audits, with audit snapshots stored locally. The extension checks synced `isPro` status first, then falls back to local browser storage.
 
 ## Deploy
 

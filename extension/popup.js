@@ -1,11 +1,24 @@
 const STORAGE_KEY = 'stackcut_tools';
-const FREE_LIMIT = 5;
+const FREE_LIMIT = 3;
 
 async function isPro() {
-  const data = await chrome.storage.local.get(['stackcut_pro', 'stackcutify_pro']);
-  return data.stackcut_pro === 'active'
-    || data.stackcutify_pro === 'true'
-    || data.stackcutify_pro === true;
+  try {
+    const synced = await chrome.storage.sync.get('isPro');
+    if (synced.isPro === true || synced.isPro === 'true') return true;
+  } catch (error) {
+    console.warn('Could not read synced Pro status; trying local storage.', error);
+  }
+
+  try {
+    if (localStorage.getItem('isPro') === 'true') return true;
+  } catch (error) {
+    console.warn('Could not read local Pro status; trying legacy extension storage.', error);
+  }
+
+  const legacy = await chrome.storage.local.get(['stackcut_pro', 'stackcutify_pro']);
+  return legacy.stackcut_pro === 'active'
+    || legacy.stackcutify_pro === 'true'
+    || legacy.stackcutify_pro === true;
 }
 
 function toast(msg) {
@@ -26,7 +39,7 @@ function toast(msg) {
 
 async function requirePro(feature) {
   if (await isPro()) return true;
-  toast(`Go Pro to unlock ${feature} — $8.84/mo`);
+  toast(`Go Pro to unlock ${feature} — $2.84/mo`);
   setTimeout(() => chrome.tabs.create({ url: 'https://stackcutify.vercel.app/#pricing' }), 800);
   return false;
 }
@@ -98,6 +111,8 @@ function render(nextTools = tools) {
   isPro().then((pro) => {
     proBadge.textContent = pro ? 'PRO' : 'FREE';
     proBadge.className = `badge ${pro ? 'pro' : 'free'}`;
+    document.getElementById('proOffer').classList.toggle('hidden', pro);
+    document.getElementById('proActive').classList.toggle('hidden', !pro);
   });
 
   if (!tools.length) {
@@ -139,7 +154,7 @@ function addCurrentTool() {
     tools = Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : [];
     if (tools.length >= FREE_LIMIT) {
       if (!await isPro()) {
-        toast('Free limit 5 — Go Pro');
+        toast('Free limit 3 — Go Pro');
         document.getElementById('freeBanner').classList.remove('hidden');
         return;
       }
@@ -170,6 +185,10 @@ document.getElementById('exportBtn').onclick = async () => {
 
 document.getElementById('openApp').onclick = () => {
   chrome.tabs.create({ url: 'https://stackcutify.vercel.app/app' });
+};
+
+document.getElementById('proUpgrade').onclick = () => {
+  chrome.tabs.create({ url: 'https://stackcutify.vercel.app/pro.html?plan=P-6HT714478R159110WNLBOW4Q' });
 };
 
 document.getElementById('importBtn').addEventListener('click', () => {

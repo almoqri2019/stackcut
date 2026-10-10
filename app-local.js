@@ -1,6 +1,7 @@
 const FREE_LIMIT = 3;
 const LAUNCH_WEEK_OPEN = true;
 const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
+const PRICE_MONTHLY = 2.84;
 const STORAGE_KEY = "stack_tools";
 const LEGACY_STORAGE_KEY = "stackcut_tools";
 const AUDIT_COUNT_KEY = "audit_count";
@@ -202,7 +203,7 @@ function save() {
 function checkPro() {
   const pro = isPro();
   const badge = document.getElementById("proStatus");
-  badge.textContent = pro ? "PRO ACTIVE" : "PRO $8.84/mo";
+  badge.textContent = pro ? "PRO ACTIVE" : `PRO ${money(PRICE_MONTHLY)}/mo`;
   badge.className = pro
     ? "text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold"
     : "text-[10px] px-2 py-0.5 rounded-full bg-black/5";
@@ -224,10 +225,10 @@ function UpgradeModal() {
     <div class="upgrade-modal-backdrop" data-dismiss-paywall></div>
     <section class="upgrade-modal-card">
       <div class="upgrade-modal-icon" aria-hidden="true">✂️</div>
-      <h2 id="upgradeTitle">That cold sweat audit is free once. Want to track it weekly?</h2>
-      <p>Free shows your total. Pro shows what to cut, when it renews, and how much you'll save. $8.84/mo — less than 1 forgotten tool.</p>
+      <h2 id="upgradeTitle">Pro $2.84/mo</h2>
+      <p>Founding price, locked forever for early users. Less than 15% of ChatGPT Plus.</p>
       <div class="upgrade-modal-actions">
-        <a href="/pro.html?plan=${PLAN_ID}">Go Pro $8.84/mo →</a>
+        <a href="/pro.html?plan=${PLAN_ID}">Upgrade — $2.84/mo →</a>
         <button type="button" data-dismiss-paywall>Maybe later</button>
       </div>
     </section>
@@ -333,7 +334,7 @@ function render() {
   if (routedTool) {
     list.classList.add("tool-page-active");
     if (auditLocked) {
-      list.innerHTML = `<div class="empty-stack"><strong>Audit details are locked</strong><span>Go Pro to see renewal timing, last-used dates, and what to cut.</span><a class="audit-lock-cta" href="/pro.html?plan=${PLAN_ID}">Go Pro $8.84/mo</a></div>`;
+      list.innerHTML = `<div class="empty-stack"><strong>Audit details are locked</strong><span>Go Pro to see renewal timing, last-used dates, and what to cut.</span><a class="audit-lock-cta" href="/pro.html?plan=${PLAN_ID}">Founding offer ${money(currentProPrice())}/mo</a></div>`;
     } else {
       renderToolPage(routedTool);
     }
@@ -832,8 +833,8 @@ function renderUsage(rows) {
 function renderTax() {
   const values = Array.from(document.querySelectorAll(".tax-inputs input")).map((input) => Math.max(0, Number(input.value) || 0));
   const monthly = values.reduce((sum, value) => sum + value, 0);
-  const delta = monthly - 8.84;
-  document.getElementById("taxResult").textContent = `${money(monthly)}/mo (${money(monthly * 12)}/year) for this stack. Stackcutify Pro is $8.84/mo; the difference is ${money(delta)}/mo. This is a comparison, not a savings guarantee.`;
+  const delta = monthly - PRICE_MONTHLY;
+  document.getElementById("taxResult").textContent = `${money(monthly)}/mo (${money(monthly * 12)}/year) for this stack. Stackcutify Pro is ${money(PRICE_MONTHLY)}/mo; the difference is ${money(delta)}/mo. This is a comparison, not a savings guarantee.`;
 }
 
 function daysSince(dateString) {

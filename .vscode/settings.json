@@ -1,0 +1,16 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^node --check app-local\\.js && git diff --check && git diff --stat -- app-local\\.js app\\.html pro\\.html app-local\\.css README\\.md$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^node --check app-local\\.js && node -e 'const fs=require\\(\"fs\"\\); const html=fs\\.readFileSync\\(\"pro\\.html\",\"utf8\"\\); for \\(const match of html\\.matchAll\\(/<script\\(\\?:\\\\s\\[\\^>\\]\\*\\)\\?>\\(\\[\\\\s\\\\S\\]\\*\\?\\)<\\\\/script>/g\\)\\) new Function\\(match\\[1\\]\\);' && git diff --check$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^node --check app-local\\.js && node --check extension/popup\\.js && node --check extension/background\\.js && node -e 'JSON\\.parse\\(require\\(\"fs\"\\)\\.readFileSync\\(\"extension/manifest\\.json\", \"utf8\"\\)\\);' && git diff --check$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

@@ -61,6 +61,27 @@ header {
   gap: 10px;
   margin: 14px 0;
 }
+.pro-offer, .pro-active {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 12px;
+}
+.pro-offer p {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.pro-offer button {
+  width: 100%;
+}
+.pro-active {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+}
 .card {
   padding: 12px;
   border-radius: 16px;

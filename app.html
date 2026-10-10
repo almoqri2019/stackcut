@@ -30,7 +30,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 <a href="/" class="brand">stackcutify</a>
 <div class="flex items-center gap-3">
 <span class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Local • No bank</span>
-<a href="/pro.html" class="h-9 px-4 rounded-full bg-black text-white text-[13px] font-semibold grid place-items-center">Go Pro $8.84/mo</a>
+<a href="/pro.html" class="h-9 px-4 rounded-full bg-black text-white text-[13px] font-semibold grid place-items-center">Pro $2.84/mo</a>
 </div>
 </div>
 </header>
@@ -51,7 +51,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 <div class="p-3 rounded-[14px] bg-white/10 border border-white/10"><div class="text-[11px] text-white/50 uppercase">Waste</div><div class="flex items-baseline gap-1 mt-1"><div id="waste" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-white/40">/mo</span></div></div>
 <div class="p-3 rounded-[14px] bg-white text-black"><div class="text-[11px] text-black/50 uppercase">Savable</div><div class="flex items-baseline gap-1 mt-1"><div id="savable" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-black/40">/mo</span></div></div>
 </div>
-<a id="auditUnlockCta" class="audit-lock-cta hidden" href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Unlock your savable $$ → Go Pro $8.84/mo</a>
+<a id="auditUnlockCta" class="audit-lock-cta hidden" href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Unlock your savable $$ → Pro $2.84/mo</a>
 <button type="button" onclick="calculateAudit()" class="calculate-audit-button">Calculate burn audit</button>
 <div id="proBanner" class="mt-4 p-3 rounded-[12px] bg-amber-400 text-black text-[12px] font-semibold hidden">Free: 3 tools max. <a href="/pro.html" class="underline">Go Pro for unlimited</a></div>
 </div>
@@ -87,21 +87,21 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 <label class="local-field">Renewal date<input id="toolRenewal" type="date"></label>
 <label class="local-field">Last used<input id="toolLastUsed" type="date"></label>
 </div>
-<label class="local-check"><input id="toolTrial" type="checkbox"> Pro $8.84/mo required — PayPal Plan P-6HT714478R159110WNLBOW4Q</label>
+<label class="local-check"><input id="toolTrial" type="checkbox"> Pro $2.84/mo required — PayPal subscription</label>
 <button onclick="addTool()" class="w-full h-11 rounded-full bg-black text-white font-semibold text-[14px] hover:bg-black/90">+ Add tool</button>
 <div class="text-[11px] text-black/40 text-center">100% local — saved in browser only</div>
 </div>
 </div>
 
 <div class="panel">
-<div class="flex justify-between items-center"><div class="text-[13px] font-semibold">Actions</div><span id="proStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-black/5">PRO $8.84/mo</span></div>
+<div class="flex justify-between items-center"><div class="text-[13px] font-semibold">Actions</div><span id="proStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-black/5">PRO $2.84/mo</span></div>
 <div class="action-grid">
 <button onclick="exportJSON()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📄 Export JSON</button>
 <button onclick="exportCSV()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📊 Export CSV</button>
 <button onclick="generateDrafts()" class="col-span-2 h-10 rounded-full bg-black text-white text-[12px] font-semibold">✉️ Copy cancel drafts</button>
 <button onclick="clearAll()" class="col-span-2 h-9 rounded-full text-[11px] text-black/40 hover:text-black">Clear all data</button>
 </div>
-<p class="local-note">Pro $8.84/mo required to export full records or copy cancel drafts.</p>
+<p class="local-note">Pro $2.84/mo required to export full records or copy cancel drafts.</p>
 </div>
 </div>
 
@@ -151,7 +151,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   </article>
 
   <article class="local-panel">
-    <div class="local-panel-head"><div><h2>AI stack tax calculator</h2><p>Estimate the monthly cost of a few AI plans against Stackcutify Pro at $8.84/month.</p></div></div>
+    <div class="local-panel-head"><div><h2>AI stack tax calculator</h2><p>Estimate the monthly cost of a few AI plans against the current Stackcutify Pro offer.</p></div></div>
     <div class="tax-inputs">
       <label>ChatGPT Plus<input type="number" min="0" step="0.01" value="20"></label>
       <label>Claude Pro<input type="number" min="0" step="0.01" value="20"></label>
@@ -163,7 +163,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 
   <article class="local-panel">
     <div class="local-panel-head"><div><h2>Keep / Kill / Test audit</h2><p>Mark each subscription deliberately. Tools not used in 30 days are flagged using your manual last-used date.</p></div></div>
-      <p id="lockedAuditNote" class="audit-lock-cta hidden">Unlock your savable $$ → <a href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Go Pro $8.84/mo</a></p>
+      <p id="lockedAuditNote" class="audit-lock-cta hidden">Unlock your savable $$ → <a href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Pro $2.84/mo</a></p>
       <div id="auditNudges"></div>
     <p class="local-note">Automatic billing-page visit tracking is not enabled. The optional extension recognizes selected AI-site hostnames locally; it does not inspect page content.</p>
   </article>
