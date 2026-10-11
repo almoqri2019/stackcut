@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /manifest.json
+Disallow: /popup.html
+Disallow: /popup.js
+Disallow: /popup.css
+Disallow: /background.js
 Sitemap: https://stackcutify.vercel.app/sitemap.xml
