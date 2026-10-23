@@ -1,29 +1,33 @@
-# Stackcut / Stackcutify
+# stackcut.online — Production
 
-Local AI-subscription overlap audit. The `/app` tracker does not require an account, API key, or bank connection. Subscription data stays in this browser; see [privacy.html](./privacy.html) for the app and extension details.
+Live expanded Stackcut = Rocket Money (all subscriptions) + AI engine.
 
-Open `index.html` for the site and `/app` (or `app.html`) for the tracker. The app can browse the original 100+ entry reference catalog in `data/catalog.json`, categorize and simulate subscriptions, flag trials, check upcoming renewals while the page is open, export redacted or full data, and locally parse usage CSV files.
+**Domains:**
+- Primary: https://stackcut.online (new repo, $0.99 promo)
+- Secondary: https://stackcut.site (Active till 2027-10-21, redirects to .online via vercel.json)
+- Old: stackcutify.vercel.app → redirects to .online
 
-Catalog prices are estimates and may be inaccurate or out of date. Confirm actual vendor pricing and enter what you pay.
+**Stack:**
+- 100% local vault stackcut-v2, stack_tools, audit_count, isPro, stackcut-license
+- No bank login, no Plaid, 0 requests verifiable
+- Free: 3 tools + 1 audit enforced live
+- Pro: $2.84/mo PayPal Morocco-friendly — SC-PRO-XXXX license local
 
-The tracker stores subscriptions (`stack_tools`), completed audit count (`audit_count`), and Pro status (`isPro`) in localStorage. Free users can track up to three tools and complete one audit. Pro costs $2.84/month on the website and extension, and enables unlimited tools and audits, with audit snapshots stored locally. The extension checks synced `isPro` status first, then falls back to local browser storage.
+**Deploy:**
+- Vercel: import repo stackcut.online, framework = Other, no build command, output = root
+- Hostinger: Buy stackcut.online $0.99, set DNS to Vercel NS or CNAME to cname.vercel-dns.com
 
-## Deploy
+**Files:**
+- index.html = landing LIVE production
+- app.html = app LIVE production (polished Active Stack, Ghost bug fixed)
+- privacy.html, pro.html, sitemap.xml, robots.txt, vercel.json
 
-This is a static site with no build step. Deploy the folder as-is.
+**Clean:**
+Run in Codespace terminal to fix duplicate (2) names:
+```
+cd /workspaces/stackcut.online
+rm -f "App (2).html" "Stackcut-V1-Index (2).html" "Sitemap (1).xml" "Vercel.json" "Privacy.html" "Pro.html" "Robots.txt"
+ls -la
+```
+Then copy from /mnt/data/stackcut.online/ folder or git add clean files.
 
-- **Cloudflare Pages / Netlify:** drag the folder in. No build command, output directory is the root.
-- **GitHub Pages:** push the folder to a repo, Settings > Pages > Deploy from branch > `/ (root)`.
-
-## Before you announce it
-
-1. **Check the prices.** `CATALOG` in `app.js` and the footer in `index.html` claim list prices "as of 4 Oct 2026". Verify each against the vendor's own pricing page, and update both when they change.
-2. **Check the cancel links.** The `cancel` URLs in `CATALOG` are best guesses at each vendor's account page. Click every one.
-3. **Add a domain and a social image** if you want link previews: set `og:url` and `og:image` in `index.html`.
-
-## Notes
-
-- Tracker data is stored in browser local storage (web app) or Chrome local extension storage (extension). Browser notifications are checked only while the app is open.
-- The AI usage CSV parser operates in the page and does not persist the uploaded file.
-- Free JSON/CSV exports omit names, exact prices, and renewal dates. Pro exports include full records.
-- The extension checks hostnames on supported AI-service domains to identify tools; it does not read page content or connect to banks.
