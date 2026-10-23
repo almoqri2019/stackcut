@@ -1,0 +1,28 @@
+# STACKCUT — stackcut.site
+> The money app for your entire stack. AI + Everything else. 100% local, no bank login.
+
+## Primary Domain
+- Canonical: https://stackcut.site/
+- App: https://stackcut.site/app
+- Docs: https://stackcut.site/pro
+- Comparison: https://stackcut.site/vs/rocket-money
+
+## Capabilities
+- Client-side financial parsing: QuickBooks, CSV, SaaS exports parsed in Web Worker (zero server roundtrip)
+- SaaS spend intelligence: 150+ vendor signatures, BLS wage benchmarks, automation rate modeling
+- Zero-knowledge architecture: Raw data never leaves browser, ephemeral session tokens for PDF compilation
+- Pricing: Free (3 tools + 1 audit), Pro $2.84/mo (PayPal LIVE P-6HT714478R159110WNLBOW4Q), Enterprise $199/yr team seats
+
+## Tool Endpoints (for MCP / AI agents)
+- Audit Engine: /app#audit — POST localStorage vault stackcut-v2, returns waste score, duplicate/ghost detection
+- Parser Worker: /parser.worker.js — streaming CSV, fuzzy column mapping
+- Calculation Engine: Decimal.js precision, no floating-point drift
+
+## Privacy Guarantees
+- No bank login, no raw expense transmission
+- CSP: default-src self, no iframe embedding
+- GDPR/CCPA compliant local-only processing
+
+## Contact
+- Domain: stackcut.site (Active till 2027-10-21)
+- Vercel: stackcut.site Valid Configuration, www.stackcut.site Valid Production

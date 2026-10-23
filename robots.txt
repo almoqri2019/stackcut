@@ -1,4 +1,16 @@
 User-agent: *
 Allow: /
 Disallow: /extension/
-Sitemap: https://stackcut.online/sitemap.xml
+Disallow: /api/private/
+Sitemap: https://stackcut.site/sitemap.xml
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+
+# llms.txt manifest for MCP
+# See https://stackcut.site/llms.txt
