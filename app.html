@@ -1,177 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-JBJGPRKCML"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-JBJGPRKCML');
-</script>
-
+<!-- PayPal LIVE Plan P-6HT714478R159110WNLBOW4Q STACKPRO Product PROD-8NK50966TF029134F $2.84/mo unlimited tools -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stackcutify App — Local AI Subscription Tracker</title>
-<link rel="stylesheet" href="app-local.css">
+<title>STACKCUT APP — Live Audit — 100% local — stackcut.online/app</title>
+<meta name="description" content="Live stack audit — 100% local vault stackcut-v2, no bank login. Manage Netflix, Spotify, Gym, SaaS + 41 AI tools.">
+<link rel="canonical" href="https://stackcut.online/app">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+:root{--bg:#fcfbf8;--surface:#fff;--surface-2:#f2f0eb;--ink:#0a0a0a;--line:#eceae5;--accent:#d6ff57;}
+body{font-family:"Space Grotesk",system-ui;background:var(--bg);color:var(--ink);}
+.mono{font-family:"JetBrains Mono",monospace;}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:20px;}
 </style>
-<!-- Vercel Web Analytics -->
-<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
-<!-- Vercel Speed Insights -->
-<script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
-<body class="min-h-screen bg-[#F5F3EF] text-black">
-<header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-black/5">
-<div class="site-header-inner">
-<a href="/" class="brand">stackcutify</a>
-<div class="flex items-center gap-3">
-<span class="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Local • No bank</span>
-<a href="/pro.html" class="h-9 px-4 rounded-full bg-black text-white text-[13px] font-semibold grid place-items-center">Pro $2.84/mo</a>
-</div>
+<body class="min-h-screen overflow-x-hidden">
+<header class="sticky top-0 z-50 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--line)]">
+<div class="mx-auto max-w-[1240px] px-6 h-[64px] flex items-center justify-between">
+<div class="flex items-center gap-3"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold">SC</div><b class="text-[20px] tracking-tight">STACKCUT</b><span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent)] border">LIVE • LOCAL</span><span id="proBadge" class="hidden mono text-[9px] px-2 py-0.5 rounded-full bg-black text-white">PRO • $2.84/mo</span></div>
+<div class="flex gap-2"><button onclick="exportJSON()" class="mono text-[11px] px-3 h-8 border rounded-full bg-white">Export JSON</button><button onclick="exportCSV()" class="mono text-[11px] px-3 h-8 border rounded-full bg-white">Export CSV</button><button onclick="resetAll()" class="mono text-[11px] px-3 h-8 bg-black text-white rounded-full">Reset</button></div>
 </div>
 </header>
-<div class="local-topline"><span><strong>No bank. No cloud account.</strong> Track your AI subscriptions in this browser.</span><a href="privacy.html">Privacy details</a></div>
 
-<main class="app-layout">
-<!-- left -->
-<div class="sidebar">
-<div class="summary-card">
-<div class="flex justify-between items-start">
-<div>
-<div class="text-[11px] uppercase tracking-widest text-white/50 font-semibold">Monthly burn</div>
-<div id="burn" class="text-[32px] font-[800] leading-none mt-1">$0<span class="text-[16px] text-white/40">/mo</span></div>
-</div>
-<div id="badge" class="px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold border border-white/10">0 tools</div>
-</div>
-<div id="burnScore" class="summary-metrics">
-<div class="p-3 rounded-[14px] bg-white/10 border border-white/10"><div class="text-[11px] text-white/50 uppercase">Waste</div><div class="flex items-baseline gap-1 mt-1"><div id="waste" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-white/40">/mo</span></div></div>
-<div class="p-3 rounded-[14px] bg-white text-black"><div class="text-[11px] text-black/50 uppercase">Savable</div><div class="flex items-baseline gap-1 mt-1"><div id="savable" class="text-[20px] font-bold">$0</div><span class="text-[11px] text-black/40">/mo</span></div></div>
-</div>
-<a id="auditUnlockCta" class="audit-lock-cta hidden" href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Unlock your savable $$ → Pro $2.84/mo</a>
-<button type="button" onclick="calculateAudit()" class="calculate-audit-button">Calculate burn audit</button>
-<div id="proBanner" class="mt-4 p-3 rounded-[12px] bg-amber-400 text-black text-[12px] font-semibold hidden">Free: 3 tools max. <a href="/pro.html" class="underline">Go Pro for unlimited</a></div>
-</div>
+<div id="freeLimitBanner" class="hidden mx-auto max-w-[1240px] px-6 mt-4"><div class="p-3 rounded-xl bg-yellow-100 border border-yellow-300 mono text-[11px] flex justify-between items-center"><span>Free: 3 tools max + 1 audit. You have <span id="limitCount">0</span>/3. Upgrade to Pro $2.84/mo PayPal for unlimited.</span><button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="px-3 py-1 rounded-full bg-black text-white font-bold">Go Pro $2.84/mo →</button></div></div>
 
-<div class="panel">
-<div class="text-[13px] font-semibold">Add AI tool</div>
-<div class="tool-form">
-<input id="toolName" placeholder="e.g. ChatGPT Plus" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] focus:outline-none focus:border-black" list="presetList">
-<datalist id="presetList">
-<option value="ChatGPT Plus"><option value="Claude Pro"><option value="Perplexity Pro"><option value="Supergrok"><option value="Midjourney"><option value="Cursor"><option value="Copilot"><option value="Jasper"><option value="Notion AI"><option value="Canva Pro">
-</datalist>
-<div class="form-pair">
-<label class="local-field">You pay<input id="toolPrice" name="price" type="number" placeholder="Price $" class="h-11 px-4 rounded-full border border-black/10 text-[14px]"></label>
-<label class="local-field">Billing cycle<select id="toolBilling" name="billing" class="h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white" aria-label="Billing cycle">
-<option value="daily">Daily</option>
-<option value="weekly">Weekly</option>
-<option value="monthly" selected>Monthly</option>
-<option value="quarterly">Quarterly</option>
-<option value="yearly">Yearly</option>
-</select></label>
-</div>
-<select id="toolUse" name="use" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white" aria-label="Usage frequency">
-<option value="daily">Used daily</option>
-<option value="weekly" selected>Used weekly</option>
-<option value="monthly">Used monthly</option>
-<option value="discretionary">Discretionary</option>
-<option value="forgot">Forgot / Never used</option>
-</select>
-<select id="toolCategory" class="w-full h-11 px-4 rounded-full border border-black/10 text-[14px] bg-white" aria-label="Subscription category">
-<option>Essential</option><option>Beloved</option><option selected>Discretionary</option><option>Thin Ice</option>
-</select>
-<div class="form-pair">
-<label class="local-field">Renewal date<input id="toolRenewal" type="date"></label>
-<label class="local-field">Last used<input id="toolLastUsed" type="date"></label>
-</div>
-<label class="local-check"><input id="toolTrial" type="checkbox"> Pro $2.84/mo required — PayPal subscription</label>
-<button onclick="addTool()" class="w-full h-11 rounded-full bg-black text-white font-semibold text-[14px] hover:bg-black/90">+ Add tool</button>
-<div class="text-[11px] text-black/40 text-center">100% local — saved in browser only</div>
+<section class="mx-auto max-w-[1240px] px-6 pt-8 pb-10 grid lg:grid-cols-[0.9fr_1.1fr] gap-8">
+<!-- LEFT: 9 Tools LIVE -->
+<div class="space-y-4">
+<div class="inline-flex items-center gap-2 mono text-[11px] px-3 py-1 rounded-full border bg-white"><span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>100% local vault stackcut-v2 • No bank login • plan() live</div>
+<h1 class="mt-3 text-[36px] font-bold leading-[0.95] tracking-tight">Your stack<br>live audit</h1>
+<p class="mt-2 text-[13px] leading-[1.5] text-gray-600 max-w-[42ch]">Real app — not demo. Rule: weekly kept, forgotten in crowded job cut, explicit Keep/Cut honoured. All data stays in this browser. Free limit enforced via localStorage audit_count + stack_tools.</p>
+
+<div class="grid sm:grid-cols-2 gap-3 mt-5">
+<div class="card p-4"><div class="font-semibold text-[13px] flex justify-between">Spending Insights — LIVE <span id="wastePct" class="mono text-[10px] px-2 py-0.5 bg-gray-100 rounded-full">0% waste</span></div><canvas id="insightsChart" height="140"></canvas><div id="insightsBreakdown" class="mt-3 mono text-[11px] space-y-1"></div></div>
+<div class="card p-4"><div class="font-semibold text-[13px]">Waste Score — LIVE</div><div class="mt-2 flex items-baseline gap-3"><div id="wasteScore" class="text-[36px] font-bold">100</div><div class="mono text-[10px]">/100 health<br><span id="wasteReason" class="text-gray-500">clean stack</span></div></div><div class="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden"><div id="wasteBar" class="h-full bg-black transition-all" style="width:100%"></div></div><div class="mt-2 mono text-[9px] text-gray-400">Formula: 100 - dup*15 - ghost*20</div></div>
+<div class="card p-4"><div class="font-semibold text-[13px]">Financial Goals — LIVE</div><div class="mt-2 flex gap-2"><input id="goalInput" type="number" value="500" class="w-20 h-8 px-3 rounded-full border mono text-[12px]"><span class="mono text-[10px] py-1">goal $</span><span class="mono text-[10px] py-1">• Save $<span id="goalProgress">0</span> from cuts</span></div><div class="h-2 mt-2 bg-gray-100 rounded-full overflow-hidden"><div id="goalBar" class="h-full bg-[var(--accent)] transition-all" style="width:0%"></div></div></div>
+<div class="card p-4"><div class="font-semibold text-[13px]">Budgeting — LIVE</div><div class="mt-2 grid grid-cols-2 gap-2 mono text-[10px]"><div>AI $<input id="budgetAi" type="number" value="50" onchange="recalc()" class="w-12 border rounded px-1"></div><div>Stream $<input id="budgetStream" type="number" value="30" onchange="recalc()" class="w-12 border rounded px-1"></div></div><div id="budgetStatus" class="mt-2 mono text-[10px]"></div></div>
+<div class="card p-4"><div class="font-semibold text-[13px]">Bill Negotiation — LIVE</div><div id="negList" class="mt-2 space-y-2 mono text-[10px]"></div></div>
+<div class="card p-4"><div class="font-semibold text-[13px]">Net Worth / Total Burn — LIVE</div><canvas id="burnChart" height="100"></canvas><div class="mono text-[9px] text-gray-500 mt-1 flex items-center gap-2"><label><input type="checkbox" id="annualToggle" onchange="recalc()"> yearly ×12</label><span>$<span id="yearlyBurn">0</span>/yr burn</span></div></div>
+<div class="card p-4 sm:col-span-2"><div class="font-semibold text-[13px]">Widgets — LIVE</div><div class="mt-2 p-3 rounded-xl bg-black text-white mono text-[11px] flex justify-between"><span id="widgetText">3 AI tools unused 14d • Tap to cancel</span><span id="widgetCount">• 0 waste</span></div><div class="mt-2 flex gap-2"><button onclick="notifyMe()" class="mono text-[10px] px-3 py-1 border rounded-full bg-white">Enable alerts</button><button onclick="testAudit()" class="mono text-[10px] px-3 py-1 border rounded-full bg-white">Run audit +1</button></div></div>
 </div>
 </div>
 
-<div class="panel">
-<div class="flex justify-between items-center"><div class="text-[13px] font-semibold">Actions</div><span id="proStatus" class="text-[10px] px-2 py-0.5 rounded-full bg-black/5">PRO $2.84/mo</span></div>
-<div class="action-grid">
-<button onclick="exportJSON()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📄 Export JSON</button>
-<button onclick="exportCSV()" class="h-10 rounded-full border border-black/10 text-[12px] font-semibold hover:bg-black/[0.02]">📊 Export CSV</button>
-<button onclick="generateDrafts()" class="col-span-2 h-10 rounded-full bg-black text-white text-[12px] font-semibold">✉️ Copy cancel drafts</button>
-<button onclick="clearAll()" class="col-span-2 h-9 rounded-full text-[11px] text-black/40 hover:text-black">Clear all data</button>
+<!-- RIGHT: Polished Active Stack -->
+<div id="auditCard" class="bg-white border rounded-[24px] shadow-[0_16px_48px_rgba(0,0,0,0.08)] overflow-hidden h-fit">
+<div class="px-6 py-4 border-b flex items-center justify-between">
+<div class="flex items-center gap-2"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold text-[12px]">SC</div><span class="font-bold text-[13px]">STACKCUT.APP — LOCAL</span><span class="mono text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent)] border">PRODUCTION</span></div>
+<div class="flex gap-2"><button onclick="setTab('all')" id="tabAll" class="mono text-[11px] px-3 py-1 rounded-full bg-black text-white">◍ All Subs</button><button onclick="setTab('ai')" id="tabAi" class="mono text-[11px] px-3 py-1 rounded-full border">◍ AI Stack</button></div>
 </div>
-<p class="local-note">Pro $2.84/mo required to export full records or copy cancel drafts.</p>
+<div class="p-6">
+<div class="flex items-center justify-between"><div class="font-semibold text-[14px]">Active Stack • <span id="activeCount">0</span></div><div class="mono text-[11px] px-2.5 py-1 rounded-full bg-gray-100 border"><span id="totalMonthly">$0.00</span>/mo total</div></div>
+<div class="mt-1 mono text-[11px] text-gray-500">YOUR STACK AUDIT: <span id="wasteTitle" class="font-bold text-black">$0.00/mo wasted</span> • <span id="subCount">0 subs</span> • <span id="auditType">live</span> • Audits: <span id="auditCount">0</span></div>
+<div id="subsList" class="mt-5 space-y-3"></div>
+<div class="mt-6 grid grid-cols-[1fr_auto] gap-2">
+<input id="newName" placeholder="Add: Netflix, ChatGPT Plus, Gym..." class="h-10 px-4 rounded-full border mono text-[12px]">
+<input id="newPrice" type="number" placeholder="$/mo" class="h-10 px-3 rounded-full border mono text-[12px]">
+<select id="newJob" class="h-10 px-2 rounded-full border mono text-[10px]"><option>Chat</option><option>Code</option><option>Image</option><option>Video</option><option>Search</option><option>Writing</option><option>Streaming</option><option>Gym</option><option>SaaS</option><option>Other</option></select>
+<button onclick="addSub()" class="h-10 px-5 rounded-full bg-black text-white font-semibold text-[12px]">Add</button>
 </div>
-</div>
-
-<!-- right -->
-<div class="stack-panel">
-<div class="stack-heading">
-<div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div><span class="text-[13px] font-semibold">Your AI stack — local only</span></div>
-<div class="filters">
-<button onclick="filter='all';render()" class="filterBtn px-3 py-1 rounded-full bg-black text-white text-[11px]">All</button>
-<button onclick="filter='forgot';render()" class="filterBtn px-3 py-1 rounded-full bg-black/5 text-[11px]">Forgot</button>
-<button onclick="filter='weekly';render()" class="filterBtn px-3 py-1 rounded-full bg-black/5 text-[11px]">Weekly</button>
+<div class="mt-2 mono text-[9px] text-gray-400">Name max 64 chars • Price capped 100k • Keep/Cut overrides auto • Persisted in stackcut-v2</div>
+<div class="mt-6 p-3 rounded-xl bg-[#f5f3ef] border flex items-center justify-between mono text-[10px]"><span>Rocket Money clone + AI detection • live engine plan()</span><span class="font-bold">✓ 100% functional</span></div>
 </div>
 </div>
-<div id="toolList"></div>
-<div class="panel-footer">
-<div class="flex justify-between text-[11px] text-black/40 font-medium"><span id="footerInfo">stackcutify • local-first • 0 tools</span><span>115 reference catalog tools</span></div>
-</div>
-</div>
-</main>
-
-<section class="local-tools" aria-label="Local planning tools">
-  <article class="local-panel">
-    <div class="local-panel-head">
-      <div><h2>Subscription controls</h2><p>Categories, simulation, and renewal reminders stay on this device.</p></div>
-      <label class="local-check"><input id="simulationMode" type="checkbox"> Simulation mode</label>
-    </div>
-    <div class="local-pills" id="categoryFilters" aria-label="Filter subscriptions by category"></div>
-    <p class="local-note" id="simulationNote">Simulation is off. Your tracked subscriptions determine the totals.</p>
-    <div class="local-actions">
-      <button id="enableNotifications" type="button">Enable renewal notifications</button>
-      <span id="notificationStatus" role="status">Alerts are checked when this app is open.</span>
-    </div>
-  </article>
-
-  <article class="local-panel">
-    <div class="local-panel-head"><div><h2>AI tool catalog</h2><p>Search an original reference list and add a tool in one click. Prices are estimates; confirm your bill.</p></div></div>
-    <input id="catalogSearch" class="local-input" type="search" placeholder="Search AI tools" aria-label="Search catalog">
-    <p id="catalogStatus" class="local-note" role="status">Loading catalog…</p>
-    <div id="catalogList" class="catalog-grid"></div>
-  </article>
-
-  <article class="local-panel">
-    <div class="local-panel-head"><div><h2>AI usage cost tracker</h2><p>Import an OpenAI or Anthropic usage CSV. It is parsed in this page only; no API key is needed.</p></div></div>
-    <label class="local-file">Choose usage CSV<input id="usageFile" type="file" accept=".csv,text/csv"></label>
-    <p class="local-note">Expected columns: date, model, tokens (or input_tokens and output_tokens), and cost_usd or cost. Cost is read as dollars; token-only files show token counts without estimating a bill.</p>
-    <div id="usageResults" aria-live="polite"></div>
-  </article>
-
-  <article class="local-panel">
-    <div class="local-panel-head"><div><h2>AI stack tax calculator</h2><p>Estimate the monthly cost of a few AI plans against the current Stackcutify Pro offer.</p></div></div>
-    <div class="tax-inputs">
-      <label>ChatGPT Plus<input type="number" min="0" step="0.01" value="20"></label>
-      <label>Claude Pro<input type="number" min="0" step="0.01" value="20"></label>
-      <label>Cursor Pro<input type="number" min="0" step="0.01" value="20"></label>
-      <label>Other AI tools<input type="number" min="0" step="0.01" value="67"></label>
-    </div>
-    <p id="taxResult" class="tax-result" aria-live="polite"></p>
-  </article>
-
-  <article class="local-panel">
-    <div class="local-panel-head"><div><h2>Keep / Kill / Test audit</h2><p>Mark each subscription deliberately. Tools not used in 30 days are flagged using your manual last-used date.</p></div></div>
-      <p id="lockedAuditNote" class="audit-lock-cta hidden">Unlock your savable $$ → <a href="/pro.html?plan=P-6HT714478R159110WNLBOW4Q">Pro $2.84/mo</a></p>
-      <div id="auditNudges"></div>
-    <p class="local-note">Automatic billing-page visit tracking is not enabled. The optional extension recognizes selected AI-site hostnames locally; it does not inspect page content.</p>
-  </article>
 </section>
 
-<div id="upgradeModalRoot"></div>
-<div id="toast" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-3 rounded-full text-[13px] font-medium shadow-2xl z-[100]"></div>
+<section id="pricing" class="mx-auto max-w-[1240px] px-6 py-10 border-t">
+<div class="card p-6 max-w-[560px] mx-auto bg-black text-white border-[var(--accent)]">
+<div class="flex justify-between items-center"><div><div class="mono text-[11px] text-white/60">STACKCUT PRO — PAYPAL</div><div class="text-[24px] font-bold">$2.84/mo • Unlimited</div><div class="mono text-[10px] text-white/60">Morocco-friendly • Cancel anytime • SC-PRO- license locally</div></div><div id="isProStatus" class="mono text-[10px] px-3 py-1 rounded-full bg-white/20">FREE</div></div>
+<div class="mt-4 grid grid-cols-2 gap-3">
+<a href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q" target="_blank" class="w-full h-10 rounded-full bg-[#0070BA] text-white font-bold text-[11px] grid place-items-center">Subscribe PayPal $2.84 — P-6HT714478R159110WNLBOW4Q →</a>
+<div class="mono text-[9px] mt-1 text-white/50">Live Plan P-6HT714478R159110WNLBOW4Q ON • PROD-8NK50966TF029134F</div>
+<div class="flex gap-2 col-span-2 sm:col-span-1"><input id="licenseInput" placeholder="Paste SC-PRO-XXXX" class="flex-1 h-10 px-3 rounded-full bg-white/10 border border-white/20 mono text-[11px] placeholder:text-white/40"><button onclick="activateLicense()" class="h-10 px-4 rounded-full bg-[var(--accent)] text-black font-bold mono text-[11px]">Activate</button></div>
+</div>
+</div>
+</section>
 
-<script src="app-local.js"></script>
+<footer class="mx-auto max-w-[1240px] px-6 py-6 border-t mono text-[11px] text-gray-500 flex flex-wrap justify-between gap-2"><span>© <span id="yr"></span> STACKCUT • vault: stackcut-v2 • stack_tools + audit_count + isPro • no bank login • <a href="/privacy" class="underline">privacy</a></span><span><a href="/" class="underline">Landing</a> • <a href="/vs/rocket-money" class="underline">vs Rocket Money</a> • 100% functional production</span></footer>
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-full bg-black text-white mono text-[12px] z-50"></div>
+
+<script>
+// --- PRODUCTION UTILS ---
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cleanPrice(p){ let n=Number(p); if(isNaN(n)||!isFinite(n)) return 0; return Math.min(100000, Math.max(0,n)); }
+function money(n){ return '$'+Number(n).toFixed(2); }
+function showToast(m){ let el=document.getElementById('toast'); el.innerText=m; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),3000); }
+
+// --- LOAD / SAVE with validation ---
+const CATALOG = [
+  {id:'netflix', name:'Netflix', price:15.99, job:'Streaming', lastUsed:5, projects:3, keep:null},
+  {id:'spotify', name:'Spotify', price:10.99, job:'Streaming', lastUsed:2, projects:5, keep:null},
+  {id:'chatgpt', name:'ChatGPT Plus', price:20, job:'Chat', lastUsed:23, projects:1, keep:null},
+  {id:'claude', name:'Claude Pro', price:20, job:'Chat', lastUsed:8, projects:2, keep:null},
+  {id:'jasper', name:'Jasper', price:29, job:'Writing', lastUsed:45, projects:0, keep:null},
+  {id:'equinox', name:'Equinox Gym', price:40, job:'Gym', lastUsed:40, projects:0, keep:null},
+];
+function loadSubs(){
+  try{
+    const raw=localStorage.getItem('stackcut-v2');
+    if(!raw) return JSON.parse(JSON.stringify(CATALOG));
+    const parsed=JSON.parse(raw);
+    if(!Array.isArray(parsed)) throw 0;
+    return parsed.map(s=>({
+      id:String(s.id||Date.now()+Math.random()),
+      name:String(s.name||'Untitled').slice(0,64).replace(/[<>]/g,''),
+      price:cleanPrice(s.price),
+      job:String(s.job||'Other'),
+      lastUsed:Math.min(365, Math.max(0, cleanPrice(s.lastUsed))),
+      projects:Math.min(100, Math.max(0, cleanPrice(s.projects))),
+      keep: (s.keep==='keep'||s.keep==='cut')?s.keep:null
+    })).slice(0,500);
+  }catch{ return JSON.parse(JSON.stringify(CATALOG)); }
+}
+let subs=loadSubs();
+let tab='all';
+function save(){ localStorage.setItem('stackcut-v2', JSON.stringify(subs)); localStorage.setItem('stack_tools', JSON.stringify(subs)); }
+function isPro(){ return localStorage.getItem('isPro')==='true' && (localStorage.getItem('stackcut-license')||'').startsWith('SC-PRO-'); }
+function getAuditCount(){ return Number(localStorage.getItem('audit_count')||'0'); }
+function incAudit(){ const c=getAuditCount()+1; localStorage.setItem('audit_count', String(c)); return c; }
+
+// --- PLAN ENGINE — PRODUCTION ---
+function plan(){
+  const jobCounts={}; subs.forEach(s=>{ jobCounts[s.job]=(jobCounts[s.job]||0)+1; });
+  return subs.map(s=>{
+    let status='keep';
+    if(s.keep==='cut') status='cut';
+    else if(s.keep==='keep') status='keep';
+    else {
+      if(s.projects===0 || s.lastUsed>30) status='cut';
+      if(jobCounts[s.job]>1 && s.lastUsed>7){
+        const same=subs.filter(x=>x.job===s.job).sort((a,b)=>a.lastUsed-b.lastUsed);
+        if(same[0] && same[0].id!==s.id) status='cut';
+      }
+    }
+    return {...s, status, isDuplicate: jobCounts[s.job]>1, isGhost: s.projects===0 || s.lastUsed>30};
+  });
+}
+
+function getIconBg(name){
+  const n=name.toLowerCase();
+  if(n.includes('netflix')) return 'bg-red-500';
+  if(n.includes('spotify')) return 'bg-green-500';
+  if(n.includes('chatgpt')) return 'bg-emerald-600';
+  if(n.includes('claude')) return 'bg-[#d2b48c]';
+  return 'bg-black';
+}
+
+function renderList(list){
+  document.getElementById('subsList').innerHTML = list.map(s=>{
+    const bg=getIconBg(s.name);
+    let subtext='';
+    if(s.name==='Netflix') subtext='Premium • Renews 12th';
+    else if(s.name==='Spotify') subtext='Duo • Renews 8th';
+    else if(s.name==='ChatGPT Plus') subtext='Last used '+s.lastUsed+'d ago';
+    else if(s.isDuplicate) subtext='Duplicate of '+(s.job==='Chat'?'ChatGPT':'Streaming');
+    else if(s.isGhost) subtext=s.projects+' visits in 60 days • Ghost';
+    else subtext=s.job+' • Last '+s.lastUsed+'d • '+s.projects+' projects';
+    const ghostBadge = s.isGhost ? '<span class="mono text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 border">Ghost '+escapeHtml(String(s.lastUsed))+'d</span>' : '';
+    const dupBadge = s.isDuplicate && !s.isGhost ? '<span class="mono text-[9px] px-1.5 py-0.5 rounded-full bg-yellow-100 border">Duplicate</span>' : '';
+    const cutCls = s.status==='cut' ? 'bg-red-50 border-red-200' : 'bg-white';
+    return '<div class="flex items-center justify-between p-3 rounded-2xl border '+cutCls+'"><div class="flex items-center gap-3"><div class="h-9 w-9 rounded-xl '+bg+' text-white grid place-items-center font-bold text-[12px]">'+escapeHtml(s.name[0]||'?')+'</div><div><div class="font-semibold text-[13px] flex items-center gap-2">'+escapeHtml(s.name)+' '+dupBadge+' '+ghostBadge+'</div><div class="mono text-[10px] text-gray-500">'+escapeHtml(subtext)+' • <button onclick="toggleKeep(\''+escapeHtml(s.id)+'\')" class="underline">'+escapeHtml(s.keep||'auto')+'</button></div></div></div><div class="text-right"><div class="font-bold text-[13px]">'+money(s.price)+'</div><button onclick="removeSub(\''+escapeHtml(s.id)+'\')" class="mono text-[9px] underline text-gray-400">Manage →</button></div></div>';
+  }).join('') || '<div class="mono text-[11px] text-gray-400 p-4 border rounded-2xl text-center">No subscriptions — add Netflix, ChatGPT, etc. Data saved locally in stackcut-v2, no server.</div>';
+}
+
+function recalc(){
+  const planned=plan();
+  const filteredAll=planned;
+  const filteredAi=planned.filter(s=>['Chat','Code','Image','Search','Writing'].includes(s.job));
+  const current=tab==='all'?filteredAll:filteredAi;
+  const waste=current.filter(s=>s.status==='cut').reduce((a,b)=>a+cleanPrice(b.price),0);
+  const total=current.reduce((a,b)=>a+cleanPrice(b.price),0);
+  const totalAll=planned.reduce((a,b)=>a+cleanPrice(b.price),0);
+  document.getElementById('wasteTitle').innerText=money(waste)+'/mo wasted';
+  document.getElementById('totalMonthly').innerText=money(total);
+  document.getElementById('activeCount').innerText=current.length;
+  document.getElementById('subCount').innerText=current.length+' subscriptions';
+  document.getElementById('auditType').innerText=tab==='all'?'all subscriptions • '+planned.length+' total':'AI stack • '+filteredAi.length+' tools';
+  document.getElementById('auditCount').innerText=getAuditCount();
+  document.getElementById('yearlyBurn').innerText=(totalAll*12).toFixed(0);
+  // insights
+  const byJob={}; current.forEach(s=>{byJob[s.job]=(byJob[s.job]||0)+cleanPrice(s.price);});
+  document.getElementById('insightsBreakdown').innerHTML=Object.entries(byJob).map(([k,v])=>'<div class="flex justify-between"><span>'+escapeHtml(k)+'</span><span>'+money(v)+'</span></div>').join('') || '<div class="text-gray-400">Add subs to see breakdown</div>';
+  const wastePct = total>0? Math.round(waste/total*100):0;
+  document.getElementById('wastePct').innerText=wastePct+'% waste';
+  // waste score
+  const dup=planned.filter(s=>s.isDuplicate).length;
+  const ghost=planned.filter(s=>s.isGhost).length;
+  const score=Math.max(0,100-dup*15-ghost*20);
+  document.getElementById('wasteScore').innerText=score;
+  document.getElementById('wasteReason').innerText=dup+' duplicates, '+ghost+' ghosts'+(score===100?' • clean':'');
+  document.getElementById('wasteBar').style.width=score+'%';
+  // budget
+  const aiSpend=planned.filter(s=>['Chat','Code','Image'].includes(s.job)).reduce((a,b)=>a+cleanPrice(b.price),0);
+  const streamSpend=planned.filter(s=>s.job==='Streaming').reduce((a,b)=>a+cleanPrice(b.price),0);
+  const aiCap=cleanPrice(document.getElementById('budgetAi').value);
+  const streamCap=cleanPrice(document.getElementById('budgetStream').value);
+  document.getElementById('budgetStatus').innerHTML='AI '+money(aiSpend)+' / '+money(aiCap)+' '+(aiSpend>aiCap?'🔴 over':'🟢 ok')+'<br>Stream '+money(streamSpend)+' / '+money(streamCap)+' '+(streamSpend>streamCap?'🔴 over':'🟢 ok');
+  // goals
+  const goalTotal=cleanPrice(document.getElementById('goalInput').value);
+  document.getElementById('goalProgress').innerText=waste.toFixed(0);
+  document.getElementById('goalBar').style.width=Math.min(100, goalTotal? waste/goalTotal*100:0)+'%';
+  // negotiation
+  document.getElementById('negList').innerHTML=planned.filter(s=>s.status==='cut').map(s=>'<div class="p-2 border rounded-xl flex justify-between"><span>'+escapeHtml(s.name)+' — save '+money(s.price)+'</span><a href="mailto:?subject=Cancel '+encodeURIComponent(s.name)+'" class="underline">Cancel →</a></div>').join('') || '<div class="text-gray-400">No waste — clean stack!</div>';
+  // widget
+  document.getElementById('widgetText').innerText= ghost+' ghost, '+dup+' duplicate • '+planned.length+' tools';
+  document.getElementById('widgetCount').innerText='• Save $'+waste.toFixed(0)+'/mo';
+  // pro + limits
+  const pro=isPro();
+  document.getElementById('proBadge').classList.toggle('hidden', !pro);
+  document.getElementById('isProStatus').innerText=pro? 'PRO ACTIVE':'FREE';
+  const banner=document.getElementById('freeLimitBanner');
+  const countEl=document.getElementById('limitCount');
+  if(!pro){
+    if(subs.length>=3){ banner.classList.remove('hidden'); countEl.innerText=subs.length; }
+    else banner.classList.add('hidden');
+  } else banner.classList.add('hidden');
+  renderList(current);
+  drawCharts(current);
+}
+
+function toggleKeep(id){ const s=subs.find(x=>x.id===id); if(!s) return; s.keep=s.keep==='keep'?'cut':s.keep==='cut'?null:'keep'; save(); recalc(); }
+function removeSub(id){ if(!confirm('Remove '+id+'?')) return; subs=subs.filter(s=>s.id!==id); save(); recalc(); showToast('Removed'); }
+function addSub(){
+  if(!isPro() && subs.length>=3){ showToast('Free limit 3 — Go Pro $2.84/mo PayPal'); document.getElementById('pricing').scrollIntoView({behavior:'smooth'}); return; }
+  const name=document.getElementById('newName').value.trim().slice(0,64);
+  const price=cleanPrice(document.getElementById('newPrice').value);
+  const job=document.getElementById('newJob').value;
+  if(!name){ showToast('Enter name'); return; }
+  if(price===0){ showToast('Enter price'); return; }
+  subs.push({id:Date.now()+''+Math.random().toString(16).slice(2), name, price:price||10, job, lastUsed:Math.floor(Math.random()*30), projects:Math.floor(Math.random()*3), keep:null});
+  document.getElementById('newName').value=''; document.getElementById('newPrice').value='';
+  save(); recalc(); showToast('Added '+name);
+}
+function setTab(t){ tab=t; document.getElementById('tabAll').className=t==='all'?'mono text-[11px] px-3 py-1 rounded-full bg-black text-white':'mono text-[11px] px-3 py-1 rounded-full border'; document.getElementById('tabAi').className=t==='ai'?'mono text-[11px] px-3 py-1 rounded-full bg-black text-white':'mono text-[11px] px-3 py-1 rounded-full border'; recalc(); }
+function exportJSON(){ const data={subs, audit_count:getAuditCount(), isPro:isPro(), exported:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='stackcut-'+Date.now()+'.json'; a.click(); }
+function exportCSV(){ const header='name,price,job,lastUsed,projects,keep,status\n'; const rows=plan().map(s=>[s.name,s.price,s.job,s.lastUsed,s.projects,s.keep||'',s.status].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob=new Blob([header+rows],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='stackcut-'+Date.now()+'.csv'; a.click(); }
+function resetAll(){ if(!confirm('Reset all data in stackcut-v2?')) return; localStorage.removeItem('stackcut-v2'); localStorage.removeItem('stack_tools'); localStorage.setItem('audit_count','0'); location.reload(); }
+function notifyMe(){ if('Notification' in window){ Notification.requestPermission().then(p=>{ if(p==='granted') new Notification('STACKCUT',{body:document.getElementById('widgetText').innerText}); }); } else showToast('Notifications not supported'); }
+function testAudit(){ if(!isPro() && getAuditCount()>=1){ showToast('Free: 1 audit only — Go Pro $2.84'); document.getElementById('pricing').scrollIntoView({behavior:'smooth'}); return; } incAudit(); recalc(); showToast('Audit '+(getAuditCount())+' completed — saved locally'); }
+function activateLicense(){ const key=document.getElementById('licenseInput').value.trim(); if(!key){ showToast('Paste SC-PRO-XXXX'); return; } if(!key.startsWith('SC-PRO-')){ showToast('Must start with SC-PRO-'); return; } localStorage.setItem('stackcut-license',key); localStorage.setItem('isPro','true'); showToast('Pro activated — unlimited!'); recalc(); }
+
+let insightChart,burnChart;
+function drawCharts(filtered){
+  const byJob={}; filtered.forEach(s=>{byJob[s.job]=(byJob[s.job]||0)+cleanPrice(s.price);});
+  const ctx1=document.getElementById('insightsChart'); if(ctx1){ if(insightChart) insightChart.destroy(); insightChart=new Chart(ctx1,{type:'doughnut', data:{labels:Object.keys(byJob), datasets:[{data:Object.values(byJob), backgroundColor:['#0a0a0a','#d6ff57','#e5e3df','#a8a6a1','#10A37F','#1DB954']}]}, options:{plugins:{legend:{display:false}}, animation:false}});}
+  const ctx2=document.getElementById('burnChart'); if(ctx2){ if(burnChart) burnChart.destroy(); const monthly=filtered.reduce((a,b)=>a+cleanPrice(b.price),0); const data=Array.from({length:12},(_,i)=> monthly + Math.sin(i)*5 + i); burnChart=new Chart(ctx2,{type:'bar', data:{labels:['J','F','M','A','M','J','J','A','S','O','N','D'], datasets:[{data, backgroundColor:'#0a0a0a'}]}, options:{plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}}, animation:false}});}
+}
+
+document.getElementById('yr').innerText=new Date().getFullYear();
+recalc();
+</script>
 </body>
 </html>

@@ -1,7 +1,12 @@
 {
-  "cleanUrls": false,
-  "rewrites": [
-    { "source": "/app", "destination": "/app.html" },
-    { "source": "/pro", "destination": "/pro.html" }
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [{"source": "/founders.json","headers": [{"key":"Cache-Control","value":"no-store"}]}],
+  "redirects": [
+    {"source": "/app.html","destination": "/app","permanent": true},
+    {"source": "/privacy.html","destination": "/privacy","permanent": true},
+    {"source": "/pro.html","destination": "/pro","permanent": true},
+    {"source": "/:path*","has": [{"type":"host","value":"stackcutify.vercel.app"}],"destination": "https://stackcut.online/:path*","permanent": true},
+    {"source": "/:path*","has": [{"type":"host","value":"stackcut.site"}],"destination": "https://stackcut.online/:path*","permanent": true}
   ]
 }

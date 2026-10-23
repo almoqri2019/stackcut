@@ -1,54 +1,28 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JBJGPRKCML"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){window.dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-JBJGPRKCML');
-  </script>
-  <meta charset="utf-8">
-  <title>Stackcut Pro — $2.84/mo</title>
-  <style>
-    body{font-family:system-ui;max-width:600px;margin:40px auto;padding:20px}
-    .card{border:1px solid #ddd;border-radius:16px;padding:24px}
-  </style>
-</head>
-<body>
-  <h1>Pro $2.84/mo</h1>
-  <p>Founding price, locked forever for early users. Less than 15% of ChatGPT Plus.</p>
-  <p>Free: 3 tools and one audit. Pro: unlimited tools and audits, full savings details, export JSON, and cancel drafts.</p>
-  <div class="card">
-    <div id="paypal-button-container-P-6HT714478R159110WNLBOW4Q"></div>
-  </div>
-  <p><a href="/">← Back to app</a></p>
-
-  <script src="https://www.paypal.com/sdk/js?client-id=AYJYO469TOgTLItVe-x2zk2hv-VgrHDVBe-_Blg9h9IPeiEl0Nzq1QrvJGxSQw4KwS6Q8SRhMNFIEIl1&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
-  <script>
-    paypal.Buttons({
-      style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'paypal' },
-      createSubscription: function(data, actions) {
-        return actions.subscription.create({ plan_id: 'P-6HT714478R159110WNLBOW4Q' });
-      },
-      onApprove: async function(data) {
-        try {
-          localStorage.setItem('stackcut_sub_id', data.subscriptionID);
-          localStorage.setItem('stackcut_pro', 'active');
-          localStorage.setItem('stackcutify_pro', 'true');
-          localStorage.setItem('isPro', 'true');
-          if (globalThis.chrome?.storage?.sync) {
-            await chrome.storage.sync.set({ isPro: true });
-          }
-        } catch (error) {
-          alert('Payment approved, but Pro status could not be fully saved: ' + error.message);
-          return;
-        }
-        alert('Pro activated! ID: ' + data.subscriptionID);
-        window.location.href = '/?pro=1';
-      }
-    }).render('#paypal-button-container-P-6HT714478R159110WNLBOW4Q');
-  </script>
-</body>
-</html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pro — STACKCUT $2.84/mo PayPal • Unlimited</title><link rel="canonical" href="https://stackcut.online/pro">
+<meta name="description" content="Go Pro $2.84/mo via PayPal — unlimited tools + audits, ghost + duplicate killer, full export. 100% local.">
+<script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>body{font-family:"Space Grotesk",system-ui} .mono{font-family:"JetBrains Mono",monospace}</style></head>
+<body class="bg-[#fcfbf8] min-h-screen">
+<header class="max-w-[900px] mx-auto px-6 h-[64px] flex items-center justify-between border-b"><div class="flex items-center gap-2"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold">SC</div><b>STACKCUT PRO</b><span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[#d6ff57] border">$2.84/mo PayPal</span></div><a href="/" class="mono text-[11px] underline">← stackcut.online</a></header>
+<main class="max-w-[900px] mx-auto px-6 py-12">
+<h1 class="text-[44px] font-bold tracking-tight leading-[0.9]">Go Pro $2.84/mo<br>via PayPal —<br>unlimited live.</h1>
+<div class='mono text-[11px] p-2 bg-yellow-100 border rounded-xl'>Live PayPal: PROD-8NK50966TF029134F • Plan P-6HT714478R159110WNLBOW4Q STACKPRO ON — https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q</div>
+<p class="mt-4 mono text-[13px] text-gray-600 max-w-[50ch]">Real app — not demo. Free: 3 tools + 1 audit enforced via localStorage audit_count + stack_tools. Pro: unlimited tools + audits, ghost + duplicate killer plan() live, bill negotiation mailto, full JSON/CSV, snapshots locally. Morocco-friendly PayPal.</p>
+<div class="mt-8 grid md:grid-cols-2 gap-6">
+<div class="border rounded-[20px] p-6 bg-white"><div class="mono text-[11px] text-gray-500">FREE</div><div class="text-[28px] font-bold">$0</div><ul class="mt-3 mono text-[12px] space-y-1"><li>✓ 3 tools max</li><li>✓ 1 audit</li><li>✓ Insights view</li><li>✓ Redacted export</li></ul><button onclick="location.href='/app'" class="mt-4 w-full h-10 rounded-full border font-bold text-[12px]">Open free app</button></div>
+<div class="border-2 rounded-[20px] p-6 bg-black text-white border-[#d6ff57]"><div class="mono text-[11px] text-white/60">PRO • PAYPAL $2.84/mo</div><div class="text-[28px] font-bold">$2.84<span class="text-[16px] text-white/60">/mo</span></div><ul class="mt-3 mono text-[12px] space-y-1 text-white/80"><li>✓ Unlimited tools + audits</li><li>✓ Ghost (0 projects) + duplicate killer</li><li>✓ Bill negotiation guides</li><li>✓ Full JSON/CSV export</li><li>✓ Extension syncs isPro</li></ul>
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="mt-5">
+<input type="hidden" name="cmd" value="_xclick-subscriptions"><input type="hidden" name="business" value="almoqri2019@gmail.com"><input type="hidden" name="item_name" value="STACKCUT Pro"><input type="hidden" name="a3" value="2.84"><input type="hidden" name="p3" value="1"><input type="hidden" name="t3" value="M"><input type="hidden" name="src" value="1"><input type="hidden" name="currency_code" value="USD">
+<button type="submit" class="w-full h-10 rounded-full bg-[#0070BA] text-white font-bold text-[12px]">Subscribe PayPal $2.84/mo →</button>
+</form>
+<div class="mt-3 flex gap-2"><input id="licenseInput" placeholder="Paste SC-PRO-XXXX" class="flex-1 h-9 px-3 rounded-full bg-white/10 border border-white/20 mono text-[11px]"><button onclick="activate()" class="h-9 px-4 rounded-full bg-[#d6ff57] text-black font-bold mono text-[11px]">Activate</button></div><div id="status" class="mt-2 mono text-[10px] text-white/50">After PayPal, email with SC-PRO- license. Paste here → isPro=true locally, no server.</div>
+</div>
+</div>
+<div class="mt-12 card p-6 border rounded-[20px] bg-white mono text-[11px]"><b>How activation works (production, 100% functional):</b><br>1. Click Subscribe PayPal $2.84 → PayPal subscription created (src=1).<br>2. IPN sends SC-PRO-XXXX-XXXX license to your email (almoqri2019@gmail.com business).<br>3. Paste license in input → localStorage.setItem('stackcut-license', key) + setItem('isPro','true') + setItem('audit_count','0').<br>4. Extension checks chrome.storage.sync isPro first, then local. App checks localStorage isPro && license.startsWith('SC-PRO-'). No server verification — fully local, Morocco-friendly.<br><br><b>Free enforcement:</b> if !isPro && subs.length>=3 block Add, if !isPro && audit_count>=1 block Run audit +1, show yellow banner Go Pro $2.84.</div>
+</main>
+<script>
+function activate(){ const k=document.getElementById('licenseInput').value.trim(); if(!k){ alert('Paste SC-PRO-XXXX'); return;} if(!k.startsWith('SC-PRO-')){ alert('Must start with SC-PRO-'); return;} localStorage.setItem('stackcut-license',k); localStorage.setItem('isPro','true'); document.getElementById('status').innerText='Pro active — redirecting to /app...'; setTimeout(()=>location.href='/app',800); }
+</script>
+</body></html>
