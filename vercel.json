@@ -7,7 +7,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://www.paypal.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.paypal.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.paypal.com https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://www.paypal.com;"
+          "value": "default-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://www.paypal.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.paypal.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; object-src 'none'; connect-src 'self' https://www.paypal.com https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://www.paypal.com; upgrade-insecure-requests;"
         },
         {
           "key": "X-Frame-Options",
@@ -28,6 +28,27 @@
         {
           "key": "Strict-Transport-Security",
           "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
@@ -50,11 +71,20 @@
       ]
     },
     {
+      "source": "/app",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/sitemap.xml",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600"
+          "value": "public, max-age=3600, stale-while-revalidate=86400"
         }
       ]
     },
@@ -68,6 +98,28 @@
         {
           "key": "Content-Type",
           "value": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/parser.worker.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
         }
       ]
     },
@@ -104,6 +156,17 @@
     {
       "source": "/pro.html",
       "destination": "/pro",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.stackcut.site"
+        }
+      ],
+      "destination": "https://stackcut.site/:path*",
       "permanent": true
     },
     {
@@ -160,6 +223,24 @@
       ],
       "destination": "https://stackcut.site/:path*",
       "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/vs/rocket-money",
+      "destination": "/"
+    },
+    {
+      "source": "/pro",
+      "destination": "/"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/"
+    },
+    {
+      "source": "/app",
+      "destination": "/app.html"
     }
   ]
 }

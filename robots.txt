@@ -4,13 +4,19 @@ Disallow: /extension/
 Disallow: /api/private/
 Sitemap: https://stackcut.site/sitemap.xml
 
-# AI Crawlers
+# AI Crawlers — v3.0 real-ready, no $199
 User-agent: GPTBot
 Allow: /
 User-agent: PerplexityBot
 Allow: /
 User-agent: ClaudeBot
 Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: Google-Extended
+Allow: /
 
-# llms.txt manifest for MCP
-# See https://stackcut.site/llms.txt
+# llms.txt manifest
+# https://stackcut.site/llms.txt — v3.0 REAL-READY — No $199/yr — PayPal P-6HT714478R159110WNLBOW4Q only
