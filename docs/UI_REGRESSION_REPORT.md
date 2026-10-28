@@ -46,11 +46,11 @@ Application, payment, and entitlement source files were not changed.
 
 ## Remaining issues and release status
 
-- **Not deployed.** Production still serves the pre-fix configuration until a deployment is made; no deployment, commit, or push was performed.
+- **Not deployed.** Production still serves the pre-fix configuration. The fix is committed locally as `a0db2f8`, but pushing to GitHub failed because this environment has no GitHub credentials (`unable to get password from user`).
 - The Vercel project currently redirects the apex host to `www`. The repository change stops the reverse redirect loop, so the deployed site will settle on `www.stackcut.site`. To keep the apex URL as the final canonical host, change the Vercel project domain setting to make `stackcut.site` primary and redirect `www` to the apex.
 - The custom-domain asset responses must be rechecked after deployment; the direct deployment URL currently proves the stylesheet exists and the JavaScript file is missing in the deployed source.
 - The production entitlement/payment backend was not exercised; its code was intentionally left unchanged.
 
 ## Commit tested
 
-Baseline source commit: `a68aa6e1a42d77d56fc627d577479684c7680a12` (`main`, equal to `origin/main`). The fixes and browser checks are uncommitted worktree changes for review.
+Baseline source commit: `a68aa6e1a42d77d56fc627d577479684c7680a12` (`main`, equal to `origin/main`). The tested fix is committed locally as `a0db2f8`; it has not been pushed or deployed.
