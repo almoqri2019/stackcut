@@ -9,7 +9,7 @@
 <main class="max-w-[900px] mx-auto px-6 py-12">
 <h1 class="text-[44px] font-bold tracking-tight leading-[0.9]">Go Pro $2.84/mo<br>via PayPal —<br>unlimited live.</h1>
 <div class='mono text-[11px] p-2 bg-yellow-100 border rounded-xl'>Live PayPal: PROD-8NK50966TF029134F • Plan P-6HT714478R159110WNLBOW4Q STACKPRO ON — https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q</div>
-<p class="mt-4 mono text-[13px] text-gray-600 max-w-[50ch]">Real app — not demo. Free: 3 tools + 1 audit enforced via localStorage audit_count + stack_tools. Pro: unlimited tools + audits, ghost + duplicate killer plan() live, bill negotiation mailto, full JSON/CSV, snapshots locally. Morocco-friendly PayPal.</p>
+<p class="mt-4 mono text-[13px] text-gray-600 max-w-[50ch]">Real app — not demo. Browser storage remains display-only. Free access is enforced by the server-side entitlement check; Pro access requires a trusted verification step before paid features are unlocked. Morocco-friendly PayPal and a secure back-end boundary are required before production billing.</p>
 <div class="mt-8 grid md:grid-cols-2 gap-6">
 <div class="border rounded-[20px] p-6 bg-white"><div class="mono text-[11px] text-gray-500">FREE</div><div class="text-[28px] font-bold">$0</div><ul class="mt-3 mono text-[12px] space-y-1"><li>✓ 3 tools max</li><li>✓ 1 audit</li><li>✓ Insights view</li><li>✓ Redacted export</li></ul><button onclick="location.href='/app'" class="mt-4 w-full h-10 rounded-full border font-bold text-[12px]">Open free app</button></div>
 <div class="border-2 rounded-[20px] p-6 bg-black text-white border-[#d6ff57]"><div class="mono text-[11px] text-white/60">PRO • PAYPAL $2.84/mo</div><div class="text-[28px] font-bold">$2.84<span class="text-[16px] text-white/60">/mo</span></div><ul class="mt-3 mono text-[12px] space-y-1 text-white/80"><li>✓ Unlimited tools + audits</li><li>✓ Ghost (0 projects) + duplicate killer</li><li>✓ Bill negotiation guides</li><li>✓ Full JSON/CSV export</li><li>✓ Extension syncs isPro</li></ul>
@@ -17,12 +17,26 @@
 <input type="hidden" name="cmd" value="_xclick-subscriptions"><input type="hidden" name="business" value="almoqri2019@gmail.com"><input type="hidden" name="item_name" value="STACKCUT Pro"><input type="hidden" name="a3" value="2.84"><input type="hidden" name="p3" value="1"><input type="hidden" name="t3" value="M"><input type="hidden" name="src" value="1"><input type="hidden" name="currency_code" value="USD">
 <button type="submit" class="w-full h-10 rounded-full bg-[#0070BA] text-white font-bold text-[12px]">Subscribe PayPal $2.84/mo →</button>
 </form>
-<div class="mt-3 flex gap-2"><input id="licenseInput" placeholder="Paste SC-PRO-XXXX" class="flex-1 h-9 px-3 rounded-full bg-white/10 border border-white/20 mono text-[11px]"><button onclick="activate()" class="h-9 px-4 rounded-full bg-[#d6ff57] text-black font-bold mono text-[11px]">Activate</button></div><div id="status" class="mt-2 mono text-[10px] text-white/50">After PayPal, email with SC-PRO- license. Paste here → isPro=true locally, no server.</div>
+<div class="mt-3 flex gap-2"><input id="licenseInput" placeholder="Paste SC-PRO-XXXX" class="flex-1 h-9 px-3 rounded-full bg-white/10 border border-white/20 mono text-[11px]"><button onclick="activate()" class="h-9 px-4 rounded-full bg-[#d6ff57] text-black font-bold mono text-[11px]">Activate</button></div><div id="status" class="mt-2 mono text-[10px] text-white/50">Server-side verification is required before the app unlocks Pro features. Browser values are only for display.</div>
 </div>
 </div>
-<div class="mt-12 card p-6 border rounded-[20px] bg-white mono text-[11px]"><b>How activation works (production, 100% functional):</b><br>1. Click Subscribe PayPal $2.84 → PayPal subscription created (src=1).<br>2. IPN sends SC-PRO-XXXX-XXXX license to your email (almoqri2019@gmail.com business).<br>3. Paste license in input → localStorage.setItem('stackcut-license', key) + setItem('isPro','true') + setItem('audit_count','0').<br>4. Extension checks chrome.storage.sync isPro first, then local. App checks localStorage isPro && license.startsWith('SC-PRO-'). No server verification — fully local, Morocco-friendly.<br><br><b>Free enforcement:</b> if !isPro && subs.length>=3 block Add, if !isPro && audit_count>=1 block Run audit +1, show yellow banner Go Pro $2.84.</div>
+<div class="mt-12 card p-6 border rounded-[20px] bg-white mono text-[11px]"><b>Secure entitlement flow:</b><br>1. A trusted payment provider or signed subscription record marks the account as active at the server.<br>2. The browser sends the license or entitlement token to `/api/pro-status` for verification.<br>3. Only a verified response unlocks Pro features; browser storage remains display-only and cannot be treated as the source of truth.<br>4. Expired, refunded, disputed, cancelled, or failed states stay inactive until server-side verification confirms otherwise.</div>
 </main>
 <script>
-function activate(){ const k=document.getElementById('licenseInput').value.trim(); if(!k){ alert('Paste SC-PRO-XXXX'); return;} if(!k.startsWith('SC-PRO-')){ alert('Must start with SC-PRO-'); return;} localStorage.setItem('stackcut-license',k); localStorage.setItem('isPro','true'); document.getElementById('status').innerText='Pro active — redirecting to /app...'; setTimeout(()=>location.href='/app',800); }
+async function activate(){
+  const k=document.getElementById('licenseInput').value.trim();
+  if(!k){ alert('Paste SC-PRO-XXXX'); return; }
+  if(!/^SC-PRO-[A-Z0-9-]+$/i.test(k)){ alert('Must look like a valid SC-PRO- license.'); return; }
+  const response=await fetch('/api/pro-status?license=' + encodeURIComponent(k), {cache: 'no-store', credentials: 'same-origin'});
+  const data=await response.json();
+  if(!data || !data.active){
+    document.getElementById('status').innerText='Server-side verification failed. No paid entitlement is active.';
+    return;
+  }
+  localStorage.setItem('stackcut-license', k);
+  sessionStorage.setItem('stackcut_pro_status', JSON.stringify({active: true, expiresAt: Date.now() + 300000}));
+  document.getElementById('status').innerText='Pro active — server verified. Redirecting to /app...';
+  setTimeout(()=>location.href='/app',800);
+}
 </script>
 </body></html>

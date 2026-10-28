@@ -1,24 +1,41 @@
 const STORAGE_KEY = 'stackcut_tools';
+const PRO_STATUS_KEY = 'stackcut_pro_status';
+const PRO_STATUS_TTL_MS = 300000;
+const PRO_STATUS_ENDPOINT = 'https://stackcut.site/api/pro-status';
 const FREE_LIMIT = 3;
 
+async function getCachedProStatus() {
+  try {
+    const result = await chrome.storage.local.get(PRO_STATUS_KEY);
+    const status = result[PRO_STATUS_KEY];
+    if (!status || !status.active || Number(status.expiresAt) <= Date.now()) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function refreshProStatus() {
+  try {
+    const response = await fetch(PRO_STATUS_ENDPOINT, { cache: 'no-store', credentials: 'omit' });
+    if (!response.ok) {
+      await chrome.storage.local.remove(PRO_STATUS_KEY);
+      return false;
+    }
+    const payload = await response.json();
+    const active = Boolean(payload && payload.active === true && payload.status === 'active');
+    await chrome.storage.local.set({ [PRO_STATUS_KEY]: { active, expiresAt: Date.now() + PRO_STATUS_TTL_MS } });
+    return active;
+  } catch (error) {
+    await chrome.storage.local.remove(PRO_STATUS_KEY);
+    return false;
+  }
+}
+
 async function isPro() {
-  try {
-    const synced = await chrome.storage.sync.get('isPro');
-    if (synced.isPro === true || synced.isPro === 'true') return true;
-  } catch (error) {
-    console.warn('Could not read synced Pro status; trying local storage.', error);
-  }
-
-  try {
-    if (localStorage.getItem('isPro') === 'true') return true;
-  } catch (error) {
-    console.warn('Could not read local Pro status; trying legacy extension storage.', error);
-  }
-
-  const legacy = await chrome.storage.local.get(['stackcut_pro', 'stackcutify_pro']);
-  return legacy.stackcut_pro === 'active'
-    || legacy.stackcutify_pro === 'true'
-    || legacy.stackcutify_pro === true;
+  return (await getCachedProStatus()) || (await refreshProStatus());
 }
 
 function toast(msg) {
@@ -184,11 +201,11 @@ document.getElementById('exportBtn').onclick = async () => {
 };
 
 document.getElementById('openApp').onclick = () => {
-  chrome.tabs.create({ url: 'https://stackcutify.vercel.app/app' });
+  chrome.tabs.create({ url: 'https://stackcut.site/app' });
 };
 
 document.getElementById('proUpgrade').onclick = () => {
-  chrome.tabs.create({ url: 'https://stackcutify.vercel.app/pro.html?plan=P-6HT714478R159110WNLBOW4Q' });
+  chrome.tabs.create({ url: 'https://stackcut.site/pro' });
 };
 
 document.getElementById('importBtn').addEventListener('click', () => {

@@ -11,6 +11,7 @@
         "/^node --check app-local\\.js && node --check extension/popup\\.js && node --check extension/background\\.js && node -e 'JSON\\.parse\\(require\\(\"fs\"\\)\\.readFileSync\\(\"extension/manifest\\.json\", \"utf8\"\\)\\);' && git diff --check$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "mkdir": true
     }
 }

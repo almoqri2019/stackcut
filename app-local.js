@@ -8,6 +8,9 @@ const AUDIT_COUNT_KEY = "audit_count";
 const AUDIT_HISTORY_KEY = "audit_history";
 const CATEGORY_KEY = "stackcut_category";
 const SIMULATION_KEY = "stackcut_simulation";
+const PRO_STATUS_KEY = "stackcut_pro_status";
+const PRO_STATUS_TTL_MS = 300000;
+const PRO_STATUS_ENDPOINT = "/api/pro-status";
 const CATEGORIES = ["Essential", "Beloved", "Discretionary", "Thin Ice"];
 const BILLING_CYCLES = ["daily", "weekly", "monthly", "quarterly", "yearly"];
 const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: "quarter", yearly: "year" };
@@ -75,9 +78,43 @@ function setFormDefaults() {
   if (lastUsed && !lastUsed.value) lastUsed.value = localDateString(today);
 }
 
+function getCachedProStatus() {
+  try {
+    const raw = sessionStorage.getItem(PRO_STATUS_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return !!(parsed && parsed.active === true && Number(parsed.expiresAt) > Date.now());
+  } catch (error) {
+    return false;
+  }
+}
+
+async function refreshProStatus() {
+  try {
+    const response = await fetch(PRO_STATUS_ENDPOINT, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) {
+      sessionStorage.removeItem(PRO_STATUS_KEY);
+      return false;
+    }
+    const data = await response.json();
+    const active = Boolean(data && data.active === true && data.status === "active");
+    sessionStorage.setItem(PRO_STATUS_KEY, JSON.stringify({
+      active,
+      expiresAt: Date.now() + PRO_STATUS_TTL_MS
+    }));
+    return active;
+  } catch (error) {
+    sessionStorage.removeItem(PRO_STATUS_KEY);
+    return false;
+  }
+}
+
 function isPro() {
   try {
-    return localStorage.getItem("isPro") === "true";
+    return getCachedProStatus();
   } catch (error) {
     if (!storageWarningShown) {
       storageWarningShown = true;
@@ -153,11 +190,6 @@ function load() {
       localStorage.setItem(AUDIT_COUNT_KEY, String(auditCount));
     }
     const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (localStorage.getItem("isPro") === null) {
-      const legacyPro = localStorage.getItem("stackcutify_pro") === "true"
-        || localStorage.getItem("stackcut_pro") === "active";
-      localStorage.setItem("isPro", String(legacyPro));
-    }
     if (stored === null) {
       tools = DEFAULT_TOOLS.map(normalizeTool);
       migrationRequired = true;
@@ -182,12 +214,14 @@ function load() {
     tools = [];
     showToast(`Could not load saved data: ${error.message}`);
   }
-  checkPro();
-  renderCategoryFilters();
-  render();
-  renderAuditNudges();
-  checkRenewalAlerts();
-  loadCatalog();
+  refreshProStatus().finally(() => {
+    checkPro();
+    renderCategoryFilters();
+    render();
+    renderAuditNudges();
+    checkRenewalAlerts();
+    loadCatalog();
+  });
 }
 
 function save() {

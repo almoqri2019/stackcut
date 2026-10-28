@@ -33,9 +33,34 @@ const PLAN_ID = "P-6HT714478R159110WNLBOW4Q";
 const BILLING_CYCLES = ["daily", "weekly", "monthly", "quarterly", "yearly"];
 const BILLING_UNITS = { daily: "day", weekly: "week", monthly: "mo", quarterly: "quarter", yearly: "year" };
 const USAGE_FREQUENCIES = ["daily", "weekly", "monthly", "discretionary", "forgot"];
+const PRO_STATUS_KEY = "stackcut_pro_status";
+const PRO_STATUS_ENDPOINT = "/api/pro-status";
 const toolPageDrafts = {};
-const isPro = localStorage.getItem("stackcut_pro") === "active";
+let isPro = false;
 const state = load();
+refreshProStatus();
+
+async function refreshProStatus() {
+  try {
+    const response = await fetch(PRO_STATUS_ENDPOINT, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) {
+      sessionStorage.removeItem(PRO_STATUS_KEY);
+      return false;
+    }
+    const data = await response.json();
+    const active = Boolean(data && data.active === true && data.status === "active");
+    sessionStorage.setItem(PRO_STATUS_KEY, JSON.stringify({ active, expiresAt: Date.now() + 300000 }));
+    isPro = active;
+    return active;
+  } catch (error) {
+    sessionStorage.removeItem(PRO_STATUS_KEY);
+    isPro = false;
+    return false;
+  }
+}
 
 function cleanPrice(value) {
   const n = Number(value);
