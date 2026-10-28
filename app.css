@@ -172,6 +172,16 @@ h3 { margin: 0 0 12px; font-size: 1rem; }
 .subscription-main { min-width: 0; }
 .subscription-name { overflow-wrap: anywhere; font-weight: 750; }
 .subscription-meta { color: var(--muted); font-size: 0.78rem; }
+.subscription-tax-summary {
+  margin: 5px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid #9a7a28;
+  background: #fbf7e9;
+  color: #504319;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 .unknown-tag, .review-tag {
   display: inline-block;
   margin: 3px 4px 0 0;
@@ -203,7 +213,10 @@ h3 { margin: 0 0 12px; font-size: 1rem; }
 .subscription-actions button:hover { background: var(--surface-alt); }
 .subscription-actions [data-action="remove"] { color: var(--red); }
 .add-form { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-.form-grid { display: grid; grid-template-columns: minmax(120px, 1.3fr) minmax(95px, 0.75fr) minmax(130px, 1fr) auto; gap: 9px; align-items: end; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; align-items: end; }
+.tax-manual-control { min-height: 44px; display: flex; align-items: center; gap: 9px; }
+.tax-manual-control input { width: 18px; min-height: 18px; accent-color: var(--green); }
+.form-grid > .button { min-height: 44px; }
 label { display: grid; gap: 5px; font-size: 0.78rem; font-weight: 700; }
 input, select {
   width: 100%;

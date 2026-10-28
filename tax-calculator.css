@@ -1,0 +1,34 @@
+.tax-page{width:min(1050px,calc(100% - 32px));margin:0 auto;padding:48px 0 64px}
+.tax-intro{max-width:760px;margin:0 auto 28px;text-align:center}
+.tax-intro h1{margin:8px 0 12px;font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;letter-spacing:-.045em}
+.tax-intro>p:last-child{color:var(--muted);font-size:1.05rem}
+.tax-eyebrow{color:#426d16;font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.tax-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);align-items:start;gap:18px}
+.tax-card,.tax-disclaimer{padding:clamp(18px,3vw,28px);border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}
+.tax-field{display:grid;gap:7px;margin-bottom:16px;min-width:0}
+.tax-field label{font-size:.88rem;font-weight:700}
+.tax-field input,.tax-field select{width:100%;min-height:46px;padding:10px 12px;border:1px solid #bbb4aa;border-radius:10px;background:#fff;color:var(--ink)}
+.tax-field small{color:var(--muted);line-height:1.45}
+.tax-fields-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tax-check{display:flex;align-items:flex-start;gap:10px;margin:4px 0 14px;font-size:.9rem}
+.tax-check input{width:18px;height:18px;accent-color:#426d16}
+.manual-tag{color:#714200;font-size:.75rem;font-weight:700}
+.tax-submit,.tax-reset{width:100%;margin-top:8px}
+.tax-status{min-height:1.5em;margin:14px 0 0;color:var(--muted)}
+.tax-status[data-state=error]{color:#9c2525}
+.tax-result h2{margin:5px 0 20px;font-size:1.35rem}
+.tax-results{margin:0}
+.tax-results>div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.tax-results dt{color:var(--muted)}
+.tax-results dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.tax-results .tax-total{margin:0 -12px;padding:14px 12px;border-radius:10px;background:#eff8df;color:#14210a;font-weight:800}
+.rate-indicator{margin:18px 0 5px;font-weight:800}
+.tax-source,.tax-warning{color:var(--muted);font-size:.84rem;line-height:1.5;overflow-wrap:anywhere}
+.tax-warning{padding:12px;border-left:3px solid #946400;background:#fff7df;color:#463100}
+.tax-disclaimer{margin-top:18px;box-shadow:none}
+.tax-disclaimer h2{margin-top:0;font-size:1.15rem}
+.tax-disclaimer p{color:var(--muted)}
+.tax-disclaimer a{text-decoration:underline;text-underline-offset:3px}
+.tax-page :focus-visible{outline:3px solid #367144;outline-offset:2px}
+@media(max-width:760px){.tax-page{padding-top:32px}.tax-layout{grid-template-columns:1fr}}
+@media(max-width:430px){.tax-fields-row{grid-template-columns:1fr;gap:0}}

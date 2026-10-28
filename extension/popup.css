@@ -12,8 +12,10 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  width: 360px;
+  width: min(360px, 100vw);
   min-height: 540px;
+  max-height: 600px;
+  overflow-y: auto;
   font-family: Inter, Arial, sans-serif;
   background: var(--bg);
   color: var(--ink);
@@ -212,3 +214,14 @@ button.ghost {
   font-size: 12px;
   color: var(--muted);
 }
+.tax-tool { margin: 12px 0 4px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.tax-tool summary { cursor: pointer; font-size: 13px; font-weight: 800; }
+.tax-tool > p { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.tax-tool form { display: grid; gap: 7px; }
+.tax-tool form > label:not(.tax-check) { display: grid; gap: 4px; font-size: 11px; font-weight: 700; }
+.tax-tool input, .tax-tool select { min-height: 37px; padding: 7px 9px; border-radius: 9px; font-size: 12px; }
+.tax-tool .tax-check { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; font-weight: 600; }
+.tax-tool .tax-check input { flex: 0 0 16px; width: 16px; min-height: 16px; margin: 1px 0 0; }
+.tax-tool form > button { padding: 9px 10px; font-size: 12px; }
+.tax-result { margin-top: 8px; padding: 10px; border-radius: 9px; background: #eff8df; color: #23330c; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.tax-tool :focus-visible { outline: 3px solid #367144; outline-offset: 2px; }

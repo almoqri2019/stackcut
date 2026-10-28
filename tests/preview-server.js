@@ -12,6 +12,12 @@ process.env.STACKCUT_PAYPAL_CLIENT_SECRET = "e2e-paypal-client-secret";
 process.env.STACKCUT_PAYPAL_PLAN_ID = "E2E-PAYPAL-PLAN";
 global.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === "string" ? input : input.url);
+  if (url.href === "https://api.vatcomply.com/vat_rates") {
+    return Response.json([
+      { country_code: "DE", country_name: "Germany", standard_rate: 19, currency: "EUR", member_state: true },
+      { country_code: "EL", country_name: "Greece", standard_rate: 24, currency: "EUR", member_state: true },
+    ]);
+  }
   if (url.pathname === "/v1/oauth2/token") {
     if (options.headers?.Authorization !== `Basic ${Buffer.from(
       `${process.env.STACKCUT_PAYPAL_CLIENT_ID}:${process.env.STACKCUT_PAYPAL_CLIENT_SECRET}`,
@@ -34,6 +40,7 @@ global.fetch = async (input, options = {}) => {
   throw new Error(`Unexpected external request in local tests: ${url.origin}`);
 };
 const proStatusHandler = require("../api/pro-status");
+const taxRatesHandler = require("../api/tax-rates");
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -45,6 +52,7 @@ const contentTypes = {
 const routes = new Map([
   ["/", "/index.html"],
   ["/app", "/app.html"],
+  ["/tax-calculator", "/tax-calculator.html"],
   ["/privacy", "/privacy.html"],
   ["/pro", "/pro.html"],
   ["/vs/rocket-money", "/vs/rocket-money.html"],
@@ -59,6 +67,10 @@ const server = http.createServer(async (request, response) => {
   }
   if (url.pathname === "/api/pro-status") {
     await proStatusHandler(request, response);
+    return;
+  }
+  if (url.pathname === "/api/tax-rates") {
+    await taxRatesHandler(request, response);
     return;
   }
 
@@ -83,7 +95,7 @@ const server = http.createServer(async (request, response) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "worker-src 'self'",
-      "connect-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com",
+      "connect-src 'self' https://stackcut.site https://cdn.jsdelivr.net https://cdn.tailwindcss.com",
       "img-src 'self' data: https:",
       "object-src 'none'",
       "base-uri 'self'",

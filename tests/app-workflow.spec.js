@@ -5,6 +5,40 @@ const { test, expect } = require("@playwright/test");
 const { PASSPHRASE, openApp, addSubscription, chooseCsv } = require("./helpers");
 
 test.describe("app vault and subscription workflow", () => {
+  test("stores explicit tax details and renders a sourced estimate without converting currencies", async ({ page }) => {
+    await page.route("**/api/tax-rates?country=DE", (route) => route.fulfill({
+      json: {
+        status: "verified", taxType: "vat", jurisdiction: "DE", rate: 19,
+        source: { provider: "VATcomply" }, retrievedAt: "2026-10-28T10:00:00Z",
+      },
+    }));
+    await openApp(page);
+    await page.locator("#newName").fill("Taxable service");
+    await page.locator("#newPrice").fill("100");
+    await page.locator("#newCurrency").selectOption("EUR");
+    await page.locator("#newCountry").selectOption("DE");
+    await page.locator("#newTaxType").selectOption("vat");
+    await page.locator("#newTreatment").selectOption("exclusive");
+    await page.locator("#btnAdd").click();
+    const row = page.locator(".subscription-row", { hasText: "Taxable service" });
+    await expect(row.locator(".subscription-tax-summary")).toContainText("19.00");
+    await expect(row.locator(".subscription-tax-summary")).toContainText("VATcomply");
+    const saved = await page.evaluate(async () => {
+      const envelope = JSON.parse(localStorage.getItem("stackcut-v4"));
+      const material = await crypto.subtle.importKey("raw", new TextEncoder().encode("correct-horse-battery"), "PBKDF2", false, ["deriveKey"]);
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: Uint8Array.from(atob(envelope.salt), (c) => c.charCodeAt(0)), iterations: 210000, hash: "SHA-256" },
+        material, { name: "AES-GCM", length: 256 }, false, ["decrypt"],
+      );
+      const plaintext = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: Uint8Array.from(atob(envelope.iv), (c) => c.charCodeAt(0)) },
+        key, Uint8Array.from(atob(envelope.ciphertext), (c) => c.charCodeAt(0)),
+      );
+      return JSON.parse(new TextDecoder().decode(plaintext)).subscriptions[0];
+    });
+    expect(saved).toMatchObject({ currency: "EUR", billingInterval: "monthly", jurisdiction: "DE", taxType: "vat", taxTreatment: "exclusive", taxRateSource: null });
+  });
+
   test("every app runtime DOM reference exists in the document", async ({ page }) => {
     const appHtml = fs.readFileSync(path.join(__dirname, "..", "app.html"), "utf8");
     const runtime = fs.readFileSync(path.join(__dirname, "..", "app-runtime.js"), "utf8");

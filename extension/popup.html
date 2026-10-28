@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stackcut</title>
     <link rel="stylesheet" href="popup.css" />
+    <script defer src="tax-engine.js"></script>
   </head>
   <body>
     <div class="app">
@@ -65,9 +66,33 @@
 
         <div id="list" class="list"></div>
         <div id="message" class="message"></div>
+        <details class="tax-tool">
+          <summary>Estimate subscription tax</summary>
+          <p>Confirm the amount and currency. No email or subscription details are sent.</p>
+          <form id="taxForm">
+            <label for="taxCountry">Country or jurisdiction</label>
+            <select id="taxCountry" required><option value="">Choose a country</option></select>
+            <label for="taxLocation">State / province, if applicable<input id="taxLocation" maxlength="80"></label>
+            <div class="row">
+              <label for="taxAmount">Amount<input id="taxAmount" type="number" min="0" step="any" required></label>
+              <label for="taxCurrency">Currency<input id="taxCurrency" value="USD" maxlength="3" required></label>
+            </div>
+            <div class="row">
+              <label for="taxInterval">Billing interval<select id="taxInterval"><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select></label>
+              <label for="taxType">Tax type<select id="taxType" required><option value="">Choose</option><option value="vat">VAT</option><option value="gst">GST</option><option value="sales tax">Sales tax</option></select></label>
+            </div>
+            <label for="taxTreatment">Price treatment<select id="taxTreatment"><option value="exclusive">Tax added</option><option value="inclusive">Includes tax</option></select></label>
+            <label class="tax-check"><input id="taxManualEnabled" type="checkbox"> Use my independently verified manual rate</label>
+            <label for="taxManualRate">Manual rate (%) — user supplied<input id="taxManualRate" type="number" min="0" max="100" step="any" disabled></label>
+            <label class="tax-check"><input id="taxConfirm" type="checkbox" required> I confirmed the amount and currency</label>
+            <button type="submit">Calculate estimate</button>
+          </form>
+          <div id="taxMessage" class="message" role="status" aria-live="polite"></div>
+          <div id="taxResult" class="tax-result" hidden></div>
+        </details>
       </main>
     </div>
 
-    <script src="popup.js"></script>
+    <script defer src="popup.js"></script>
   </body>
 </html>

@@ -10,6 +10,7 @@
     <title>Subscription audit — STACKCUT</title>
     <link rel="canonical" href="https://stackcut.site/app" />
     <link rel="stylesheet" href="/app.css" />
+    <script defer src="/shared/tax-engine.js"></script>
     <script defer src="/app-runtime.js"></script>
   </head>
   <body>
@@ -70,6 +71,7 @@
         </a>
         <nav class="app-nav" aria-label="App navigation">
           <a href="/">Home</a>
+          <a href="/tax-calculator">Tax calculator</a>
           <a href="/privacy">Privacy</a>
           <span id="proStatus" class="plan-badge" aria-live="polite">Checking plan…</span>
         </nav>
@@ -100,7 +102,7 @@
         <article class="summary-card">
           <span class="summary-label">Monthly spend</span>
           <strong id="monthlySpend">$0.00</strong>
-          <span class="summary-detail">Based on the records you entered</span>
+          <span class="summary-detail">Entered recurring prices; currencies are not converted</span>
         </article>
         <article class="summary-card">
           <span class="summary-label">In your list</span>
@@ -115,7 +117,7 @@
         <article class="summary-card">
           <span class="summary-label">Potential monthly savings</span>
           <strong id="potentialSavings">$0.00</strong>
-          <span class="summary-detail">Only items you explicitly mark to cut</span>
+          <span class="summary-detail">Entered prices; tax applicability may vary</span>
         </article>
       </section>
 
@@ -146,7 +148,7 @@
                 <input id="newName" name="name" maxlength="64" required />
               </label>
               <label>
-                Monthly price
+                Amount per billing interval
                 <input
                   id="newPrice"
                   name="price"
@@ -156,6 +158,18 @@
                   step="0.01"
                   required
                 />
+              </label>
+              <label>Currency
+                <select id="newCurrency">
+                  <option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option>
+                  <option>AUD</option><option>JPY</option><option>CHF</option><option>NZD</option>
+                </select>
+              </label>
+              <label>Billing interval
+                <select id="newInterval">
+                  <option value="monthly">Monthly</option><option value="annual">Annual</option>
+                  <option value="weekly">Weekly</option><option value="quarterly">Quarterly</option>
+                </select>
               </label>
               <label>
                 Category
@@ -170,6 +184,24 @@
                   <option>Other</option>
                 </select>
               </label>
+              <label>Country or jurisdiction
+                <select id="newCountry"><option value="">Unknown / not set</option></select>
+              </label>
+              <label>Tax type
+                <select id="newTaxType">
+                  <option value="">Unknown / not set</option><option value="vat">VAT</option>
+                  <option value="gst">GST</option><option value="sales tax">Sales tax</option>
+                </select>
+              </label>
+              <label>Price tax treatment
+                <select id="newTreatment">
+                  <option value="unknown">Unknown / not set</option><option value="exclusive">Tax added to price</option>
+                  <option value="inclusive">Price includes tax</option>
+                </select>
+              </label>
+              <label>State / province (if applicable)<input id="newJurisdictionDetail" maxlength="80"></label>
+              <label class="tax-manual-control"><span>Use an explicitly user-supplied manual rate</span><input id="newManualEnabled" type="checkbox"></label>
+              <label>Manual rate (%)<input id="newManualRate" type="number" min="0" max="100" step="any" disabled></label>
               <button id="btnAdd" class="button button-primary" type="submit">
                 Add subscription
               </button>
@@ -206,6 +238,7 @@
               and can be read by anyone who gets the downloaded file.
             </p>
             <a href="/privacy">Read the privacy details</a>
+            <p>Tax amounts are estimates, not confirmed invoice charges. <a href="/tax-calculator">Open the international tax calculator</a>.</p>
           </section>
         </aside>
       </section>
@@ -268,8 +301,12 @@
         <input id="editId" type="hidden" />
         <label for="editName">Name</label>
         <input id="editName" maxlength="64" required />
-        <label for="editPrice">Monthly price</label>
+        <label for="editPrice">Amount per billing interval</label>
         <input id="editPrice" type="number" min="0.01" max="10000" step="0.01" required />
+        <label for="editCurrency">Currency</label>
+        <select id="editCurrency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option><option>JPY</option><option>CHF</option><option>NZD</option></select>
+        <label for="editInterval">Billing interval</label>
+        <select id="editInterval"><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select>
         <label for="editJob">Category</label>
         <select id="editJob">
           <option value="Unknown">Unknown</option>
@@ -281,6 +318,17 @@
           <option>Gym</option>
           <option>Other</option>
         </select>
+        <label for="editCountry">Country or jurisdiction</label>
+        <select id="editCountry"><option value="">Unknown / not set</option></select>
+        <label for="editTaxType">Tax type</label>
+        <select id="editTaxType"><option value="">Unknown / not set</option><option value="vat">VAT</option><option value="gst">GST</option><option value="sales tax">Sales tax</option></select>
+        <label for="editTreatment">Price tax treatment</label>
+        <select id="editTreatment"><option value="unknown">Unknown / not set</option><option value="exclusive">Tax added to price</option><option value="inclusive">Price includes tax</option></select>
+        <label for="editJurisdictionDetail">State / province (if applicable)</label>
+        <input id="editJurisdictionDetail" maxlength="80" />
+        <label class="tax-manual-control" for="editManualEnabled"><span>Use an explicitly user-supplied manual rate</span><input id="editManualEnabled" type="checkbox" /></label>
+        <label for="editManualRate">Manual rate (%)</label>
+        <input id="editManualRate" type="number" min="0" max="100" step="any" disabled />
         <div class="modal-actions">
           <button class="button button-primary" type="submit">Save changes</button>
           <button id="btnCancelEdit" class="button button-secondary" type="button">Cancel</button>

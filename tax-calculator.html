@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Estimate VAT, GST, or sales tax on software subscriptions. Rates and applicability vary by jurisdiction.">
+  <link rel="canonical" href="https://stackcut.site/tax-calculator">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/tax-calculator.css">
+  <script defer src="/shared/tax-engine.js"></script>
+  <script defer src="/tax-calculator.js"></script>
+  <title>International Tax Calculator for Software Subscriptions — STACKCUT</title>
+</head>
+<body>
+  <header class="site-header"><div class="inner">
+    <a class="brand" href="/" aria-label="STACKCUT home"><span class="logo-mark">SC</span><span>STACKCUT</span></a>
+    <nav class="site-nav" aria-label="Primary navigation"><a href="/">Home</a><a href="/app">Open app</a><a href="/privacy">Privacy</a></nav>
+    <div class="header-actions"><a class="button button-primary" href="/app">Start free audit</a></div>
+  </div></header>
+  <main class="tax-page">
+    <section class="tax-intro">
+      <p class="tax-eyebrow">Software subscription estimate</p>
+      <h1>International Tax Calculator for Software Subscriptions</h1>
+      <p>Estimate VAT, GST, or sales tax for a recurring software price. A reference rate does not predict the vendor's final invoice.</p>
+    </section>
+    <div class="tax-layout">
+      <form id="taxForm" class="tax-card" novalidate>
+        <div class="tax-field">
+          <label for="taxCountry">Country or jurisdiction</label>
+          <input id="taxCountry" list="taxCountries" autocomplete="country-name" required>
+          <datalist id="taxCountries"></datalist>
+          <small id="countryHelp">Automated reference rates currently cover EU standard VAT only.</small>
+        </div>
+        <div class="tax-fields-row">
+          <div class="tax-field"><label for="taxType">Tax type</label><select id="taxType" required><option value="">Choose tax type</option><option value="vat">VAT</option><option value="gst">GST</option><option value="sales tax">Sales tax</option></select></div>
+          <div class="tax-field"><label for="taxJurisdictionDetail">State / province (optional)</label><input id="taxJurisdictionDetail" maxlength="80" autocomplete="address-level1" placeholder="Needed for some local taxes"></div>
+        </div>
+        <div class="tax-fields-row">
+          <div class="tax-field"><label for="taxAmount">Subscription amount</label><input id="taxAmount" type="number" min="0" step="any" inputmode="decimal" required></div>
+          <div class="tax-field"><label for="taxCurrency">Currency (ISO 4217)</label><input id="taxCurrency" value="USD" maxlength="3" autocapitalize="characters" required></div>
+        </div>
+        <div class="tax-fields-row">
+          <div class="tax-field"><label for="taxInterval">Billing interval</label><select id="taxInterval"><option value="monthly">Monthly</option><option value="annual">Annual</option><option value="weekly">Weekly</option><option value="quarterly">Quarterly</option></select></div>
+          <div class="tax-field"><label for="taxTreatment">Price treatment</label><select id="taxTreatment" required><option value="exclusive">Tax added to price</option><option value="inclusive">Price includes tax</option></select></div>
+        </div>
+        <label class="tax-check"><input id="manualRateEnabled" type="checkbox"><span>Use a manual rate I have independently verified</span></label>
+        <div class="tax-field" id="manualRateField" hidden><label for="manualRate">Manual tax rate (%) <span class="manual-tag">User-supplied</span></label><input id="manualRate" type="number" min="0" max="100" step="any" disabled></div>
+        <button class="button tax-submit" type="submit">Calculate estimate</button>
+        <button id="taxReset" class="button-secondary tax-reset" type="reset">Reset</button>
+        <p id="taxStatus" class="tax-status" role="status" aria-live="polite"></p>
+      </form>
+      <section id="taxResult" class="tax-card tax-result" aria-labelledby="taxResultTitle" hidden>
+        <p class="tax-eyebrow">Estimate only</p><h2 id="taxResultTitle">Estimated subscription tax</h2>
+        <dl class="tax-results">
+          <div><dt>Base amount</dt><dd id="resultBase">—</dd></div>
+          <div><dt>Estimated tax</dt><dd id="resultTax">—</dd></div>
+          <div class="tax-total"><dt>Estimated total per billing period</dt><dd id="resultTotal">—</dd></div>
+          <div><dt>Monthly equivalent</dt><dd id="resultMonthly">—</dd></div>
+          <div><dt>Annual equivalent</dt><dd id="resultAnnual">—</dd></div>
+        </dl>
+        <p id="resultRate" class="rate-indicator"></p><p id="resultSource" class="tax-source"></p><p id="resultWarning" class="tax-warning"></p>
+      </section>
+    </div>
+    <aside class="tax-disclaimer">
+      <h2>Important limitations</h2>
+      <p>This estimates indirect consumption taxes on software subscriptions. It is not an income-tax calculator, tax-return tool, tax advice, or a guarantee of a vendor's invoice. Tax applicability may depend on customer type, exact location, product classification, exemptions, tax-inclusive pricing, and supplier obligations.</p>
+      <p>Automated rates use the EU standard VAT reference from <a href="https://www.vatcomply.com/api/vat-rates/" rel="noopener noreferrer">VATcomply</a>, which documents data from the European Commission TEDB. A standard rate may not apply to a particular purchase. Retrieval time is not a legal effective date. Outside this coverage, no rate is assumed; a manual rate is user-supplied.</p>
+      <p>Tax rounds to the currency's minor-unit precision per period. Monthly equivalents use 52 weeks and 12 months per year. No currency conversion is performed.</p>
+    </aside>
+  </main>
+  <footer class="footer"><div class="footer-inner"><div>© STACKCUT</div><div class="footer-links"><a href="/">Home</a><a href="/app">App</a><a href="/privacy">Privacy</a></div></div></footer>
+</body>
+</html>

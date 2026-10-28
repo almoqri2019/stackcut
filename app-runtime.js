@@ -9,6 +9,7 @@
   const MAX_SUBSCRIPTIONS = 5000;
   const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
   const MAX_IMPORT_ROWS = 5000;
+  const taxRateCache = new Map();
   const $ = (id) => document.getElementById(id);
 
   let state = { subscriptions: [], auditCount: 0 };
@@ -37,11 +38,19 @@
     }, 3500);
   }
 
-  function formatMoney(value) {
+  function formatMoney(value, currency = "USD") {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: "USD",
+      currency,
     }).format(Number(value) || 0);
+  }
+
+  function formatCurrencyTotals(totals) {
+    if (!totals.size) return formatMoney(0);
+    return Array.from(totals.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([currency, value]) => formatMoney(value, currency))
+      .join(" · ");
   }
 
   function toBase64(bytes) {
@@ -124,15 +133,39 @@
     if (!name || !Number.isFinite(price) || price <= 0 || price > 10000) {
       throw new Error(`Saved subscription ${index + 1} has invalid data.`);
     }
+    const currency = String(item.currency || "USD").trim().toUpperCase();
+    window.StackcutTax.currencyDigits(currency);
+    const intervalValue = String(item.billingInterval || item.interval || "monthly").toLowerCase();
+    const billingInterval = intervalValue === "yearly" ? "annual" : intervalValue;
+    if (!["monthly", "annual", "weekly", "quarterly"].includes(billingInterval)) {
+      throw new Error(`Saved subscription ${index + 1} has an unsupported billing interval.`);
+    }
+    const jurisdiction = window.StackcutTax.normalizeCountryCode(item.jurisdiction);
+    if (jurisdiction && !window.StackcutTax.countries.some((country) => country.code === jurisdiction)) {
+      throw new Error(`Saved subscription ${index + 1} has an invalid jurisdiction.`);
+    }
+    const taxRateSource = item.taxRateSource === "manual" ? "manual" : null;
+    const taxRate = taxRateSource ? Number(item.taxRate) : null;
+    if (taxRateSource && (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100)) {
+      throw new Error(`Saved subscription ${index + 1} has an invalid manual tax rate.`);
+    }
     return {
       id: String(item.id || crypto.randomUUID()),
       name,
-      price: Math.round(price * 100) / 100,
+      price: window.StackcutTax.roundCurrency(price, currency),
+      currency,
+      billingInterval,
       category: String(item.category ?? item.job ?? "Unknown").slice(0, 32) || "Unknown",
       transactionDate: String(item.transactionDate ?? "").slice(0, 32),
       decision: ["keep", "cut"].includes(item.decision ?? item.keep)
         ? item.decision ?? item.keep
         : null,
+      jurisdiction,
+      jurisdictionDetail: String(item.jurisdictionDetail ?? "").slice(0, 80),
+      taxType: ["vat", "gst", "sales tax"].includes(item.taxType) ? item.taxType : "",
+      taxTreatment: ["inclusive", "exclusive"].includes(item.taxTreatment) ? item.taxTreatment : "unknown",
+      taxRateSource,
+      taxRate,
     };
   }
 
@@ -308,6 +341,61 @@
     return button;
   }
 
+  async function fetchTaxRate(jurisdiction) {
+    if (taxRateCache.has(jurisdiction)) return taxRateCache.get(jurisdiction);
+    const request = fetch(`/api/tax-rates?country=${encodeURIComponent(jurisdiction)}`, {
+      headers: { Accept: "application/json" }, credentials: "same-origin",
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.reason || `Rate lookup returned HTTP ${response.status}.`);
+      return data;
+    });
+    taxRateCache.set(jurisdiction, request);
+    try { return await request; } catch (error) {
+      taxRateCache.delete(jurisdiction);
+      throw error;
+    }
+  }
+
+  async function updateTaxSummary(item, output) {
+    if (!item.jurisdiction || !item.taxType || item.taxTreatment === "unknown") {
+      output.textContent = "Tax estimate unavailable: jurisdiction, tax type, or price treatment is unknown.";
+      return;
+    }
+    let rateInfo;
+    if (item.taxRateSource === "manual") {
+      rateInfo = {
+        status: "manual", rate: item.taxRate, jurisdiction: item.jurisdiction,
+        taxType: item.taxType, userSupplied: true,
+      };
+    } else if (item.taxType === "vat") {
+      try { rateInfo = await fetchTaxRate(item.jurisdiction); }
+      catch (error) {
+        output.textContent = `Verified rate unavailable (${error.message}); no zero rate was assumed.`;
+        return;
+      }
+    } else {
+      output.textContent = "No automated rate is available for this tax type. Enter a manual rate you have verified.";
+      return;
+    }
+    const calculation = window.StackcutTax.calculate({
+      amount: item.price, currency: item.currency, interval: item.billingInterval,
+      taxType: item.taxType, jurisdiction: item.jurisdiction, treatment: item.taxTreatment,
+    }, rateInfo);
+    if (!["verified", "manual"].includes(calculation.status)) {
+      output.textContent = calculation.reason || "No rate is available; no zero rate was assumed.";
+      return;
+    }
+    const source = calculation.status === "manual"
+      ? "Manual, user-supplied rate"
+      : `Verified standard-rate reference retrieved ${calculation.retrievedAt || "at unknown time"}`;
+    const region = item.jurisdictionDetail ? `${item.jurisdiction} · ${item.jurisdictionDetail}` : item.jurisdiction;
+    output.textContent =
+      `Estimated ${item.taxType.toUpperCase()} for ${region}: tax ${formatMoney(calculation.tax, item.currency)} per ${item.billingInterval}; ` +
+      `total ${formatMoney(calculation.total, item.currency)}; monthly ${formatMoney(calculation.monthlyEquivalent, item.currency)}; ` +
+      `annual ${formatMoney(calculation.annualEquivalent, item.currency)}. ${source}. Estimate only, not a confirmed invoice charge.`;
+  }
+
   function renderSubscriptions() {
     const list = $("subscriptionList");
     const empty = $("listEmpty");
@@ -328,11 +416,18 @@
       name.textContent = item.name;
       const meta = document.createElement("div");
       meta.className = "subscription-meta";
-      const details = [formatMoney(item.price) + "/mo", item.category];
+      const interval = item.billingInterval === "monthly" ? "mo" : item.billingInterval;
+      const details = [`${formatMoney(item.price, item.currency)}/${interval}`, item.category];
       details.push("Usage history not provided");
       if (item.transactionDate) details.push(`Transaction date: ${item.transactionDate}`);
       meta.textContent = details.join(" · ");
-      main.append(name, meta);
+      const taxSummary = document.createElement("p");
+      taxSummary.className = "subscription-tax-summary";
+      taxSummary.textContent = "Loading tax estimate…";
+      main.append(name, meta, taxSummary);
+      void updateTaxSummary(item, taxSummary).catch(() => {
+        taxSummary.textContent = "Tax estimate unavailable; no rate was assumed.";
+      });
 
       if (item.category !== "Unknown" && categoryCounts.get(item.category) > 1) {
         const overlap = document.createElement("span");
@@ -370,23 +465,29 @@
     const totals = new Map();
     for (const item of state.subscriptions) {
       if (item.category === "Unknown") continue;
-      totals.set(item.category, (totals.get(item.category) || 0) + item.price);
+      if (!totals.has(item.category)) totals.set(item.category, new Map());
+      const byCurrency = totals.get(item.category);
+      const monthly = window.StackcutTax.toMonthlyEquivalent(item.price, item.currency, item.billingInterval);
+      byCurrency.set(item.currency, (byCurrency.get(item.currency) || 0) + monthly);
     }
-    const entries = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
+    const entries = Array.from(totals.entries()).flatMap(([category, currencies]) =>
+      Array.from(currencies, ([currency, total]) => ({ category, currency, total })),
+    );
     empty.hidden = entries.length > 0;
-    const max = Math.max(...entries.map(([, total]) => total), 1);
-    for (const [category, total] of entries) {
+    const maxima = new Map();
+    for (const entry of entries) maxima.set(entry.currency, Math.max(maxima.get(entry.currency) || 0, entry.total));
+    for (const { category, currency, total } of entries) {
       const line = document.createElement("div");
       line.className = "category-line";
       const label = document.createElement("span");
-      label.textContent = category;
+      label.textContent = `${category} · ${currency}`;
       const amount = document.createElement("strong");
-      amount.textContent = formatMoney(total);
+      amount.textContent = formatMoney(total, currency);
       const track = document.createElement("div");
       track.className = "category-track";
       const fill = document.createElement("div");
       fill.className = "category-fill";
-      fill.style.width = `${Math.max(3, (total / max) * 100)}%`;
+      fill.style.width = `${Math.max(3, (total / maxima.get(currency)) * 100)}%`;
       track.append(fill);
       line.append(label, amount, track);
       container.append(line);
@@ -395,17 +496,19 @@
 
   function render() {
     const items = state.subscriptions;
-    const monthly = items.reduce((sum, item) => sum + item.price, 0);
-    const savings = items.reduce(
-      (sum, item) => sum + (item.decision === "cut" ? item.price : 0),
-      0,
-    );
+    const monthly = new Map();
+    const savings = new Map();
+    for (const item of items) {
+      const value = window.StackcutTax.toMonthlyEquivalent(item.price, item.currency, item.billingInterval);
+      monthly.set(item.currency, (monthly.get(item.currency) || 0) + value);
+      if (item.decision === "cut") savings.set(item.currency, (savings.get(item.currency) || 0) + value);
+    }
     const categories = getKnownCategoryCounts();
     const overlaps = Array.from(categories.values()).filter((count) => count > 1).length;
-    $("monthlySpend").textContent = formatMoney(monthly);
+    $("monthlySpend").textContent = formatCurrencyTotals(monthly);
     $("subCount").textContent = String(items.length);
     $("overlapCount").textContent = String(overlaps);
-    $("potentialSavings").textContent = formatMoney(savings);
+    $("potentialSavings").textContent = formatCurrencyTotals(savings);
     $("auditUsage").textContent = isPro()
       ? `${state.auditCount} audits completed`
       : `${state.auditCount} of ${FREE_AUDIT_LIMIT} free audits used`;
@@ -445,17 +548,53 @@
     return name.length >= 2 && name.length <= 64 && /^[\p{L}\p{N} .+\-_()]+$/u.test(name);
   }
 
+  function readTaxDetails(prefix) {
+    const currency = $(`${prefix}Currency`).value.trim().toUpperCase();
+    window.StackcutTax.currencyDigits(currency);
+    const jurisdiction = window.StackcutTax.normalizeCountryCode($(`${prefix}Country`).value);
+    const taxType = $(`${prefix}TaxType`).value;
+    const taxTreatment = $(`${prefix}Treatment`).value;
+    const manual = $(`${prefix}ManualEnabled`).checked;
+    const rawRate = $(`${prefix}ManualRate`).value;
+    let taxRate = null;
+    if (manual) {
+      taxRate = Number(rawRate);
+      if (!jurisdiction || !taxType || taxTreatment === "unknown") {
+        throw new Error("Choose jurisdiction, tax type, and price treatment for a manual rate.");
+      }
+      if (!rawRate.trim() || !Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
+        throw new Error("Enter a manual rate from 0 to 100%; it will be labeled user-supplied.");
+      }
+    }
+    return {
+      currency,
+      billingInterval: $(`${prefix}Interval`).value,
+      jurisdiction,
+      taxType,
+      taxTreatment,
+      jurisdictionDetail: $(`${prefix}JurisdictionDetail`).value.trim(),
+      taxRateSource: manual ? "manual" : null,
+      taxRate,
+    };
+  }
+
   async function addSubscription(event) {
     event.preventDefault();
     const name = $("newName").value.trim();
-    const price = Number($("newPrice").value);
+    const rawPrice = $("newPrice").value;
+    const price = Number(rawPrice);
     const category = $("newJob").value || "Unknown";
     if (!validName(name)) {
       setStatus($("addStatus"), "Use a 2–64 character name with letters, numbers, spaces, or . + - _ ( ).", true);
       return;
     }
-    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
-      setStatus($("addStatus"), "Enter a monthly price greater than $0 and no more than $10,000.", true);
+    if (!rawPrice.trim() || !Number.isFinite(price) || price <= 0 || price > 10000) {
+      setStatus($("addStatus"), "Enter a positive amount no more than 10,000 per billing interval.", true);
+      return;
+    }
+    let taxDetails;
+    try { taxDetails = readTaxDetails("new"); } catch (error) {
+      setStatus($("addStatus"), error.message, true);
       return;
     }
     if (state.subscriptions.length >= subscriptionLimit()) {
@@ -469,7 +608,7 @@
     const previous = state.subscriptions;
     state.subscriptions = [
       ...previous,
-      normalizeSubscription({ id: crypto.randomUUID(), name, price, category }),
+      normalizeSubscription({ id: crypto.randomUUID(), name, price, category, ...taxDetails }),
     ];
     if (await saveAndRender(`${name} added.`)) {
       $("addForm").reset();
@@ -512,6 +651,15 @@
     $("editName").value = item.name;
     $("editPrice").value = String(item.price);
     $("editJob").value = item.category;
+    $("editCurrency").value = item.currency;
+    $("editInterval").value = item.billingInterval;
+    $("editCountry").value = item.jurisdiction;
+    $("editTaxType").value = item.taxType;
+    $("editTreatment").value = item.taxTreatment;
+    $("editJurisdictionDetail").value = item.jurisdictionDetail;
+    $("editManualEnabled").checked = item.taxRateSource === "manual";
+    $("editManualRate").value = item.taxRateSource === "manual" ? String(item.taxRate) : "";
+    $("editManualRate").disabled = !$("editManualEnabled").checked;
     setStatus($("editStatus"), "");
     openDialog($("editDialog"));
     $("editName").focus();
@@ -522,19 +670,26 @@
     const item = state.subscriptions.find((entry) => entry.id === $("editId").value);
     if (!item) return;
     const name = $("editName").value.trim();
-    const price = Number($("editPrice").value);
+    const rawPrice = $("editPrice").value;
+    const price = Number(rawPrice);
     if (!validName(name)) {
       setStatus($("editStatus"), "Enter a valid 2–64 character name.", true);
       return;
     }
-    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
-      setStatus($("editStatus"), "Enter a price greater than $0 and no more than $10,000.", true);
+    if (!rawPrice.trim() || !Number.isFinite(price) || price <= 0 || price > 10000) {
+      setStatus($("editStatus"), "Enter a positive amount no more than 10,000 per billing interval.", true);
       return;
     }
-    const previous = { name: item.name, price: item.price, category: item.category };
+    let taxDetails;
+    try { taxDetails = readTaxDetails("edit"); } catch (error) {
+      setStatus($("editStatus"), error.message, true);
+      return;
+    }
+    const previous = { ...item };
     item.name = name;
-    item.price = Math.round(price * 100) / 100;
+    item.price = window.StackcutTax.roundCurrency(price, taxDetails.currency);
     item.category = $("editJob").value || "Unknown";
+    Object.assign(item, taxDetails);
     if (await saveAndRender("Subscription updated.")) {
       closeDialog($("editDialog"));
     } else {
@@ -843,6 +998,28 @@
   }
 
   function setupAppEvents() {
+    for (const id of ["newCountry", "editCountry"]) {
+      for (const country of window.StackcutTax.countries) {
+        const option = document.createElement("option");
+        option.value = country.code;
+        const availability = window.StackcutTax.euVatCountries.includes(country.code)
+          ? "EU standard VAT reference"
+          : "manual only / unsupported";
+        option.textContent = `${country.name} (${country.code}) — ${availability}`;
+        $(id).append(option);
+      }
+    }
+    for (const prefix of ["new", "edit"]) {
+      const toggle = $(`${prefix}ManualEnabled`);
+      const rate = $(`${prefix}ManualRate`);
+      const sync = () => {
+        rate.disabled = !toggle.checked;
+        rate.required = toggle.checked;
+      };
+      toggle.addEventListener("change", sync);
+      if (prefix === "new") $("addForm").addEventListener("reset", () => window.setTimeout(sync));
+      sync();
+    }
     $("btnExport").addEventListener("click", exportJSON);
     $("btnReset").addEventListener("click", () => void resetAll());
     $("btnRunAudit").addEventListener("click", () => void runAudit());

@@ -240,4 +240,75 @@ toolName.addEventListener('change', (event) => {
   if (PRESET[v]) toolPrice.value = PRESET[v];
 });
 
+const taxForm = document.getElementById('taxForm');
+const taxCountry = document.getElementById('taxCountry');
+const taxManual = document.getElementById('taxManualEnabled');
+const taxManualRate = document.getElementById('taxManualRate');
+const taxMessage = document.getElementById('taxMessage');
+const taxResult = document.getElementById('taxResult');
+
+for (const country of window.StackcutTax.countries) {
+  const option = document.createElement('option');
+  option.value = country.code;
+  const support = window.StackcutTax.euVatCountries.includes(country.code)
+    ? 'EU standard VAT reference'
+    : 'manual only / unsupported';
+  option.textContent = `${country.name} (${country.code}) — ${support}`;
+  taxCountry.append(option);
+}
+taxManual.addEventListener('change', () => {
+  taxManualRate.disabled = !taxManual.checked;
+  taxManualRate.required = taxManual.checked;
+});
+taxForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  taxResult.hidden = true;
+  const jurisdiction = taxCountry.value;
+  const input = {
+    amount: document.getElementById('taxAmount').value,
+    currency: document.getElementById('taxCurrency').value.trim().toUpperCase(),
+    interval: document.getElementById('taxInterval').value,
+    taxType: document.getElementById('taxType').value,
+    treatment: document.getElementById('taxTreatment').value,
+    jurisdiction,
+    jurisdictionDetail: document.getElementById('taxLocation').value.trim(),
+  };
+  try {
+    let rateInfo;
+    if (taxManual.checked) {
+      rateInfo = {
+        status: 'manual', rate: taxManualRate.value, jurisdiction,
+        taxType: input.taxType, userSupplied: true,
+      };
+    } else if (input.taxType === 'vat') {
+      taxMessage.textContent = 'Looking up a public standard VAT reference…';
+      const response = await fetch(
+        `https://stackcut.site/api/tax-rates?country=${encodeURIComponent(jurisdiction)}`,
+        { headers: { Accept: 'application/json' }, credentials: 'omit' },
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.reason || `Rate lookup returned HTTP ${response.status}.`);
+      rateInfo = data;
+    } else {
+      rateInfo = { status: 'unsupported', reason: 'Automated lookup covers EU standard VAT only. No rate was assumed.' };
+    }
+    const calculation = window.StackcutTax.calculate(input, rateInfo);
+    if (!['verified', 'manual'].includes(calculation.status)) {
+      taxMessage.textContent = calculation.reason || 'No rate available; no zero rate was assumed.';
+      return;
+    }
+    const money = (value) => window.StackcutTax.formatMoney(value, calculation.currency);
+    const provider = calculation.status === 'manual'
+      ? 'Manual, user-supplied rate.'
+      : `VATcomply standard-rate reference, retrieved ${calculation.retrievedAt || 'at unknown time'}.`;
+    taxResult.textContent =
+      `Tax: ${money(calculation.tax)} per ${calculation.interval}; total: ${money(calculation.total)}; ` +
+      `monthly: ${money(calculation.monthlyEquivalent)}; annual: ${money(calculation.annualEquivalent)}. ${provider} Estimate only; invoice may differ.`;
+    taxResult.hidden = false;
+    taxMessage.textContent = 'Calculated locally. Only the selected country code was sent for rate lookup.';
+  } catch (error) {
+    taxMessage.textContent = `Could not calculate: ${error.message}`;
+  }
+});
+
 getTools();
