@@ -27,7 +27,7 @@
         <div class="header-actions">
           <a class="button-ghost" href="/app">Open app</a>
           <a class="button button-primary pricing-pill" href="#pricing">Start free audit</a>
-          <button class="mobile-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Toggle menu">
+          <button class="mobile-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
             Menu
           </button>
         </div>
@@ -188,16 +188,5 @@
       </div>
     </footer>
 
-    <script>
-      const toggle = document.querySelector('.mobile-toggle');
-      const mobileMenu = document.getElementById('mobileMenu');
-      if (toggle && mobileMenu) {
-        toggle.addEventListener('click', () => {
-          const isOpen = !mobileMenu.classList.contains('hidden');
-          mobileMenu.classList.toggle('hidden');
-          toggle.setAttribute('aria-expanded', String(!isOpen));
-        });
-      }
-    </script>
   </body>
 </html>

@@ -155,17 +155,6 @@
       "has": [
         {
           "type": "host",
-          "value": "www.stackcut.site"
-        }
-      ],
-      "destination": "https://stackcut.site/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
           "value": "stackcut.net"
         }
       ],

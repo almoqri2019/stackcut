@@ -1,30 +1,56 @@
-# UI Regression Report
+# STACKCUT Homepage UI Regression Report
 
 ## Confirmed root cause
 
-The deployed homepage regression was caused by a combination of:
+The production homepage response at `https://www.stackcut.site/` was HTTP 200 and its bytes matched `index.html` in the checked-out `main` commit. The latest successful GitHub production deployment also points to that same commit (`a68aa6e1a42d77d56fc627d577479684c7680a12`). Its deployment URL returned `/styles.css` as HTTP 200 (`text/css`) and `/scripts.js` as HTTP 404 (`text/plain`):
 
-1. A stale alternate landing page artifact (`index-landing.html`) and a runtime dependency on the Tailwind CDN in the main marketing page.
-2. The homepage being designed around a large utility-class system that is not reliably generated in production when the CDN is unavailable or when a stale alternate entry point is served.
+- `https://stackcut.site/` redirects to `https://www.stackcut.site/`.
+- The deployed Vercel configuration redirects `www.stackcut.site` back to `stackcut.site`.
+- On the custom domain, requests for either asset alternate between the two hosts until the browser stops following redirects. They do not reach a normal asset response. This is a host-redirect loop, not a missing CSS file or a CSP block.
+- On the direct deployment URL, the CSS file is present and the browser applies it; the referenced JavaScript file is genuinely absent. Chromium logged the script 404 and strict MIME-type error.
 
-This meant the site could render as a mostly unstyled HTML document even though the repo contains a polished landing page intended for production use.
+The source also had two independent issues:
 
-## Evidence from the repository
+- `styles.css` exists at the deployment root and is tracked in Git, but `scripts.js` did not exist even though `index.html` referenced it.
+- The mobile panel had `display: none` at every viewport, including after the menu's `hidden` class was removed.
 
-- `index.html` loads `https://cdn.tailwindcss.com` directly and relies on a large set of generated utility classes.
-- `index-landing.html` contains a different artifact with a generated CSS block and a generic `React Artifact` title, suggesting a stale or fallback build artifact rather than the active product landing page.
-- `styles.css` contains a local, version-controlled design system that is suitable for a production static landing page.
-- `vercel.json` allows the Tailwind CDN origin, but the app should not rely on a third-party runtime CSS generator for essential layout.
+No `.vercelignore` or secondary Vercel config excludes the root assets. The GitHub production deployment record reports success for the checked-out `main` commit, which also matched `origin/main`. The direct deployment's `/app`, `/pro`, `/privacy`, and `/vs/rocket-money` routes returned their expected pages; their existing Vercel rewrites are retained.
 
-## Fix applied
+## Changes made
 
-- Replaced the runtime-Tailwind homepage with a static local stylesheet design system.
-- Added a lightweight mobile menu and responsive layout to keep the page styled without the CDN.
-- Redirected the stale `index-landing.html` artifact back to `/` so it stops serving an obsolete layout.
-- Kept the app’s existing product and pricing flow intact while removing the untrusted dependency on third-party CSS generation.
+- Updated the root `styles.css` with the missing responsive mobile-panel visibility, keyboard focus styling, reduced-motion support, improved small-screen header fit, and a higher-contrast pricing accent.
+- Added root `scripts.js` for the mobile menu. It synchronizes `aria-expanded` and the accessible label, closes on Escape or link selection, and returns focus to the toggle on Escape.
+- Updated `index.html` to use the external menu script and its accessible open-menu label; removed duplicate inline menu code.
+- Removed the conflicting `www.stackcut.site` to apex redirect from `vercel.json`. This lets Vercel's existing apex-to-www redirect settle on one host instead of looping asset requests.
+- Preserved the existing app, Pro, privacy, and comparison route configuration.
+- Captured and visually inspected [homepage-repaired.png](./homepage-repaired.png).
 
-## Follow-up recommendations
+Application, payment, and entitlement source files were not changed.
 
-- Keep the canonical marketing content in `index.html` and avoid alternate landing-page artifacts in the repository root.
-- Prefer local, version-controlled styles for all static marketing pages and only use network-hosted assets for optional non-essential enhancements.
-- Verify the deployed route and canonical site in Vercel while checking both `/` and `/index.html` to ensure the correct HTML entry point is served.
+## Tests performed
+
+- Chromium local preview with the repository's production CSP header:
+  - `/styles.css`: HTTP 200, `text/css`.
+  - `/scripts.js`: HTTP 200, `text/javascript`.
+  - `/app`, `/pro`, and `/privacy`: HTTP 200 and expected page content.
+  - No browser console errors or failed network requests.
+- Direct current Vercel deployment inspection:
+  - Homepage matched the source commit; `/styles.css` returned HTTP 200 and `/scripts.js` returned HTTP 404.
+  - Chromium confirmed the deployed stylesheet was applied and reported the missing script/MIME errors.
+  - `/app`, `/pro`, `/privacy`, and `/vs/rocket-money` returned their intended pages.
+- Checked widths 320, 375, 430, 768, 1024, 1440, and 1920 pixels. All had no horizontal overflow.
+- Verified the mobile menu opens, closes on Escape and link selection, and updates its ARIA state and accessible name.
+- Verified all nine in-page anchors resolve, keyboard focus indicators render, and reduced-motion preferences are respected.
+- `node --check scripts.js`, `python -m json.tool vercel.json`, and `git diff --check` passed.
+- Confirmed `app.html`, `app-local.js`, `app.js`, `app-local.css`, and `api/pro-status.js` have no changes versus the tested base commit.
+
+## Remaining issues and release status
+
+- **Not deployed.** Production still serves the pre-fix configuration until a deployment is made; no deployment, commit, or push was performed.
+- The Vercel project currently redirects the apex host to `www`. The repository change stops the reverse redirect loop, so the deployed site will settle on `www.stackcut.site`. To keep the apex URL as the final canonical host, change the Vercel project domain setting to make `stackcut.site` primary and redirect `www` to the apex.
+- The custom-domain asset responses must be rechecked after deployment; the direct deployment URL currently proves the stylesheet exists and the JavaScript file is missing in the deployed source.
+- The production entitlement/payment backend was not exercised; its code was intentionally left unchanged.
+
+## Commit tested
+
+Baseline source commit: `a68aa6e1a42d77d56fc627d577479684c7680a12` (`main`, equal to `origin/main`). The fixes and browser checks are uncommitted worktree changes for review.
