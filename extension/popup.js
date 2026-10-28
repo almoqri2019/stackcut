@@ -2,6 +2,7 @@ const STORAGE_KEY = 'stackcut_tools';
 const PRO_STATUS_KEY = 'stackcut_pro_status';
 const PRO_STATUS_TTL_MS = 300000;
 const PRO_STATUS_ENDPOINT = 'https://stackcut.site/api/pro-status';
+const CANONICAL_SITE_URL = 'https://stackcut.site';
 const FREE_LIMIT = 3;
 
 async function getCachedProStatus() {
@@ -57,7 +58,7 @@ function toast(msg) {
 async function requirePro(feature) {
   if (await isPro()) return true;
   toast(`Go Pro to unlock ${feature} — $2.84/mo`);
-  setTimeout(() => chrome.tabs.create({ url: 'https://stackcutify.vercel.app/#pricing' }), 800);
+  setTimeout(() => chrome.tabs.create({ url: `${CANONICAL_SITE_URL}/#pricing` }), 800);
   return false;
 }
 
@@ -201,11 +202,11 @@ document.getElementById('exportBtn').onclick = async () => {
 };
 
 document.getElementById('openApp').onclick = () => {
-  chrome.tabs.create({ url: 'https://stackcut.site/app' });
+  chrome.tabs.create({ url: `${CANONICAL_SITE_URL}/app` });
 };
 
 document.getElementById('proUpgrade').onclick = () => {
-  chrome.tabs.create({ url: 'https://stackcut.site/pro' });
+  chrome.tabs.create({ url: `${CANONICAL_SITE_URL}/pro` });
 };
 
 document.getElementById('importBtn').addEventListener('click', () => {

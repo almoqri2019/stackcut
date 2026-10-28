@@ -1,142 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<!-- STACKCUT v3.0 REAL-READY — P0 Traditional Gaps fixed — No $199/yr — PayPal LIVE P-6HT714478R159110WNLBOW4Q $2.84/mo only -->
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>STACKCUT — The money app for your entire stack.</title>
-<meta name="description" content="Rocket Money for your whole stack + AI engine. 100% local Web Worker streaming + Decimal.js exact. Turn QuickBooks/CSV into $4,120/mo savings. No bank login.">
-<link rel="canonical" href="https://stackcut.site/">
-<link rel="alternate" type="text/plain" href="https://stackcut.site/llms.txt">
-<meta property="og:title" content="STACKCUT — The money app for your entire stack">
-<meta property="og:description" content="Stop paying for ghost AI tools. 100% local, Decimal.js exact, $4,120/mo found — $2,840 verified. PayPal LIVE $2.84/mo.">
-<meta property="og:url" content="https://stackcut.site/">
-<meta name="robots" content="index, follow, max-image-preview:large">
-<script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script type="application/ld+json">
-{
-  "@context":"https://schema.org",
-  "@type":"SoftwareApplication",
-  "name":"STACKCUT",
-  "url":"https://stackcut.site/",
-  "applicationCategory":"FinanceApplication",
-  "operatingSystem":"Web",
-  "offers":[
-    {"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD","description":"3 tools + 1 audit, real streaming preview, encrypted local vault stackcut-v3"},
-    {"@type":"Offer","name":"Pro","price":"2.84","priceCurrency":"USD","priceValidUntil":"2027-12-31","url":"https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q","description":"Unlimited tools, Web Worker streaming, Decimal.js exact, rAF virtualized, encrypted vault, checksum license"}
-  ],
-  "featureList":"Real Web Worker step streaming, Decimal.js in Worker+main O(n) optimized, 60fps rAF virtualized with event delegation, encrypted IndexedDB fallback, SRI-ready, CSP worker-src blob: + object-src none",
-  "softwareVersion":"3.0-real-ready",
-  "privacyPolicy":"https://stackcut.site/privacy"
-}
-</script>
-<style>
-:root{--bg:#fcfbf8;--surface:#ffffff;--surface-2:#f2f0eb;--ink:#0a0a0a;--line:#eceae5;--accent:#d6ff57;--emerald:#10b981;--amber:#f59e0b;}
-body{font-family:"Space Grotesk",system-ui;background:var(--bg);color:var(--ink);}
-.mono{font-family:"JetBrains Mono",monospace;}
-.verified{color:var(--emerald);} .estimated{color:var(--amber);}
-.btn-44{min-height:44px; min-width:44px;}
-</style>
-</head>
-<body class="min-h-screen overflow-x-hidden">
-<header class="sticky top-0 z-50 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--line)]">
-<div class="mx-auto max-w-[1200px] px-6 h-[64px] flex items-center justify-between">
-<div class="flex items-center gap-2.5">
-<div class="h-8 w-8 bg-black text-white grid place-items-center rounded-[8px] font-bold">SC</div>
-<span class="font-bold text-[20px]">STACKCUT</span>
-<span class="mono text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent)] border">REAL-READY v3.0 • LOCAL</span>
-</div>
-<nav class="hidden lg:flex items-center gap-6 text-[14px] font-medium">
-<div class="relative">
-<button id="featuresBtn" class="flex items-center gap-1 btn-44">Features ▼</button>
-<div id="featuresDropdown" class="hidden absolute top-[44px] left-0 w-[520px] bg-white border border-[var(--line)] rounded-2xl shadow-xl p-3 z-50">
-<div class="grid gap-1">
-<button data-action="exec" class="p-3 rounded-xl hover:bg-[var(--surface-2)] text-left border border-emerald-100 w-full"><b class="verified">Executive Summary — $4,120/mo found</b><div class="text-[12px] text-gray-500">Verified emerald $2,840 / Estimated amber $1,280 • Encrypted vault v3</div></button>
-<button data-action="audit" class="p-3 rounded-xl hover:bg-[var(--surface-2)] text-left w-full"><b>Real Streaming CSV — PapaParse step O(n)</b><div class="text-[12px] text-gray-500">Worker /parser.worker.js only (no Blob dup), Decimal.js in Worker, 10MB guard</div></button>
-<button data-action="app" class="p-3 rounded-xl hover:bg-[var(--surface-2)] text-left w-full"><b>rAF Virtualized 60fps + Event Delegation</b><div class="text-[12px] text-gray-500">No innerHTML onclick injection, data-id + delegation, Blob revoke</div></button>
-<button data-action="llms" class="p-3 rounded-xl hover:bg-[var(--surface-2)] text-left w-full"><b>CSP worker-src blob: + Encrypted Vault</b><div class="text-[12px] text-gray-500">AES-GCM local, checksum license SC-PRO-XXXX, SRI-ready</div></button>
-<button data-action="app" class="p-3 rounded-xl bg-[var(--accent)]/30 border border-[var(--accent)] text-left w-full"><b>AI Stack Audit ⭐ REAL-READY</b><div class="text-[12px]">Modal paywall with $4,120 context, O(n) duplicate killer</div></button>
-</div>
-</div>
-</div>
-<a href="#pricing" class="hover:opacity-60 btn-44 flex items-center">Pricing</a>
-<a href="/vs/rocket-money" class="hover:opacity-60 flex items-center gap-1 btn-44">vs Rocket Money</a>
-<a href="/llms.txt" class="hover:opacity-60 mono text-[11px] btn-44 flex items-center">llms.txt</a>
-</div>
-<div class="flex items-center gap-2">
-<button data-action="app" class="hidden sm:block text-[13px] px-4 h-9 rounded-full border btn-44">Open App</button>
-<a href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q" class="text-[13px] font-bold px-4 h-9 rounded-full bg-black text-white grid place-items-center btn-44">Go Pro $2.84/mo</a>
-</div>
-</div>
-</header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STACKCUT — Find duplicate subscriptions and cut waste</title>
+    <meta name="description" content="Review subscriptions, find duplicate SaaS tools, and see where software spend can be reduced." />
+    <link rel="canonical" href="https://stackcut.site/" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/scripts.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="inner">
+        <div class="brand" aria-label="STACKCUT home">
+          <span class="logo-mark">SC</span>
+          <span>STACKCUT</span>
+        </div>
 
-<section id="execSummary" class="mx-auto max-w-[1200px] px-6 pt-14 pb-8 grid lg:grid-cols-2 gap-10">
-<div>
-<div class="inline-flex items-center gap-2 mono text-[11px] px-3 py-1 rounded-full border bg-white"><span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>REAL-READY v3.0 — P0 Traditional Gaps fixed, no $199/yr, encrypted vault</div>
-<h1 class="mt-5 text-[48px] sm:text-[64px] font-bold leading-[0.9]">The money app for your entire stack</h1>
-<p class="mt-5 text-[16px] text-gray-600 max-w-[44ch]"><b>STACKCUT = Rocket Money for all + AI engine.</b> Real Worker streaming parses QuickBooks without freeze. Decimal.js exact, encrypted local vault stackcut-v3, checksum license. No bank login, no raw data leaves browser.</p>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a href="/privacy">Privacy</a>
+        </nav>
 
-<div class="mt-6 p-4 rounded-2xl bg-black text-white border">
-<div class="mono text-[10px] opacity-60">UN-BLURRABLE HOOK — REAL-READY</div>
-<div class="mt-2 text-[28px] font-bold leading-[0.9]">We found <span class="text-[var(--accent)]">$4,120/mo</span> in redundant SaaS</div>
-<div class="mt-3 grid grid-cols-2 gap-2">
-<div class="p-2.5 rounded-xl bg-white/10 border border-emerald-500/20"><div class="mono text-[9px] opacity-60">VERIFIED</div><div class="text-[18px] font-bold text-emerald-400">$2,840/mo</div></div>
-<div class="p-2.5 rounded-xl bg-white/5 border border-amber-500/20"><div class="mono text-[9px] opacity-60">ESTIMATED</div><div class="text-[18px] font-bold text-amber-400">$1,280/mo</div></div>
-</div>
-<div class="mt-2 mono text-[10px] opacity-60">127 subs • O(n) duplicate killer • Encrypted vault • SHA-256 metrics-only</div>
-</div>
+        <div class="header-actions">
+          <a class="button-ghost" href="/app">Open app</a>
+          <a class="button button-primary pricing-pill" href="#pricing">Start free audit</a>
+          <button class="mobile-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Toggle menu">
+            Menu
+          </button>
+        </div>
+      </div>
+    </header>
 
-<div class="mt-7 flex gap-3">
-<button data-action="app" class="h-12 px-6 rounded-full bg-black text-white font-semibold text-[14px] btn-44">Start free audit ⚡ Real streaming</button>
-<a href="/vs/rocket-money" class="h-12 px-6 rounded-full border bg-white font-semibold text-[14px] grid place-items-center btn-44">vs Rocket Money →</a>
-</div>
-</div>
+    <div class="mobile-panel hidden" id="mobileMenu">
+      <nav aria-label="Mobile navigation">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/privacy">Privacy</a>
+        <a class="button" href="/app">Start free audit</a>
+      </nav>
+    </div>
 
-<div class="bg-white border rounded-[24px] shadow-[0_16px_48px_rgba(0,0,0,0.08)] overflow-hidden">
-<div class="px-6 py-4 border-b flex justify-between items-center">
-<b class="text-[13px]">EXEC SUMMARY — v3.0 REAL-READY</b><span class="mono text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent)] border">P0 FIXED</span>
-</div>
-<div class="p-6 space-y-4">
-<div class="p-3 rounded-xl bg-gray-50 border mono text-[11px]"><b>P0 Traditional Gaps fixed:</b> No Blob dup → /parser.worker.js only, O(n) plan() with Map, event delegation no onclick injection, AES-GCM vault stackcut-v3, checksum license SC-PRO-XXXX, Chart.js update not destroy, no $199/yr.</div>
-<div class="grid grid-cols-2 gap-3">
-<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200"><div class="mono text-[10px]">VERIFIED</div><div class="text-[20px] font-bold verified">$2,840/mo</div></div>
-<div class="p-3 rounded-xl bg-amber-50 border border-amber-200"><div class="mono text-[10px]">ESTIMATED</div><div class="text-[20px] font-bold estimated">$1,280/mo</div></div>
-</div>
-<button data-action="app" class="w-full mono text-[11px] px-4 h-11 rounded-full bg-black text-white btn-44">Open App → Real-ready</button>
-</div>
-</div>
-</section>
+    <main>
+      <section class="hero site-shell">
+        <div class="hero-grid">
+          <div>
+            <div class="kicker">
+              <span class="kicker-dot" aria-hidden="true"></span>
+              subscription audit
+            </div>
+            <h1>Find duplicate subscriptions. Cut wasted software spend.</h1>
+            <p class="hero-copy">
+              Review your software subscriptions, identify possible overlaps, and understand where you may be paying for tools you no longer need.
+            </p>
 
-<section id="pricing" class="mx-auto max-w-[1200px] px-6 py-12 border-t">
-<h2 class="text-[32px] font-bold">Pricing — Real-Ready — No $199/yr</h2>
-<p class="mono text-[12px] text-gray-500 mt-2">Removed Enterprise $199/yr team seats as requested. Only Free + Pro $2.84/mo PayPal LIVE P-6HT714478R159110WNLBOW4Q. Real-ready: encrypted vault, checksum license, O(n).</p>
-<div class="mt-6 grid md:grid-cols-2 gap-4 max-w-[800px]">
-<div class="p-6 rounded-2xl border bg-white"><div class="font-bold">Free</div><div class="mono text-[12px] text-gray-500">3 tools + 1 audit • Encrypted vault stackcut-v3</div><div class="mt-4 text-[24px] font-bold">$0</div><div class="mono text-[10px] mt-2">✓ Worker /parser.worker.js only • ✓ O(n) Map • ✓ Event delegation • ✓ AES-GCM vault</div><button data-action="app" class="mt-4 w-full h-11 rounded-full border mono text-[12px] btn-44">Start audit</button></div>
-<div class="p-6 rounded-2xl border-2 border-black bg-white shadow-xl"><div class="font-bold flex justify-between">Pro <span class="mono text-[10px] px-2 py-0.5 bg-[var(--accent)] rounded-full">LIVE PayPal</span></div><div class="mono text-[12px] text-gray-500">Unlimited • Encrypted vault • Checksum license</div><div class="mt-4 text-[24px] font-bold">$2.84/mo</div><div class="mono text-[10px]">Plan P-6HT714478R159110WNLBOW4Q • CSP worker-src blob: • Checksum SC-PRO-XXXX</div><a href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q" class="mt-4 w-full h-11 rounded-full bg-black text-white grid place-items-center mono text-[12px] font-bold btn-44">Go Pro → PayPal LIVE</a></div>
-</div>
-</section>
+            <div class="hero-actions">
+              <a class="button" href="/app">Start free audit</a>
+              <a class="button-secondary" href="#how-it-works">See how it works</a>
+            </div>
+          </div>
 
-<footer class="mx-auto max-w-[1200px] px-6 py-8 border-t mono text-[11px] text-gray-500 flex justify-between">
-<span>© <span id="yr"></span> STACKCUT • v3.0 REAL-READY • No $199/yr • O(n) Map • Encrypted vault • PayPal P-6HT714478R159110WNLBOW4Q</span>
-<span class="flex gap-3"><a href="/sitemap.xml" class="underline">sitemap</a> • <a href="/llms.txt" class="underline">llms</a> • <a href="/app" class="underline">app</a></span>
-</footer>
+          <aside class="hero-info-card" aria-label="Sample savings overview">
+            <div class="info-topline">
+              <span>sample report</span>
+              <span class="lime-badge">local-first</span>
+            </div>
 
-<script>
-document.getElementById('yr').innerText=new Date().getFullYear();
-const btn=document.getElementById('featuresBtn');
-const dd=document.getElementById('featuresDropdown');
-btn.onclick=()=>dd.classList.toggle('hidden');
-document.addEventListener('click',e=>{ if(!e.target.closest('#featuresBtn') && !e.target.closest('#featuresDropdown')) dd.classList.add('hidden'); });
-document.querySelectorAll('[data-action]').forEach(el=>{
-  el.addEventListener('click',()=>{
-    const a=el.getAttribute('data-action');
-    if(a==='exec') document.getElementById('execSummary').scrollIntoView({behavior:'smooth'});
-    if(a==='app') location.href='/app';
-    if(a==='audit') { document.getElementById('execSummary').scrollIntoView({behavior:'smooth'}); setTimeout(()=>location.href='/app',400); }
-    if(a==='llms') window.open('/llms.txt','_blank');
-  });
-});
-</script>
-</body>
+            <div class="hero-metric">
+              <div class="metric-box emerald">
+                <strong>$2,840</strong>
+                <span>confirmed</span>
+              </div>
+              <div class="metric-box amber">
+                <strong>$1,280</strong>
+                <span>potential</span>
+              </div>
+            </div>
+
+            <div class="info-summary" aria-live="polite">
+              Sample data only. Savings depend on the subscriptions a user imports and verifies.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section site-shell" id="how-it-works">
+        <div class="section-head">
+          <h2>How it works</h2>
+          <p>Three quick steps to review your stack and decide what to keep, test, or stop paying for.</p>
+        </div>
+
+        <div class="steps">
+          <article class="step-card">
+            <div class="step-number">1</div>
+            <h3>Import</h3>
+            <p>Upload a supported CSV or add tools manually to build a working list of your subscriptions.</p>
+          </article>
+
+          <article class="step-card">
+            <div class="step-number">2</div>
+            <h3>Review</h3>
+            <p>Check duplicate or overlapping tools, usage patterns, and renewal timing before making changes.</p>
+          </article>
+
+          <article class="step-card">
+            <div class="step-number">3</div>
+            <h3>Decide</h3>
+            <p>Compare savings, understand tradeoffs, and keep or cancel services with clear context.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section site-shell" id="features">
+        <div class="section-head">
+          <h2>Built for clarity</h2>
+          <p>Everything is designed to make subscription spend easier to understand and easier to act on.</p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">✦</div>
+            <h3>Subscription audit</h3>
+            <p>Organize your tools by spend, usage, category, and renewal date without the noise of a generic list.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">◎</div>
+            <h3>Duplicate detection</h3>
+            <p>See similar services and overlapping plans to identify where a duplicate or near-duplicate may exist.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">▣</div>
+            <h3>Transparent savings</h3>
+            <p>Compare confirmed spend with estimated upside and keep a clear view of what may be cut or delayed.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section site-shell" id="pricing">
+        <div class="section-head">
+          <h2>Pricing</h2>
+          <p>Simple plans that fit the app’s actual usage limits and supported features.</p>
+        </div>
+
+        <div class="pricing-grid">
+          <article class="price-card">
+            <div class="price-label">Free</div>
+            <div class="price-row"><strong>$0</strong><span class="price-meta">/mo</span></div>
+            <p class="price-note">Good for a quick audit of a few tools.</p>
+            <ul>
+              <li>Three tools in the active stack</li>
+              <li>One audit pass</li>
+              <li>Basic review and insights</li>
+            </ul>
+            <a class="button-secondary" href="/app">Open free app</a>
+          </article>
+
+          <article class="price-card featured">
+            <div class="price-label">Pro</div>
+            <div class="price-row"><strong>$2.84</strong><span class="price-meta">/mo</span></div>
+            <p class="price-note">Actual configured price in the app. Billing terms and access are verified server-side.</p>
+            <ul>
+              <li>Unlimited tools and audits</li>
+              <li>Advanced duplicate and waste review</li>
+              <li>Export and deeper reporting</li>
+            </ul>
+            <a class="button" href="/pro">Go Pro</a>
+          </article>
+        </div>
+
+        <div class="support-box">
+          <p>Pro access is not granted by trusting browser storage alone. A trusted server-side verification step is required before paid access is unlocked.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div>© STACKCUT</div>
+        <div class="footer-links">
+          <a href="/privacy">Privacy</a>
+          <a href="#pricing">Pricing</a>
+          <a href="mailto:almoqri2019@gmail.com">Contact</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector('.mobile-toggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (toggle && mobileMenu) {
+        toggle.addEventListener('click', () => {
+          const isOpen = !mobileMenu.classList.contains('hidden');
+          mobileMenu.classList.toggle('hidden');
+          toggle.setAttribute('aria-expanded', String(!isOpen));
+        });
+      }
+    </script>
+  </body>
 </html>
