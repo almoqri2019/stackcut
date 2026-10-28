@@ -1,42 +1,83 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pro — STACKCUT $2.84/mo PayPal • Unlimited</title><link rel="canonical" href="https://stackcut.site/pro">
-<meta name="description" content="Go Pro $2.84/mo via PayPal — unlimited tools + audits, ghost + duplicate killer, full export. 100% local.">
-<script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-<style>body{font-family:"Space Grotesk",system-ui} .mono{font-family:"JetBrains Mono",monospace}</style></head>
-<body class="bg-[#fcfbf8] min-h-screen">
-<header class="max-w-[900px] mx-auto px-6 h-[64px] flex items-center justify-between border-b"><div class="flex items-center gap-2"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold">SC</div><b>STACKCUT PRO</b><span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[#d6ff57] border">$2.84/mo PayPal</span></div><a href="/" class="mono text-[11px] underline">← stackcut.site</a></header>
-<main class="max-w-[900px] mx-auto px-6 py-12">
-<h1 class="text-[44px] font-bold tracking-tight leading-[0.9]">Go Pro $2.84/mo<br>via PayPal —<br>unlimited live.</h1>
-<div class='mono text-[11px] p-2 bg-yellow-100 border rounded-xl'>Live PayPal: PROD-8NK50966TF029134F • Plan P-6HT714478R159110WNLBOW4Q STACKPRO ON — https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q</div>
-<p class="mt-4 mono text-[13px] text-gray-600 max-w-[50ch]">Real app — not demo. Browser storage remains display-only. Free access is enforced by the server-side entitlement check; Pro access requires a trusted verification step before paid features are unlocked. Morocco-friendly PayPal and a secure back-end boundary are required before production billing.</p>
-<div class="mt-8 grid md:grid-cols-2 gap-6">
-<div class="border rounded-[20px] p-6 bg-white"><div class="mono text-[11px] text-gray-500">FREE</div><div class="text-[28px] font-bold">$0</div><ul class="mt-3 mono text-[12px] space-y-1"><li>✓ 3 tools max</li><li>✓ 1 audit</li><li>✓ Insights view</li><li>✓ Redacted export</li></ul><button onclick="location.href='/app'" class="mt-4 w-full h-10 rounded-full border font-bold text-[12px]">Open free app</button></div>
-<div class="border-2 rounded-[20px] p-6 bg-black text-white border-[#d6ff57]"><div class="mono text-[11px] text-white/60">PRO • PAYPAL $2.84/mo</div><div class="text-[28px] font-bold">$2.84<span class="text-[16px] text-white/60">/mo</span></div><ul class="mt-3 mono text-[12px] space-y-1 text-white/80"><li>✓ Unlimited tools + audits</li><li>✓ Ghost (0 projects) + duplicate killer</li><li>✓ Bill negotiation guides</li><li>✓ Full JSON/CSV export</li><li>✓ Extension syncs isPro</li></ul>
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank" class="mt-5">
-<input type="hidden" name="cmd" value="_xclick-subscriptions"><input type="hidden" name="business" value="almoqri2019@gmail.com"><input type="hidden" name="item_name" value="STACKCUT Pro"><input type="hidden" name="a3" value="2.84"><input type="hidden" name="p3" value="1"><input type="hidden" name="t3" value="M"><input type="hidden" name="src" value="1"><input type="hidden" name="currency_code" value="USD">
-<button type="submit" class="w-full h-10 rounded-full bg-[#0070BA] text-white font-bold text-[12px]">Subscribe PayPal $2.84/mo →</button>
-</form>
-<div class="mt-3 flex gap-2"><input id="licenseInput" placeholder="Paste SC-PRO-XXXX" class="flex-1 h-9 px-3 rounded-full bg-white/10 border border-white/20 mono text-[11px]"><button onclick="activate()" class="h-9 px-4 rounded-full bg-[#d6ff57] text-black font-bold mono text-[11px]">Activate</button></div><div id="status" class="mt-2 mono text-[10px] text-white/50">Server-side verification is required before the app unlocks Pro features. Browser values are only for display.</div>
-</div>
-</div>
-<div class="mt-12 card p-6 border rounded-[20px] bg-white mono text-[11px]"><b>Secure entitlement flow:</b><br>1. A trusted payment provider or signed subscription record marks the account as active at the server.<br>2. The browser sends the license or entitlement token to `/api/pro-status` for verification.<br>3. Only a verified response unlocks Pro features; browser storage remains display-only and cannot be treated as the source of truth.<br>4. Expired, refunded, disputed, cancelled, or failed states stay inactive until server-side verification confirms otherwise.</div>
-</main>
-<script>
-async function activate(){
-  const k=document.getElementById('licenseInput').value.trim();
-  if(!k){ alert('Paste SC-PRO-XXXX'); return; }
-  if(!/^SC-PRO-[A-Z0-9-]+$/i.test(k)){ alert('Must look like a valid SC-PRO- license.'); return; }
-  const response=await fetch('/api/pro-status?license=' + encodeURIComponent(k), {cache: 'no-store', credentials: 'same-origin'});
-  const data=await response.json();
-  if(!data || !data.active){
-    document.getElementById('status').innerText='Server-side verification failed. No paid entitlement is active.';
-    return;
-  }
-  localStorage.setItem('stackcut-license', k);
-  sessionStorage.setItem('stackcut_pro_status', JSON.stringify({active: true, expiresAt: Date.now() + 300000}));
-  document.getElementById('status').innerText='Pro active — server verified. Redirecting to /app...';
-  setTimeout(()=>location.href='/app',800);
-}
-</script>
-</body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Review STACKCUT Pro access and verify an existing PayPal subscription on the server."
+    />
+    <title>Pro access — STACKCUT</title>
+    <link rel="canonical" href="https://stackcut.site/pro" />
+    <link rel="stylesheet" href="/pro.css" />
+    <script defer src="/pro.js"></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <a class="brand" href="/" aria-label="STACKCUT homepage">
+        <span class="brand-mark" aria-hidden="true">SC</span>
+        <span>STACKCUT</span>
+      </a>
+      <a href="/">Back to homepage</a>
+    </header>
+
+    <main class="pro-shell">
+      <p class="eyebrow">Plan access</p>
+      <h1>Pro access is verified with PayPal.</h1>
+      <p class="intro">
+        The app checks subscription status with PayPal on the server. An entered
+        ID, browser storage value, or locally generated code is not proof of payment.
+      </p>
+
+      <section class="plan-grid" aria-label="Available app access">
+        <article class="plan-card">
+          <p class="eyebrow">Free</p>
+          <h2>$0</h2>
+          <ul>
+            <li>Three subscriptions in this browser</li>
+            <li>One local audit</li>
+            <li>Review and plaintext JSON export</li>
+          </ul>
+          <a class="button button-secondary" href="/app">Open free app</a>
+        </article>
+        <article class="plan-card plan-card-pro">
+          <p class="eyebrow">Pro</p>
+          <h2>Server verified</h2>
+          <ul>
+            <li>Up to 5,000 local subscription records</li>
+            <li>More audits while verified in this session</li>
+            <li>Same local-only data model</li>
+          </ul>
+          <button class="button button-disabled" type="button" disabled>
+            Checkout unavailable
+          </button>
+        </article>
+      </section>
+
+      <p class="notice">
+        This build does not accept payments. PayPal checkout is disabled until
+        server credentials and a matching subscription plan are configured.
+      </p>
+
+      <section class="verify-card" aria-labelledby="verifyTitle">
+        <h2 id="verifyTitle">Verify an existing subscription</h2>
+        <p>
+          Enter the PayPal subscription ID. It is sent to this server for a
+          live status and plan check and is not saved in this browser.
+        </p>
+        <form id="verifyForm">
+          <label for="subscriptionId">PayPal subscription ID</label>
+          <input id="subscriptionId" name="subscriptionId" autocomplete="off" required />
+          <button id="verifyButton" class="button button-primary" type="submit">
+            Verify subscription
+          </button>
+        </form>
+        <p id="verifyStatus" class="status-message" role="status" aria-live="polite">
+          Verification is unavailable until PayPal credentials and a plan ID are configured on the server.
+        </p>
+      </section>
+
+      <a class="app-link" href="/app">Return to the app</a>
+    </main>
+  </body>
+</html>

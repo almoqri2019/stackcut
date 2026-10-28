@@ -1,5 +1,7 @@
 # Implementation Audit
 
+> Historical baseline findings: this report records an earlier source snapshot. The current uncommitted implementation, deployment comparison, and verification evidence are in [BUTTON_AND_APP_AUDIT.md](./BUTTON_AND_APP_AUDIT.md).
+
 ## Verified findings
 
 - Browser-controlled `localStorage` values were being treated as authoritative for paid access in `app-local.js` and `app.js`. The app used values such as `isPro`, `stackcut_pro`, and `stackcut-license` as direct authorization signals. This is not a valid entitlement check because any user can mutate that data in DevTools or a script. The secure fix is to treat local state as display-only and verify access on a trusted server-side boundary.

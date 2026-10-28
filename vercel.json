@@ -107,7 +107,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=0, must-revalidate"
         },
         {
           "key": "Content-Type",
@@ -116,7 +116,16 @@
       ]
     },
     {
-      "source": "/(.*)\\.(js|css|woff2|png|jpg|svg)",
+      "source": "/(.*)\\.(js|css)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(woff2|png|jpg|svg)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -207,18 +216,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/vs/rocket-money",
-      "destination": "/"
-    },
-    {
-      "source": "/pro",
-      "destination": "/"
-    },
-    {
-      "source": "/privacy",
-      "destination": "/"
-    },
     {
       "source": "/app",
       "destination": "/app.html"

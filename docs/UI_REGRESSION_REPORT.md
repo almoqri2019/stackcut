@@ -1,5 +1,7 @@
 # STACKCUT Homepage UI Regression Report
 
+> Historical regression snapshot: deployment and source details below predate the current `main` deployment. See [BUTTON_AND_APP_AUDIT.md](./BUTTON_AND_APP_AUDIT.md) for the current audit.
+
 ## Confirmed root cause
 
 The production homepage response at `https://www.stackcut.site/` was HTTP 200 and its bytes matched `index.html` in the checked-out `main` commit. The latest successful GitHub production deployment also points to that same commit (`a68aa6e1a42d77d56fc627d577479684c7680a12`). Its deployment URL returned `/styles.css` as HTTP 200 (`text/css`) and `/scripts.js` as HTTP 404 (`text/plain`):

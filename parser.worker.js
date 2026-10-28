@@ -1,104 +1,289 @@
-// parser.worker.js v3.0 REAL-READY — P0 fixed — No Blob dup, used via /parser.worker.js only, O(n) Map, encrypted vault support, checksum-ready
-// PayPal LIVE P-6HT714478R159110WNLBOW4Q — No $199/yr
-try { importScripts('https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js','https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js'); } catch(e){}
+"use strict";
 
-const FUZZY_MAP = {
-  amount: ['amount','price','cost','spend','total','charge','fee','value','amt','expense','debit','credit','open_balance','home_currency_amount','amount (usd)','annual','monthly','mrr','arr'],
-  vendor: ['vendor','merchant','supplier','name','tool','service','provider','company','description','account','payee','memo','product','item','software','subscription'],
-  date: ['date','renew','billing','charged','timestamp','lastused','last_used','transaction_date','last_billing','next_billing','created','last_activity'],
-  category: ['category','job','type','department','tag','account_type','product_type','class','team','owner']
-};
+const BATCH_SIZE = 250;
+const MAX_ROWS = 5000;
+const AMOUNT_HEADERS = [
+  "amount",
+  "price",
+  "cost",
+  "spend",
+  "total",
+  "charge",
+  "fee",
+  "value",
+  "amt",
+  "expense",
+  "debit",
+  "credit",
+  "open balance",
+  "home currency amount",
+  "annual",
+  "monthly",
+  "mrr",
+  "arr",
+];
+const VENDOR_HEADERS = [
+  "vendor",
+  "merchant",
+  "supplier",
+  "name",
+  "tool",
+  "service",
+  "provider",
+  "company",
+  "description",
+  "account",
+  "payee",
+  "memo",
+  "product",
+  "item",
+  "software",
+  "subscription",
+];
+const CATEGORY_HEADERS = [
+  "category",
+  "job",
+  "type",
+  "department",
+  "tag",
+  "account type",
+  "product type",
+  "class",
+  "team",
+  "owner",
+];
+const DATE_HEADERS = [
+  "date",
+  "renew",
+  "billing",
+  "charged",
+  "timestamp",
+  "transaction date",
+  "last billing",
+  "next billing",
+];
 
-function fuzzyFind(headers, target){
-  const lower=headers.map(h=>String(h).toLowerCase().trim());
-  const syn=FUZZY_MAP[target]||[target];
-  for(let s of syn){
-    let idx=lower.findIndex(h=>h===s || h.includes(s));
-    if(idx!==-1) return headers[idx];
+function normalizedHeader(value) {
+  return String(value)
+    .replace(/^\uFEFF/, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function findHeader(headers, candidates) {
+  const normalized = headers.map(normalizedHeader);
+  for (const candidate of candidates) {
+    const index = normalized.findIndex((header) => header === candidate);
+    if (index >= 0) return headers[index];
   }
-  return headers[0]||null;
+  for (const candidate of candidates) {
+    const index = normalized.findIndex((header) => header.includes(candidate));
+    if (index >= 0) return headers[index];
+  }
+  return null;
 }
 
-function safeDecimal(raw){
-  try{
-    let str=String(raw||'0').replace(/[$€£¥,\s]/g,'').replace(/\(([^)]+)\)/,'-$1');
-    if(!str || str==='-') return new Decimal(0);
-    let d=new Decimal(str);
-    return d.isNaN()? new Decimal(0) : d.abs();
-  }catch{ return new Decimal(0); }
+function parseAmount(value) {
+  let raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const isParenthesized = /^\(.*\)$/.test(raw);
+  if (isParenthesized) raw = raw.slice(1, -1);
+  raw = raw.replace(/(?:USD|EUR|GBP|CAD|AUD)\s*/gi, "");
+  raw = raw.replace(/[$€£¥,\s]/g, "");
+  if (isParenthesized) raw = `-${raw}`;
+  if (!/^-?(?:\d+\.?\d*|\.\d+)$/.test(raw)) return null;
+  const amount = Number(raw);
+  return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : null;
 }
 
-function validateRow(row, map){
-  if(!row) return false;
-  const rawAmt=row[map.amountCol]||row[Object.keys(row)[0]]||'0';
-  const dec=safeDecimal(rawAmt);
-  return dec.gt(0) && dec.lt(1000000);
+function parseCsv(text, onHeaders, onRow) {
+  const headers = [];
+  let fields = [];
+  let field = "";
+  let quoted = false;
+  let rowNumber = 1;
+  let firstRow = true;
+
+  function emitRow() {
+    fields.push(field);
+    field = "";
+    const row = fields;
+    fields = [];
+    rowNumber += 1;
+    if (row.every((value) => value.trim() === "")) return;
+    if (firstRow) {
+      firstRow = false;
+      headers.push(...row.map((value) => value.trim().replace(/^\uFEFF/, "")));
+      if (headers.every((header) => !header)) {
+        throw new Error("The CSV header row is empty.");
+      }
+      onHeaders(headers);
+      return;
+    }
+    onRow(row, rowNumber - 1);
+  }
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (quoted) {
+      if (character === '"') {
+        if (text[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        field += character;
+      }
+      continue;
+    }
+    if (character === '"') {
+      if (field.length !== 0) {
+        throw new Error(`Unexpected quote in row ${rowNumber}.`);
+      }
+      quoted = true;
+    } else if (character === ",") {
+      fields.push(field);
+      field = "";
+    } else if (character === "\n" || character === "\r") {
+      emitRow();
+      if (character === "\r" && text[index + 1] === "\n") index += 1;
+    } else {
+      field += character;
+    }
+  }
+
+  if (quoted) throw new Error(`Unclosed quoted field near row ${rowNumber}.`);
+  if (field.length || fields.length) emitRow();
+  return headers;
 }
 
-self.onmessage=function(e){
-  const {fileText, id} = e.data;
-  const start=Date.now();
-  let count=0;
-  let preview=[];
-  let headersDetected=[];
-  let map={};
-  try{
-    Papa.parse(fileText,{
-      header:true,
-      skipEmptyLines:true,
-      worker:false,
-      step: function(results){
-        if(!headersDetected.length && results.meta && results.meta.fields){
-          headersDetected=results.meta.fields;
-          map={
-            amountCol: fuzzyFind(headersDetected,'amount'),
-            vendorCol: fuzzyFind(headersDetected,'vendor'),
-            dateCol: fuzzyFind(headersDetected,'date'),
-            categoryCol: fuzzyFind(headersDetected,'category')
-          };
+function parseFile(message) {
+  const { id, text } = message;
+  if (typeof text !== "string" || !text.trim()) {
+    self.postMessage({ id, type: "error", message: "The selected file is empty." });
+    return;
+  }
+
+  let headers = [];
+  let mapping = null;
+  let count = 0;
+  let refundCount = 0;
+  let invalidCount = 0;
+  let scannedRows = 0;
+  let batch = [];
+  const started = Date.now();
+
+  try {
+    headers = parseCsv(text, (detectedHeaders) => {
+      headers = detectedHeaders;
+    }, (cells, rowNumber) => {
+      scannedRows += 1;
+      if (cells.length > headers.length && cells.slice(headers.length).some((cell) => cell.trim())) {
+        throw new Error(`Row ${rowNumber} contains more fields than the header.`);
+      }
+      const row = Object.create(null);
+      headers.forEach((header, index) => {
+        row[header] = cells[index] ?? "";
+      });
+
+      if (!mapping) {
+        const amount = findHeader(headers, AMOUNT_HEADERS);
+        if (!amount) {
+          throw new Error("Could not identify an amount column. Add a header such as Amount, Price, Cost, or Charge.");
         }
-        if(count<5000){
-          let row=results.data;
-          if(!validateRow(row, map)) return;
-          let rawAmt=row[map.amountCol]||row[Object.keys(row)[0]]||'0';
-          let dec=safeDecimal(rawAmt);
-          count++;
-          if(preview.length<100){
-            preview.push({
-              vendor: (row[map.vendorCol]||row[map.categoryCol]||'Unknown').toString().slice(0,64).replace(/[<>]/g,''),
-              amount: dec.toNumber(),
-              amountExact: dec.toString(),
-              date: (row[map.dateCol]||'').toString().slice(0,20),
-              category: (row[map.categoryCol]||'Other').toString().slice(0,32),
-              _confidence: dec.gt(50) ? 'estimated' : 'verified'
-            });
-          }
+        const vendor = findHeader(headers, VENDOR_HEADERS);
+        mapping = {
+          amount,
+          vendor: vendor || headers.find((header) => header !== amount) || null,
+          category: findHeader(headers, CATEGORY_HEADERS),
+          date: findHeader(headers, DATE_HEADERS),
+        };
+      }
+
+      const amount = parseAmount(row[mapping.amount]);
+      if (amount === null) {
+        invalidCount += 1;
+      } else if (amount <= 0) {
+        refundCount += 1;
+      } else {
+        count += 1;
+        if (count > MAX_ROWS) {
+          throw new Error(`This file has more than ${MAX_ROWS.toLocaleString()} positive rows. Split it into smaller files; no rows were imported.`);
         }
-        if(count%1000===0){
-          self.postMessage({id, type:'progress', count, previewLen: preview.length, elapsed: Date.now()-start});
+        const vendor = String(
+          mapping.vendor ? row[mapping.vendor] : "",
+        ).trim();
+        const category = String(
+          mapping.category ? row[mapping.category] : "",
+        ).trim();
+        const date = String(mapping.date ? row[mapping.date] : "").trim();
+        batch.push({
+          vendor: (vendor || "Unknown vendor").slice(0, 64),
+          amount,
+          category: (category || "Unknown").slice(0, 32),
+          date: date.slice(0, 32),
+        });
+        if (batch.length >= BATCH_SIZE) {
+          self.postMessage({ id, type: "batch", rows: batch });
+          batch = [];
         }
-      },
-      complete: function(results){
-        if(!headersDetected.length){
-          headersDetected=results.meta.fields||Object.keys(results.data[0]||{});
-          map={
-            amountCol: fuzzyFind(headersDetected,'amount'),
-            vendorCol: fuzzyFind(headersDetected,'vendor'),
-            dateCol: fuzzyFind(headersDetected,'date'),
-            categoryCol: fuzzyFind(headersDetected,'category')
-          };
-        }
-        self.postMessage({id, ok:true, map, count, preview, headers: headersDetected, mode:'stream-v3-real-ready', elapsed: Date.now()-start});
-      },
-      error: function(err){
-        self.postMessage({id, ok:false, error: err.message||String(err)});
+      }
+
+      if (scannedRows % 500 === 0) {
+        self.postMessage({
+          id,
+          type: "progress",
+          count,
+          scannedRows,
+          elapsed: Date.now() - started,
+        });
       }
     });
-  }catch(err){
-    self.postMessage({id, ok:false, error: String(err)});
-  }
-};
 
-self.addEventListener('error', function(ev){
-  self.postMessage({ok:false, error:'Worker error: '+(ev.message||ev)});
-});
+    if (!mapping) {
+      const amount = findHeader(headers, AMOUNT_HEADERS);
+      if (!amount) {
+        throw new Error("Could not identify an amount column. Add a header such as Amount, Price, Cost, or Charge.");
+      }
+      mapping = {
+        amount,
+        vendor: findHeader(headers, VENDOR_HEADERS),
+        category: findHeader(headers, CATEGORY_HEADERS),
+        date: findHeader(headers, DATE_HEADERS),
+      };
+    }
+    if (batch.length) self.postMessage({ id, type: "batch", rows: batch });
+    self.postMessage({
+      id,
+      type: "complete",
+      count,
+      refundCount,
+      invalidCount,
+      headers,
+      map: mapping,
+      elapsed: Date.now() - started,
+    });
+  } catch (error) {
+    self.postMessage({
+      id,
+      type: "error",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+self.onmessage = (event) => {
+  if (event.data?.type !== "parse" || typeof event.data.id !== "string") {
+    self.postMessage({
+      id: event.data?.id,
+      type: "error",
+      message: "Invalid parser request.",
+    });
+    return;
+  }
+  parseFile(event.data);
+};

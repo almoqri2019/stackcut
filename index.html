@@ -18,15 +18,26 @@
         </div>
 
         <nav class="site-nav" aria-label="Primary navigation">
-          <a href="#features">Features</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-toggle" type="button" aria-expanded="false" aria-controls="featuresMenu">
+              Features <span aria-hidden="true">⌄</span>
+            </button>
+            <div class="nav-dropdown-menu hidden" id="featuresMenu">
+              <a href="#features">Overview</a>
+              <a href="#subscription-audit">Subscription audit</a>
+              <a href="#duplicate-detection">Duplicate detection</a>
+              <a href="#transparent-savings">Transparent savings</a>
+            </div>
+          </div>
           <a href="#how-it-works">How it works</a>
           <a href="#pricing">Pricing</a>
+          <a href="/vs/rocket-money">Compare</a>
           <a href="/privacy">Privacy</a>
         </nav>
 
         <div class="header-actions">
           <a class="button-ghost" href="/app">Open app</a>
-          <a class="button button-primary pricing-pill" href="#pricing">Start free audit</a>
+          <a class="button button-primary pricing-pill" href="/app">Start free audit</a>
           <button class="mobile-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Open menu">
             Menu
           </button>
@@ -39,6 +50,7 @@
         <a href="#features">Features</a>
         <a href="#how-it-works">How it works</a>
         <a href="#pricing">Pricing</a>
+        <a href="/vs/rocket-money">Compare with Rocket Money</a>
         <a href="/privacy">Privacy</a>
         <a class="button" href="/app">Start free audit</a>
       </nav>
@@ -121,17 +133,17 @@
         </div>
 
         <div class="features-grid">
-          <article class="feature-card">
+          <article class="feature-card" id="subscription-audit">
             <div class="feature-icon" aria-hidden="true">✦</div>
             <h3>Subscription audit</h3>
             <p>Organize your tools by spend, usage, category, and renewal date without the noise of a generic list.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" id="duplicate-detection">
             <div class="feature-icon" aria-hidden="true">◎</div>
             <h3>Duplicate detection</h3>
             <p>See similar services and overlapping plans to identify where a duplicate or near-duplicate may exist.</p>
           </article>
-          <article class="feature-card">
+          <article class="feature-card" id="transparent-savings">
             <div class="feature-icon" aria-hidden="true">▣</div>
             <h3>Transparent savings</h3>
             <p>Compare confirmed spend with estimated upside and keep a clear view of what may be cut or delayed.</p>
@@ -160,19 +172,19 @@
 
           <article class="price-card featured">
             <div class="price-label">Pro</div>
-            <div class="price-row"><strong>$2.84</strong><span class="price-meta">/mo</span></div>
-            <p class="price-note">Actual configured price in the app. Billing terms and access are verified server-side.</p>
+            <div class="price-row"><strong>Unavailable</strong></div>
+            <p class="price-note">Pro will be offered after checkout and server-side subscription verification are configured.</p>
             <ul>
-              <li>Unlimited tools and audits</li>
-              <li>Advanced duplicate and waste review</li>
-              <li>Export and deeper reporting</li>
+              <li>Up to 5,000 local subscription records</li>
+              <li>More audits while server-verified</li>
+              <li>Local review and export</li>
             </ul>
             <a class="button" href="/pro">Go Pro</a>
           </article>
         </div>
 
         <div class="support-box">
-          <p>Pro access is not granted by trusting browser storage alone. A trusted server-side verification step is required before paid access is unlocked.</p>
+          <p>Pro access is not granted by trusting browser storage alone. This build requires a server-side entitlement; automatic payment-provider verification is not configured.</p>
         </div>
       </section>
     </main>
@@ -182,6 +194,7 @@
         <div>© STACKCUT</div>
         <div class="footer-links">
           <a href="/privacy">Privacy</a>
+          <a href="/vs/rocket-money">Rocket Money comparison</a>
           <a href="#pricing">Pricing</a>
           <a href="mailto:almoqri2019@gmail.com">Contact</a>
         </div>

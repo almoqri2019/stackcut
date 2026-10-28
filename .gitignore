@@ -4,6 +4,10 @@
 !extension/icons/
 !extension/icons/*.png
 
+node_modules/
+playwright-report/
+test-results/
+
 # fix - allow extension icons
 !extension/icons/
 !extension/icons/*.png

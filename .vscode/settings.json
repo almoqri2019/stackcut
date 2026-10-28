@@ -12,6 +12,10 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "mkdir": true
+        "mkdir": true,
+        "/^git status --short --branch && git branch --show-current && git log -1 --format='%H%n%cs%n%s' && git remote -v$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

@@ -1,143 +1,294 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>STACKCUT APP — Real-Ready v3.0 — No Blob dup, O(n) Map, Encrypted Vault</title>
-<link rel="canonical" href="https://stackcut.site/app">
-<script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/decimal.js@10.4.3/decimal.min.js" crossorigin="anonymous"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#fcfbf8;--surface:#fff;--surface-2:#f2f0eb;--ink:#0a0a0a;--line:#eceae5;--accent:#d6ff57;--emerald:#10b981;--amber:#f59e0b;}
-body{font-family:"Space Grotesk",system-ui;background:var(--bg);color:var(--ink);}
-.mono{font-family:"JetBrains Mono",monospace;}
-.card{border:1px solid var(--line);background:var(--surface);border-radius:20px;}
-.verified{color:var(--emerald);} .estimated{color:var(--amber);}
-.virtual-row{height:52px;display:flex;align-items:center;will-change:transform;}
-@media (max-width:768px){ .virtual-row{height:64px;} }
-.btn-44{min-height:44px;min-width:44px;}
-</style>
-</head>
-<body class="min-h-screen">
-<header class="sticky top-0 z-50 bg-[var(--bg)]/90 backdrop-blur-xl border-b border-[var(--line)]">
-<div class="mx-auto max-w-[1240px] px-6 h-[64px] flex items-center justify-between">
-<div class="flex items-center gap-3"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold">SC</div><b class="text-[20px]">STACKCUT</b><span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent)] border">v3.0 REAL-READY • ENCRYPTED</span><span id="proBadge" class="hidden mono text-[9px] px-2 py-0.5 rounded-full bg-black text-white">PRO $2.84/mo</span></div>
-<div class="flex gap-2">
-<button id="btnUpload" class="mono text-[11px] px-3 h-9 border rounded-full bg-white btn-44">Upload CSV/QB</button>
-<button id="btnExport" class="mono text-[11px] px-3 h-9 border rounded-full bg-white btn-44">Export JSON</button>
-<button id="btnReset" class="mono text-[11px] px-3 h-8 bg-black text-white rounded-full btn-44">Reset</button>
-</div>
-</div>
-</header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Review subscription spend and possible overlaps. Your records stay in your browser."
+    />
+    <title>Subscription audit — STACKCUT</title>
+    <link rel="canonical" href="https://stackcut.site/app" />
+    <link rel="stylesheet" href="/app.css" />
+    <script defer src="/app-runtime.js"></script>
+  </head>
+  <body>
+    <main id="vaultGate" class="vault-gate">
+      <a class="brand" href="/" aria-label="STACKCUT homepage">
+        <span class="brand-mark" aria-hidden="true">SC</span>
+        <span>STACKCUT</span>
+      </a>
+      <section class="vault-card" aria-labelledby="vaultTitle">
+        <p class="eyebrow">Private by default</p>
+        <h1 id="vaultTitle">Your subscription list stays on this device.</h1>
+        <p id="vaultDescription">
+          Create a passphrase to encrypt your local data. The passphrase is not
+          saved; you will need it again when you return.
+        </p>
+        <form id="vaultForm">
+          <label for="vaultPassphrase">Vault passphrase</label>
+          <input
+            id="vaultPassphrase"
+            name="passphrase"
+            type="password"
+            autocomplete="current-password"
+            minlength="12"
+            required
+          />
+          <div id="vaultConfirmGroup">
+            <label for="vaultConfirm">Confirm passphrase</label>
+            <input
+              id="vaultConfirm"
+              name="confirm"
+              type="password"
+              autocomplete="new-password"
+              minlength="12"
+            />
+          </div>
+          <button id="vaultSubmit" class="button button-primary" type="submit">
+            Create encrypted vault
+          </button>
+          <button id="startFresh" class="button button-secondary" type="button" hidden>
+            Create a new vault without deleting old data
+          </button>
+          <p id="vaultStatus" class="status-message" role="status" aria-live="polite"></p>
+        </form>
+        <p class="fine-print">
+          AES-GCM encryption protects saved data at rest from someone who only
+          has a copy of browser storage. It does not protect an unlocked browser
+          from malicious extensions, active scripts, or device access. Keep your
+          passphrase safe: it cannot be recovered.
+        </p>
+      </section>
+    </main>
 
-<div id="paywallModal" class="hidden fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm grid place-items-center p-4">
-<div class="bg-white rounded-[24px] p-6 max-w-[480px] w-full border shadow-2xl">
-<div class="flex justify-between items-start"><div><div class="mono text-[10px] px-2 py-0.5 rounded-full bg-black text-white inline-block">PAYWALL REAL-READY</div><div class="mt-2 text-[22px] font-bold leading-[1.1]">Unlock your <span id="paywallWaste" class="bg-[var(--accent)] px-1">$4,120/mo</span> report</div></div><button id="btnClosePaywall" class="h-9 w-9 rounded-full border grid place-items-center">✕</button></div>
-<div class="mt-4 p-3 rounded-xl bg-gray-50 border mono text-[11px]"><span class="verified">● $2,840 verified</span> • <span class="estimated">● $1,280 estimated</span> • <span id="paywallCount">0</span> tools</div>
-<div class="mt-4 grid grid-cols-2 gap-3">
-<a href="https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q" class="h-12 rounded-full bg-black text-white grid place-items-center font-bold text-[13px]">Go Pro $2.84/mo → PayPal LIVE</a>
-<button id="btnContinueFree" class="h-12 rounded-full border bg-white font-bold text-[13px]">Continue Free (3 max)</button>
-</div>
-<div class="mt-3 mono text-[10px] text-gray-500">Plan P-6HT714478R159110WNLBOW4Q • Checksum license SC-PRO-XXXX validated • SHA-256 metrics-only</div>
-</div>
-</div>
+    <main id="appContent" class="app-shell" hidden>
+      <header class="app-header">
+        <a class="brand" href="/" aria-label="STACKCUT homepage">
+          <span class="brand-mark" aria-hidden="true">SC</span>
+          <span>STACKCUT</span>
+        </a>
+        <nav class="app-nav" aria-label="App navigation">
+          <a href="/">Home</a>
+          <a href="/privacy">Privacy</a>
+          <span id="proStatus" class="plan-badge" aria-live="polite">Checking plan…</span>
+        </nav>
+        <div class="header-actions">
+          <button id="btnUpload" class="button button-secondary" type="button">
+            Upload CSV
+          </button>
+          <button id="btnExport" class="button button-secondary" type="button">
+            Export JSON
+          </button>
+          <button id="btnReset" class="button button-quiet" type="button">
+            Reset
+          </button>
+        </div>
+      </header>
 
-<div id="freeLimitBanner" class="hidden mx-auto max-w-[1240px] px-6 mt-4"><div class="p-3 rounded-xl bg-yellow-100 border border-yellow-300 mono text-[11px] flex justify-between items-center"><span>Free: 3 tools max + 1 audit • <span id="limitCount">0</span>/3 tools, <span id="auditCountDisp">0</span>/1 audits</span><button id="btnUnlockBanner" class="px-3 py-1 rounded-full bg-black text-white font-bold">Unlock →</button></div></div>
+      <section class="app-intro">
+        <p class="eyebrow">Your local subscription review</p>
+        <h1>Know what your software stack costs.</h1>
+        <p>
+          Review your imported records, decide what to keep, and inspect
+          possible category overlaps. Usage and cancellation status are never
+          guessed.
+        </p>
+      </section>
 
-<div id="uploadModal" class="hidden fixed inset-0 z-[100] bg-black/50 grid place-items-center p-6">
-<div class="bg-white rounded-[24px] p-6 max-w-[640px] w-full border shadow-2xl max-h-[90vh] overflow-auto">
-<div class="flex justify-between items-center"><b class="text-[18px]">Upload — v3.0 Real-Ready — No Blob dup</b><button id="btnCloseUpload" class="mono text-[12px] border px-3 py-1 rounded-full btn-44">Close</button></div>
-<div class="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 mono text-[10px]"><b class="verified">FIX:</b> Worker /parser.worker.js only (no Blob dup), O(n) Map, event delegation no XSS, session-bound vault with server-side entitlement checks.</div>
-<div class="mt-4"><input id="csvFile" type="file" accept=".csv,.txt" class="w-full mono text-[12px] p-2 border rounded-xl"></div>
-<div id="csvStatus" class="mt-3 mono text-[11px] text-gray-500">/parser.worker.js only</div>
-<div class="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden"><div id="csvProgress" class="h-full bg-black transition-all" style="width:0%"></div></div>
-<div id="fuzzyMap" class="mt-2 mono text-[10px] bg-gray-50 p-2 rounded-xl border"></div>
-<div class="mt-4 flex gap-2"><button id="btnParse" class="px-4 h-11 rounded-full bg-black text-white mono text-[11px] font-bold btn-44">Parse → /parser.worker.js</button><button id="btnSample" class="px-4 h-11 rounded-full border mono text-[11px] btn-44">Load 5k non-blocking</button></div>
-</div>
-</div>
+      <section class="summary-grid" aria-label="Subscription summary">
+        <article class="summary-card">
+          <span class="summary-label">Monthly spend</span>
+          <strong id="monthlySpend">$0.00</strong>
+          <span class="summary-detail">Based on the records you entered</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">In your list</span>
+          <strong id="subCount">0</strong>
+          <span class="summary-detail">Subscriptions stored in this vault</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Possible overlaps</span>
+          <strong id="overlapCount">0</strong>
+          <span class="summary-detail">Same known category; review before acting</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Potential monthly savings</span>
+          <strong id="potentialSavings">$0.00</strong>
+          <span class="summary-detail">Only items you explicitly mark to cut</span>
+        </article>
+      </section>
 
-<section class="mx-auto max-w-[1240px] px-6 pt-6 pb-10 grid lg:grid-cols-[1.1fr_0.9fr] gap-8">
-<div id="auditCard" class="bg-white border rounded-[24px] shadow-[0_16px_48px_rgba(0,0,0,0.08)] overflow-hidden h-fit">
-<div class="px-6 py-4 border-b flex items-center justify-between">
-<span class="font-bold text-[13px]">ACTIVE STACK — v3.0 REAL-READY</span><span class="mono text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent)] border">NO $199</span>
-</div>
-<div class="px-6 py-3 border-b bg-gray-50 flex justify-between mono text-[10px]"><span id="subCount">0</span><span id="auditType">all</span><span id="isProStatus">FREE</span><span id="tokenStatus">token: none</span></div>
-<div id="virtualScroll" class="h-[520px] overflow-auto border-b relative"><div id="virtualSpacer" style="height:0"></div><div id="listAll" class="absolute top-0 left-0 right-0"></div><div id="listAi" class="hidden absolute top-0 left-0 right-0"></div></div>
-<div class="p-4 border-t bg-gray-50 space-y-3">
-<div class="flex gap-2"><input id="newName" placeholder="Add tool" maxlength="64" class="flex-1 h-11 px-4 rounded-full border mono text-[12px] btn-44"><input id="newPrice" type="number" placeholder="$" min="0" max="10000" step="0.01" class="w-24 h-11 px-3 rounded-full border mono text-[12px] btn-44"><select id="newJob" class="h-11 px-3 rounded-full border mono text-[11px] btn-44"><option>Streaming</option><option>Chat</option><option>Code</option><option>Image</option><option>Writing</option><option>Gym</option><option>Other</option></select><button id="btnAdd" class="h-11 px-4 rounded-full bg-black text-white mono text-[11px] font-bold btn-44">Add</button></div>
-<div class="flex gap-2"><input id="licenseInput" placeholder="SC-PRO-XXXX checksum" maxlength="20" class="flex-1 h-11 px-4 rounded-full border mono text-[11px] btn-44"><button id="btnActivate" class="h-11 px-4 rounded-full bg-black text-white mono text-[11px] font-bold btn-44">Activate Checksum</button></div>
-</div>
-</div>
+      <section class="workspace-grid">
+        <section class="panel stack-panel" aria-labelledby="stackTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Subscription list</p>
+              <h2 id="stackTitle">Your stack</h2>
+            </div>
+            <button id="btnRunAudit" class="button button-primary" type="button">
+              Run audit
+            </button>
+          </div>
+          <p id="planNote" class="plan-note">
+            Free limits are applied in this browser; this static app has no
+            authenticated server quota.
+          </p>
+          <p id="listEmpty" class="empty-state">
+            No subscriptions yet. Add one or import a CSV to get started.
+          </p>
+          <div id="subscriptionList" class="subscription-list" aria-live="polite"></div>
+          <form id="addForm" class="add-form">
+            <h3>Add a subscription</h3>
+            <div class="form-grid">
+              <label>
+                Name
+                <input id="newName" name="name" maxlength="64" required />
+              </label>
+              <label>
+                Monthly price
+                <input
+                  id="newPrice"
+                  name="price"
+                  type="number"
+                  min="0.01"
+                  max="10000"
+                  step="0.01"
+                  required
+                />
+              </label>
+              <label>
+                Category
+                <select id="newJob" name="category">
+                  <option value="Unknown">Unknown</option>
+                  <option>Streaming</option>
+                  <option>Chat</option>
+                  <option>Code</option>
+                  <option>Image</option>
+                  <option>Writing</option>
+                  <option>Gym</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <button id="btnAdd" class="button button-primary" type="submit">
+                Add subscription
+              </button>
+            </div>
+            <p id="addStatus" class="status-message" role="status" aria-live="polite"></p>
+          </form>
+        </section>
 
-<div class="space-y-4">
-<div class="p-4 rounded-[20px] bg-black text-white border">
-<div class="mono text-[10px] opacity-60">REAL-READY HOOK O(n) Map</div>
-<div class="mt-2 text-[28px] font-bold">We found <span class="text-[var(--accent)]">$4,120/mo</span> waste</div>
-<div class="mt-3 grid grid-cols-2 gap-2"><div class="p-2.5 rounded-xl bg-white/10 border border-emerald-500/20"><div class="mono text-[9px] opacity-60">VERIFIED</div><div class="text-[18px] font-bold text-emerald-400">$2,840/mo</div></div><div class="p-2.5 rounded-xl bg-white/5 border border-amber-500/20"><div class="mono text-[9px] opacity-60">ESTIMATED</div><div class="text-[18px] font-bold text-amber-400">$1,280/mo</div></div></div>
-</div>
-<div class="grid sm:grid-cols-2 gap-3">
-<div class="card p-4"><div class="font-semibold text-[13px] flex justify-between">Spending Insights <span id="wastePct" class="mono text-[10px] px-2 py-0.5 bg-gray-100 rounded-full">0%</span></div><canvas id="insightsChart" height="140"></canvas><div id="insightsBreakdown" class="mt-3 mono text-[11px] space-y-1"></div></div>
-<div class="card p-4"><div class="font-semibold text-[13px]">Waste Score O(n)</div><div class="mt-2 flex items-baseline gap-3"><div id="wasteScore" class="text-[36px] font-bold">100</div><div class="mono text-[10px]">/100<br><span id="wasteReason" class="text-gray-500">clean</span></div></div><div class="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden"><div id="wasteBar" class="h-full bg-black transition-all" style="width:100%"></div></div></div>
-<div class="card p-4"><div class="font-semibold text-[13px]">Total Burn — Decimal.js</div><canvas id="burnChart" height="100"></canvas><div class="mono text-[9px] mt-2"><span>$<span id="yearlyBurn">0</span>/yr</span></div></div>
-<div class="card p-4"><div class="font-semibold text-[13px]">Bill Negotiation — tokenized</div><div id="negList" class="mt-2 space-y-2 mono text-[10px]"></div></div>
-</div>
-</div>
-</section>
+        <aside class="insights-column">
+          <section class="panel" aria-labelledby="categoryTitle">
+            <p class="eyebrow">Spend breakdown</p>
+            <h2 id="categoryTitle">By category</h2>
+            <div id="categoryBreakdown" class="category-breakdown"></div>
+            <p id="categoryEmpty" class="empty-state">
+              Add records with a known category to see a breakdown.
+            </p>
+          </section>
+          <section class="panel audit-panel">
+            <p class="eyebrow">Audit usage</p>
+            <h2 id="auditUsage">0 of 1 free audits used</h2>
+            <p>
+              An audit highlights category overlaps and your explicit keep/cut
+              decisions. Imported usage history is not available unless the
+              source file contains it.
+            </p>
+            <button id="btnUnlock" class="button button-secondary" type="button">
+              View Pro access
+            </button>
+          </section>
+          <section class="panel privacy-note">
+            <p class="eyebrow">Local data</p>
+            <p>
+              Your list is encrypted on this device. JSON exports are plaintext
+              and can be read by anyone who gets the downloaded file.
+            </p>
+            <a href="/privacy">Read the privacy details</a>
+          </section>
+        </aside>
+      </section>
 
-<footer class="mx-auto max-w-[1240px] px-6 py-6 border-t mono text-[10px] text-gray-500 flex justify-between"><span>v3.0 REAL-READY • No $199 • O(n) Map • Session-key vault • Server-verified access • /parser.worker.js only • PayPal P-6HT714478R159110WNLBOW4Q</span><span id="yr"></span></footer>
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black text-white mono text-[12px] hidden z-[300]"></div>
+      <footer class="app-footer">
+        <span>STACKCUT keeps subscription data in your browser.</span>
+        <a href="/privacy">Privacy</a>
+        <a href="/">Homepage</a>
+      </footer>
+    </main>
 
-<script>
-function showToast(m){ const t=document.getElementById('toast'); t.innerText=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2400); }
-function money(n){ try{ return '$'+new Decimal(n||0).toFixed(2); }catch{ return '$'+Number(n||0).toFixed(2); } }
-function cleanPrice(v){ try{ let s=String(v).replace(/[^0-9.-]/g,''); if(!s) return new Decimal(0); let d=new Decimal(s); return d.isNaN()? new Decimal(0):d.abs(); }catch{ return new Decimal(0); } }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-const PRO_STATUS_KEY='stackcut_pro_status';
-const PRO_STATUS_TTL_MS=300000;
-const PRO_STATUS_ENDPOINT='/api/pro-status';
-const VAULT_SEED_KEY='stackcut_vault_seed';
-const VAULT_SALT='stackcut-session-vault-v3';
-async function getCryptoKey(){ const enc=new TextEncoder(); let seedBytes=null; try { const raw=sessionStorage.getItem(VAULT_SEED_KEY); if(raw){ const binary=Uint8Array.from(atob(raw), c=>c.charCodeAt(0)); if(binary.length===32){ seedBytes=binary; } } } catch {} if(!seedBytes){ seedBytes=crypto.getRandomValues(new Uint8Array(32)); sessionStorage.setItem(VAULT_SEED_KEY, btoa(String.fromCharCode(...seedBytes))); }
- const km=await crypto.subtle.importKey('raw', seedBytes, {name:'PBKDF2'}, false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', salt: enc.encode(VAULT_SALT), iterations:100000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
-async function encryptVault(obj){ try{ const k=await getCryptoKey(); const iv=crypto.getRandomValues(new Uint8Array(12)); const enc=new TextEncoder().encode(JSON.stringify(obj)); const c=await crypto.subtle.encrypt({name:'AES-GCM', iv}, k, enc); const comb=new Uint8Array(iv.length + c.byteLength); comb.set(iv,0); comb.set(new Uint8Array(c), iv.length); return btoa(String.fromCharCode(...comb)); }catch(error){ console.warn('Vault encryption unavailable; browser session key is required for safe persistence.', error); return JSON.stringify(obj); } }
-async function decryptVault(str){ try{ if(!str) return null; const k=await getCryptoKey(); const b=Uint8Array.from(atob(str), c=>c.charCodeAt(0)); const iv=b.slice(0,12); const d=b.slice(12); const p=await crypto.subtle.decrypt({name:'AES-GCM', iv}, k, d); return JSON.parse(new TextDecoder().decode(p)); }catch{ try{ return JSON.parse(atob(str)); }catch{ try{ return JSON.parse(str); }catch{ return null; } } } }
-async function refreshProStatus(){ try{ const response=await fetch(PRO_STATUS_ENDPOINT,{cache:'no-store',credentials:'same-origin'}); if(!response.ok){ sessionStorage.removeItem(PRO_STATUS_KEY); return false; } const data=await response.json(); const active=Boolean(data && data.active===true && data.status==='active'); sessionStorage.setItem(PRO_STATUS_KEY, JSON.stringify({active, expiresAt: Date.now()+PRO_STATUS_TTL_MS})); return active; }catch(error){ sessionStorage.removeItem(PRO_STATUS_KEY); return false; } }
-function readCachedProStatus(){ try{ const raw=sessionStorage.getItem(PRO_STATUS_KEY); if(!raw) return false; const parsed=JSON.parse(raw); return Boolean(parsed && parsed.active===true && Number(parsed.expiresAt) > Date.now()); }catch{ return false; } }
-const CATALOG=[{id:'netflix', name:'Netflix', price:15.99, job:'Streaming', lastUsed:40, projects:0, keep:null},{id:'spotify', name:'Spotify Duo', price:12.99, job:'Streaming', lastUsed:8, projects:2, keep:null},{id:'chatgpt', name:'ChatGPT Plus', price:20, job:'Chat', lastUsed:23, projects:1, keep:null},{id:'claude', name:'Claude Pro', price:20, job:'Chat', lastUsed:8, projects:2, keep:null},{id:'equinox', name:'Equinox Gym', price:40, job:'Gym', lastUsed:40, projects:0, keep:null}];
-let subs=[]; async function loadSubs(){ try{ const r3=localStorage.getItem('stackcut-v3'); if(r3){ const dec=await decryptVault(r3); if(Array.isArray(dec)&&dec.length) return dec.slice(0,5000); } const r2=localStorage.getItem('stackcut-v2'); if(r2){ const p=JSON.parse(r2); if(Array.isArray(p)) return p.map(s=>({id:String(s.id), name:String(s.name).slice(0,64), price:Number(s.price)||10, job:String(s.job||'Other'), lastUsed:Number(s.lastUsed)||0, projects:Number(s.projects)||0, keep:s.keep||null})).slice(0,5000); } return JSON.parse(JSON.stringify(CATALOG)); }catch{ return JSON.parse(JSON.stringify(CATALOG)); } }
-async function save(){ const enc=await encryptVault(subs); localStorage.setItem('stackcut-v3', enc); localStorage.removeItem('stackcut-v2'); }
-function plan(){ const jobCounts=new Map(); subs.forEach(s=>{ jobCounts.set(s.job,(jobCounts.get(s.job)||0)+1); }); const jobSorted=new Map(); for(const job of jobCounts.keys()){ const list=subs.filter(x=>x.job===job).sort((a,b)=>a.lastUsed-b.lastUsed); jobSorted.set(job,list); } return subs.map(s=>{ let status='keep'; if(s.keep==='cut') status='cut'; else if(s.keep==='keep') status='keep'; else { if(s.projects===0||s.lastUsed>30) status='cut'; const count=jobCounts.get(s.job)||0; if(count>1 && s.lastUsed>7){ const same=jobSorted.get(s.job)||[]; if(same[0]&&same[0].id!==s.id) status='cut'; } } const isDup=(jobCounts.get(s.job)||0)>1; const isGhost=s.projects===0||s.lastUsed>30; const confidence=(isDup&&s.lastUsed>14)||isGhost?'verified':'estimated'; return {...s,status,isDuplicate:isDup,isGhost,confidence}; }); }
-function validateLicense(key){ if(!key) return false; key=key.trim().toUpperCase(); if(!key.startsWith('SC-PRO-')) return false; const suffix=key.slice(7); if(suffix.length<4) return false; let sum=0; for(let i=0;i<suffix.length;i++) sum+=suffix.charCodeAt(i); const mod=(sum*7)%97; if(mod===42) return true; const base=suffix.slice(0,-1); const check=suffix.slice(-1); let bSum=0; for(let c of base) bSum+=c.charCodeAt(0); const expected=String.fromCharCode(65+(bSum%26)); if(check===expected) return true; if(/^[A-Z0-9]{4,8}$/.test(suffix)&&mod<50) return true; return false; }
-function isPro(){ return readCachedProStatus(); }
-function getAuditCount(){ return parseInt(localStorage.getItem('audit_count')||'0'); }
-function incAudit(){ localStorage.setItem('audit_count',String(getAuditCount()+1)); }
-async function generateSecureToken(){ try{ const metrics=plan().filter(s=>s.status==='cut').map(s=>({id:s.id,price:s.price,job:s.job,confidence:s.confidence})); const payload=JSON.stringify({metrics,ts:Date.now(),domain:'stackcut.site',v:'3.0',count:metrics.length}); const enc=new TextEncoder().encode(payload); const hashBuf=await crypto.subtle.digest('SHA-256',enc); const hashArray=Array.from(new Uint8Array(hashBuf)); const token=hashArray.map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32); localStorage.setItem('stackcut-secure-token',token); const el=document.getElementById('tokenStatus'); if(el) el.innerText='token: '+token.slice(0,8)+'... SHA-256'; return token; }catch{ const token=Math.random().toString(16).slice(2)+Date.now().toString(16); localStorage.setItem('stackcut-secure-token',token); return token; } }
-const ROW_H=52; let virtualData=[]; let rafPending=false;
-function renderVirtual(){ const container=document.getElementById('virtualScroll'); const spacer=document.getElementById('virtualSpacer'); const listAll=document.getElementById('listAll'); const total=virtualData.length; spacer.style.height=(total*ROW_H)+'px'; function draw(){ rafPending=false; const st=container.scrollTop; const vh=container.clientHeight; const start=Math.max(0,Math.floor(st/ROW_H)-3); const end=Math.min(total,Math.ceil((st+vh)/ROW_H)+3); const slice=virtualData.slice(start,end); const html=slice.map((s,idx)=>{ const actual=start+idx; const top=actual*ROW_H; const bg=s.name.toLowerCase().includes('netflix')?'bg-red-500':s.name.toLowerCase().includes('spotify')?'bg-green-500':'bg-black'; const badge=s.isGhost?`<span class="mono text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 border">Ghost ${s.lastUsed}d</span>`:s.isDuplicate&&!s.isGhost?`<span class="mono text-[9px] px-1.5 py-0.5 rounded-full bg-yellow-100 border">Duplicate</span>`:''; const conf=s.confidence==='verified'?`<span class="mono text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-50 border verified">verified</span>`:`<span class="mono text-[8px] px-1.5 py-0.5 rounded-full bg-amber-50 border estimated">estimated</span>`; const cutCls=s.status==='cut'?'bg-red-50 border-red-200':'bg-white'; return `<div class="virtual-row absolute w-full px-3" style="top:${top}px" data-id="${escapeHtml(s.id)}"><div class="flex items-center justify-between p-2.5 rounded-2xl border ${cutCls} w-full"><div class="flex items-center gap-3 min-w-0"><div class="h-9 w-9 rounded-xl ${bg} text-white grid place-items-center font-bold text-[12px]">${escapeHtml(s.name[0])}</div><div class="min-w-0"><div class="font-semibold text-[13px] truncate">${escapeHtml(s.name)} ${badge} ${conf}</div><div class="mono text-[10px] text-gray-500"><button class="underline btn-auto" data-id="${escapeHtml(s.id)}" data-action="auto">auto</button> • ${escapeHtml(s.job)} • ${s.lastUsed}d</div></div></div><div class="text-right"><div class="font-bold text-[13px]">${money(s.price)}</div><button class="mono text-[9px] underline text-gray-400 btn-manage" data-id="${escapeHtml(s.id)}" data-action="manage">Manage →</button></div></div></div>`; }).join(''); listAll.innerHTML=html; } function onScroll(){ if(!rafPending){ rafPending=true; requestAnimationFrame(draw); } } container._scrollHandler=onScroll; container.addEventListener('scroll',onScroll,{passive:true}); draw(); }
-function renderList(list){ virtualData=list; renderVirtual(); }
-document.getElementById('listAll').addEventListener('click', async (e)=>{ const btn=e.target.closest('button[data-id]'); if(!btn) return; const id=btn.getAttribute('data-id'); const act=btn.getAttribute('data-action'); if(act==='auto') await toggleKeep(id); if(act==='manage') await removeSub(id); });
-let insightChart=null, burnChart=null;
-function drawCharts(filtered){ const byJob={}; filtered.forEach(s=>{byJob[s.job]=(byJob[s.job]||0)+Number(s.price);}); const c1=document.getElementById('insightsChart'); if(c1){ const labels=Object.keys(byJob); const data=Object.values(byJob); if(insightChart){ insightChart.data.labels=labels; insightChart.data.datasets[0].data=data; insightChart.update(); } else { insightChart=new Chart(c1,{type:'doughnut', data:{labels, datasets:[{data, backgroundColor:['#0a0a0a','#d6ff57','#e5e3df','#a8a6a1']}]}, options:{plugins:{legend:{display:false}}, animation:false}}); } } const c2=document.getElementById('burnChart'); if(c2){ const monthly=filtered.reduce((a,b)=>a.plus(cleanPrice(b.price)), new Decimal(0)).toNumber(); const data=Array.from({length:12},(_,i)=>monthly+Math.sin(i)*5+i); if(burnChart){ burnChart.data.datasets[0].data=data; burnChart.update(); } else { burnChart=new Chart(c2,{type:'bar', data:{labels:['J','F','M','A','M','J','J','A','S','O','N','D'], datasets:[{data, backgroundColor:'#0a0a0a'}]}, options:{plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}}, animation:false}}); } } }
-async function recalc(){ const planned=plan(); const current=planned; let waste=new Decimal(0); let total=new Decimal(0); current.forEach(s=>{ total=total.plus(cleanPrice(s.price)); if(s.status==='cut') waste=waste.plus(cleanPrice(s.price)); }); const wastePct=total.gt(0)?waste.div(total).times(100).toFixed(0):'0'; document.getElementById('wastePct').innerText=wastePct+'% waste'; const dup=planned.filter(s=>s.isDuplicate).length; const ghost=planned.filter(s=>s.isGhost).length; const score=Math.max(0,100-dup*15-ghost*20); document.getElementById('wasteScore').innerText=score; document.getElementById('wasteReason').innerText=dup+' dup, '+ghost+' ghost'; document.getElementById('wasteBar').style.width=score+'%'; document.getElementById('negList').innerHTML=planned.filter(s=>s.status==='cut').map(s=>'<div class="p-2 border rounded-xl flex justify-between"><span>'+escapeHtml(s.name)+' — save '+money(s.price)+' <span class="'+(s.confidence==='verified'?'verified':'estimated')+'">● '+s.confidence+'</span></span><a href="mailto:?subject=Cancel '+encodeURIComponent(s.name)+'" class="underline">Cancel →</a></div>').join('')||'<div class="text-gray-400">No waste — clean!</div>'; document.getElementById('subCount').innerText=planned.length+' subs'; document.getElementById('isProStatus').innerText=isPro()?'PRO':'FREE'; document.getElementById('paywallCount').innerText=planned.length; document.getElementById('paywallWaste').innerText='$'+waste.toFixed(0)+'/mo'; const banner=document.getElementById('freeLimitBanner'); if(!isPro()&&(subs.length>=3||getAuditCount()>=1)){ banner.classList.remove('hidden'); document.getElementById('limitCount').innerText=subs.length; document.getElementById('auditCountDisp').innerText=getAuditCount(); } else banner.classList.add('hidden'); renderList(current); drawCharts(current); generateSecureToken(); document.getElementById('yearlyBurn').innerText=planned.reduce((a,b)=>a.plus(cleanPrice(b.price)), new Decimal(0)).times(12).toFixed(0); }
-async function toggleKeep(id){ const s=subs.find(x=>x.id===id); if(!s) return; s.keep=s.keep==='keep'?'cut':s.keep==='cut'?null:'keep'; await save(); recalc(); }
-async function removeSub(id){ if(!confirm('Remove?')) return; subs=subs.filter(s=>s.id!==id); await save(); recalc(); showToast('Removed'); }
-function validateSub(name,price,job){ if(!name||name.length<2||name.length>64) return 'Name 2-64'; if(!/^[a-zA-Z0-9 .+\-_()]+$/.test(name)) return 'Invalid chars'; if(price.eq(0)||price.gt(10000)) return 'Price 0-10000'; if(!job) return 'Job required'; return null; }
-async function addSub(){ if(!isPro()&&subs.length>=3){ openPaywall(); return; } const name=document.getElementById('newName').value.trim().slice(0,64); const price=cleanPrice(document.getElementById('newPrice').value); const job=document.getElementById('newJob').value; const err=validateSub(name,price,job); if(err){ showToast(err); return; } subs.push({id:Date.now()+''+Math.random().toString(16).slice(2), name, price:price.toNumber(), job, lastUsed:Math.floor(Math.random()*30), projects:Math.floor(Math.random()*3), keep:null}); document.getElementById('newName').value=''; document.getElementById('newPrice').value=''; await save(); recalc(); showToast('Added '+name); }
-async function exportJSON(){ const token=await generateSecureToken(); const data={subs, audit_count:getAuditCount(), isPro:isPro(), token, exported:new Date().toISOString(), vault:'stackcut-v3-encrypted'}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='stackcut-v3-'+Date.now()+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); showToast('Exported — revoked'); }
-async function resetAll(){ if(!confirm('Reset stackcut-v3?')) return; localStorage.removeItem('stackcut-v3'); localStorage.removeItem('stackcut-v2'); localStorage.setItem('audit_count','0'); subs=JSON.parse(JSON.stringify(CATALOG)); await save(); location.reload(); }
-function openUpload(){ document.getElementById('uploadModal').classList.remove('hidden'); }
-function closeUpload(){ document.getElementById('uploadModal').classList.add('hidden'); terminateWorker(); document.getElementById('csvProgress').style.width='0%'; }
-function openPaywall(){ document.getElementById('paywallModal').classList.remove('hidden'); }
-function closePaywall(){ document.getElementById('paywallModal').classList.add('hidden'); }
-let worker=null; function getWorker(){ if(worker) return worker; worker=new Worker('/parser.worker.js'); return worker; }
-function terminateWorker(){ if(worker){ worker.terminate(); worker=null; } }
-window.addEventListener('beforeunload', terminateWorker);
-function parseWithWorker(){ const fi=document.getElementById('csvFile'); if(!fi.files[0]){ showToast('Select CSV'); return; } const file=fi.files[0]; if(file.size>10*1024*1024){ showToast('>10MB'); return; } const r=new FileReader(); r.onload=(e)=>{ const text=e.target.result; const w=getWorker(); document.getElementById('csvStatus').innerText='Parsing via /parser.worker.js only...'; document.getElementById('csvProgress').style.width='20%'; w.onmessage=async (ev)=>{ const d=ev.data; if(d.type==='progress'){ document.getElementById('csvProgress').style.width=Math.min(90,20+d.count/50)+'%'; document.getElementById('csvStatus').innerText=`Streaming... ${d.count} rows`; return; } const {ok,map,count,preview,headers,error}=d; document.getElementById('csvProgress').style.width='100%'; if(!ok){ document.getElementById('csvStatus').innerText='Error: '+error; return; } document.getElementById('csvStatus').innerText=`Parsed ${count} rows — ${headers.join(', ')}`; document.getElementById('fuzzyMap').innerText=`Fuzzy → ${map.amountCol} | ${map.vendorCol} • O(n) Map • Encrypted`; for(const p of preview) subs.push({id:Date.now()+''+Math.random().toString(16).slice(2), name:p.vendor, price:Math.abs(p.amount), job:p.category, lastUsed:Math.floor(Math.random()*40), projects:Math.floor(Math.random()*3), keep:null}); await save(); recalc(); showToast(`Imported ${preview.length} of ${count}`); closeUpload(); }; w.postMessage({fileText:text, id:Date.now()}); }; r.readAsText(file); }
-async function loadSampleCSV(){ document.getElementById('csvStatus').innerText='Generating 5k non-blocking...'; openUpload(); let csv='Vendor,Amount,Date,Category\n'; let i=0; function chunk(){ const end=Math.min(i+500,5000); for(;i<end;i++) csv+=`Tool${i},${(Math.random()*50+5).toFixed(2)},2026-01-01,${['Chat','Code','Streaming','Gym'][i%4]}\n`; document.getElementById('csvProgress').style.width=(i/5000*50)+'%'; if(i<5000) setTimeout(chunk,0); else { const w=getWorker(); w.onmessage=async (ev)=>{ const {count,preview,headers}=ev.data; for(const p of preview) subs.push({id:Date.now()+''+Math.random().toString(16).slice(2), name:p.vendor, price:Math.abs(p.amount), job:p.category, lastUsed:Math.floor(Math.random()*40), projects:Math.floor(Math.random()*3), keep:null}); await save(); recalc(); showToast('5k non-blocking loaded'); closeUpload(); }; w.postMessage({fileText:csv, id:Date.now()}); } } chunk(); }
-async function activateLicense(){ const k=document.getElementById('licenseInput').value.trim().toUpperCase(); if(!k){ showToast('Paste SC-PRO-XXXX'); return; } if(!validateLicense(k)){ showToast('Invalid checksum — must be SC-PRO-XXXX with checksum mod97=42 or last-char check'); return; } const response=await fetch(PRO_STATUS_ENDPOINT + '?license=' + encodeURIComponent(k), {cache:'no-store', credentials:'same-origin'}); const data=await response.json(); if(!data || !data.active){ showToast('Server-side verification failed. License is not active.'); return; } localStorage.setItem('stackcut-license', k); sessionStorage.setItem(PRO_STATUS_KEY, JSON.stringify({active:true, expiresAt: Date.now() + PRO_STATUS_TTL_MS})); showToast('Pro activated and verified by server'); recalc(); closePaywall(); }
-(async()=>{ subs=await loadSubs(); await refreshProStatus(); document.getElementById('yr').innerText=new Date().getFullYear(); document.getElementById('btnUpload').addEventListener('click', openUpload); document.getElementById('btnExport').addEventListener('click', exportJSON); document.getElementById('btnReset').addEventListener('click', resetAll); document.getElementById('btnClosePaywall').addEventListener('click', closePaywall); document.getElementById('btnContinueFree').addEventListener('click', closePaywall); document.getElementById('btnUnlockBanner').addEventListener('click', openPaywall); document.getElementById('btnCloseUpload').addEventListener('click', closeUpload); document.getElementById('btnParse').addEventListener('click', parseWithWorker); document.getElementById('btnSample').addEventListener('click', loadSampleCSV); document.getElementById('btnAdd').addEventListener('click', addSub); document.getElementById('btnActivate').addEventListener('click', activateLicense); recalc(); })();
-</script>
-</body>
+    <dialog id="uploadDialog" class="modal" aria-labelledby="uploadTitle">
+      <form method="dialog" class="modal-close-form">
+        <button class="icon-button" aria-label="Close CSV import" value="close">×</button>
+      </form>
+      <p class="eyebrow">Import records</p>
+      <h2 id="uploadTitle">Upload a CSV file</h2>
+      <p>
+        CSV files are parsed in your browser. Up to 5,000 positive-amount rows
+        per file; refunds and zero-value rows are skipped, not turned into spend.
+      </p>
+      <label for="csvFile">CSV or TXT file (maximum 10 MB)</label>
+      <input id="csvFile" type="file" accept=".csv,.txt,text/csv,text/plain" />
+      <div class="modal-actions">
+        <button id="btnParse" class="button button-primary" type="button">Import selected file</button>
+        <button id="btnSample" class="button button-secondary" type="button">Load sample data</button>
+      </div>
+      <progress id="csvProgress" max="100" value="0" aria-label="Import progress"></progress>
+      <p id="csvStatus" class="status-message" role="status" aria-live="polite">
+        Choose a file to begin.
+      </p>
+      <p id="fuzzyMap" class="fine-print"></p>
+    </dialog>
+
+    <dialog id="paywallDialog" class="modal modal-narrow" aria-labelledby="paywallTitle">
+      <form method="dialog" class="modal-close-form">
+        <button class="icon-button" aria-label="Close Pro access dialog" value="close">×</button>
+      </form>
+      <p class="eyebrow">Plan limits</p>
+      <h2 id="paywallTitle">Continue with Pro</h2>
+      <p id="paywallMessage">
+        The free experience supports three subscriptions and one audit in this browser.
+      </p>
+      <a class="button button-primary full-button" href="/pro">View Pro options</a>
+      <label for="subscriptionId">PayPal subscription ID</label>
+      <input id="subscriptionId" autocomplete="off" />
+      <button id="btnActivate" class="button button-secondary full-button" type="button">
+        Verify subscription with server
+      </button>
+      <p id="entitlementStatus" class="status-message" role="status" aria-live="polite">
+        PayPal checks are made by the server. Browser storage and entered IDs are not proof of payment.
+      </p>
+      <button id="btnContinueFree" class="text-button" type="button">Continue with Free</button>
+    </dialog>
+
+    <dialog id="editDialog" class="modal modal-narrow" aria-labelledby="editTitle">
+      <form id="editForm">
+        <p class="eyebrow">Manage record</p>
+        <h2 id="editTitle">Edit subscription</h2>
+        <input id="editId" type="hidden" />
+        <label for="editName">Name</label>
+        <input id="editName" maxlength="64" required />
+        <label for="editPrice">Monthly price</label>
+        <input id="editPrice" type="number" min="0.01" max="10000" step="0.01" required />
+        <label for="editJob">Category</label>
+        <select id="editJob">
+          <option value="Unknown">Unknown</option>
+          <option>Streaming</option>
+          <option>Chat</option>
+          <option>Code</option>
+          <option>Image</option>
+          <option>Writing</option>
+          <option>Gym</option>
+          <option>Other</option>
+        </select>
+        <div class="modal-actions">
+          <button class="button button-primary" type="submit">Save changes</button>
+          <button id="btnCancelEdit" class="button button-secondary" type="button">Cancel</button>
+        </div>
+        <p id="editStatus" class="status-message" role="status" aria-live="polite"></p>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </body>
 </html>

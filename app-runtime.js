@@ -1,0 +1,952 @@
+(() => {
+  "use strict";
+
+  const VAULT_KEY = "stackcut-v4";
+  const LEGACY_KEYS = ["stackcut-v3", "stackcut-v2"];
+  const PBKDF2_ITERATIONS = 210000;
+  const FREE_SUBSCRIPTION_LIMIT = 3;
+  const FREE_AUDIT_LIMIT = 1;
+  const MAX_SUBSCRIPTIONS = 5000;
+  const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+  const MAX_IMPORT_ROWS = 5000;
+  const $ = (id) => document.getElementById(id);
+
+  let state = { subscriptions: [], auditCount: 0 };
+  let vaultKey = null;
+  let vaultSalt = null;
+  let proActive = false;
+  let worker = null;
+  let currentImportId = null;
+  let toastTimer = 0;
+  let ignoreLegacyVault = false;
+  let legacyState = null;
+  let legacyError = "";
+
+  function setStatus(element, message, isError = false) {
+    element.textContent = message;
+    element.dataset.state = isError ? "error" : "info";
+  }
+
+  function showToast(message) {
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toast.hidden = true;
+    }, 3500);
+  }
+
+  function formatMoney(value) {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+    }).format(Number(value) || 0);
+  }
+
+  function toBase64(bytes) {
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    return btoa(binary);
+  }
+
+  function fromBase64(value) {
+    return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+  }
+
+  async function deriveVaultKey(passphrase, salt) {
+    const material = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(passphrase),
+      "PBKDF2",
+      false,
+      ["deriveKey"],
+    );
+    return crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: PBKDF2_ITERATIONS,
+        hash: "SHA-256",
+      },
+      material,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"],
+    );
+  }
+
+  async function encryptVault(value, key, salt) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      new TextEncoder().encode(JSON.stringify(value)),
+    );
+    return JSON.stringify({
+      version: 4,
+      salt: toBase64(salt),
+      iv: toBase64(iv),
+      ciphertext: toBase64(new Uint8Array(ciphertext)),
+    });
+  }
+
+  async function decryptVault(raw, passphrase) {
+    const record = JSON.parse(raw);
+    if (
+      !record ||
+      record.version !== 4 ||
+      typeof record.salt !== "string" ||
+      typeof record.iv !== "string" ||
+      typeof record.ciphertext !== "string"
+    ) {
+      throw new Error("The saved vault format is not recognized.");
+    }
+    const salt = fromBase64(record.salt);
+    const key = await deriveVaultKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: fromBase64(record.iv) },
+      key,
+      fromBase64(record.ciphertext),
+    );
+    return {
+      data: JSON.parse(new TextDecoder().decode(plaintext)),
+      key,
+      salt,
+    };
+  }
+
+  function normalizeSubscription(item, index = 0) {
+    const name = String(item?.name ?? "").trim().slice(0, 64);
+    const price = Number(item?.price);
+    if (!name || !Number.isFinite(price) || price <= 0 || price > 10000) {
+      throw new Error(`Saved subscription ${index + 1} has invalid data.`);
+    }
+    return {
+      id: String(item.id || crypto.randomUUID()),
+      name,
+      price: Math.round(price * 100) / 100,
+      category: String(item.category ?? item.job ?? "Unknown").slice(0, 32) || "Unknown",
+      transactionDate: String(item.transactionDate ?? "").slice(0, 32),
+      decision: ["keep", "cut"].includes(item.decision ?? item.keep)
+        ? item.decision ?? item.keep
+        : null,
+    };
+  }
+
+  function normalizeState(value) {
+    if (Array.isArray(value)) value = { subscriptions: value, auditCount: 0 };
+    if (!value || !Array.isArray(value.subscriptions)) {
+      throw new Error("The saved vault does not contain a subscription list.");
+    }
+    if (value.subscriptions.length > MAX_SUBSCRIPTIONS) {
+      throw new Error(`The vault exceeds the ${MAX_SUBSCRIPTIONS.toLocaleString()} item limit.`);
+    }
+    return {
+      subscriptions: value.subscriptions.map(normalizeSubscription),
+      auditCount: Number.isInteger(Number(value.auditCount))
+        ? Math.max(0, Number(value.auditCount))
+        : 0,
+    };
+  }
+
+  async function readLegacyData() {
+    const oldV2 = localStorage.getItem("stackcut-v2");
+    if (oldV2) {
+      const parsed = JSON.parse(oldV2);
+      if (!Array.isArray(parsed)) {
+        throw new Error("The older local data is malformed and was not changed.");
+      }
+      return normalizeState({
+        subscriptions: parsed,
+        auditCount: Number(localStorage.getItem("audit_count") || 0),
+      });
+    }
+
+    const oldV3 = localStorage.getItem("stackcut-v3");
+    if (!oldV3) return { subscriptions: [], auditCount: 0 };
+    const trimmedV3 = oldV3.trim();
+    if (trimmedV3.startsWith("[") || trimmedV3.startsWith("{")) {
+      const parsed = JSON.parse(trimmedV3);
+      return normalizeState({
+        subscriptions: Array.isArray(parsed) ? parsed : parsed.subscriptions,
+        auditCount: parsed.auditCount ?? Number(localStorage.getItem("audit_count") || 0),
+      });
+    }
+
+    const legacySeed = sessionStorage.getItem("stackcut_vault_seed");
+    if (!legacySeed) {
+      throw new Error(
+        "This older vault used a browser-session-only key that is no longer available. Its saved data is untouched. You can create a separate new vault below.",
+      );
+    }
+    const seedBytes = fromBase64(legacySeed);
+    if (seedBytes.length !== 32) {
+      throw new Error(
+        "The older vault key is invalid. Its saved data is untouched; create a separate new vault to continue.",
+      );
+    }
+    const material = await crypto.subtle.importKey(
+      "raw",
+      seedBytes,
+      "PBKDF2",
+      false,
+      ["deriveKey"],
+    );
+    const key = await crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: new TextEncoder().encode("stackcut-session-vault-v3"),
+        iterations: 100000,
+        hash: "SHA-256",
+      },
+      material,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["decrypt"],
+    );
+    const combined = fromBase64(oldV3);
+    if (combined.length <= 12) {
+      throw new Error("The older vault is incomplete and was not changed.");
+    }
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: combined.slice(0, 12) },
+      key,
+      combined.slice(12),
+    );
+    return normalizeState(JSON.parse(new TextDecoder().decode(plaintext)));
+  }
+
+  function setVaultMode(mode, message = "") {
+    const isUnlock = mode === "unlock";
+    const title = $("vaultTitle");
+    const description = $("vaultDescription");
+    const confirmGroup = $("vaultConfirmGroup");
+    const confirmInput = $("vaultConfirm");
+    const submit = $("vaultSubmit");
+    const freshButton = $("startFresh");
+
+    if (isUnlock) {
+      title.textContent = "Unlock your local vault.";
+      description.textContent =
+        "Enter the passphrase you created for this device. It is not stored or sent to a server.";
+      confirmGroup.hidden = true;
+      confirmInput.required = false;
+      submit.textContent = "Unlock vault";
+      freshButton.hidden = true;
+    } else {
+      title.textContent = "Your subscription list stays on this device.";
+      description.textContent =
+        "Create a passphrase to encrypt your local data. The passphrase is not saved; you will need it again when you return.";
+      confirmGroup.hidden = false;
+      confirmInput.required = true;
+      submit.textContent = "Create encrypted vault";
+      freshButton.hidden = !message.includes("older vault used a browser-session-only key");
+    }
+    if (message) setStatus($("vaultStatus"), message, true);
+  }
+
+  async function persist() {
+    if (!vaultKey || !vaultSalt) {
+      throw new Error("Unlock the local vault before saving changes.");
+    }
+    const encrypted = await encryptVault(state, vaultKey, vaultSalt);
+    localStorage.setItem(VAULT_KEY, encrypted);
+  }
+
+  function isPro() {
+    return proActive;
+  }
+
+  function subscriptionLimit() {
+    return isPro() ? MAX_SUBSCRIPTIONS : FREE_SUBSCRIPTION_LIMIT;
+  }
+
+  function auditLimit() {
+    return isPro() ? Number.POSITIVE_INFINITY : FREE_AUDIT_LIMIT;
+  }
+
+  async function refreshProStatus() {
+    const status = $("proStatus");
+    try {
+      const response = await fetch("/api/pro-status", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (!response.ok) {
+        throw new Error(`Entitlement check returned HTTP ${response.status}.`);
+      }
+      const data = await response.json();
+      proActive = data?.active === true && data?.status === "active";
+      status.textContent = proActive ? "Pro — server verified" : "Free";
+      render();
+    } catch (error) {
+      proActive = false;
+      status.textContent = "Free — verification unavailable";
+      showToast(`Could not verify Pro access: ${error.message}`);
+    }
+  }
+
+  function getKnownCategoryCounts() {
+    const counts = new Map();
+    for (const item of state.subscriptions) {
+      if (item.category !== "Unknown") {
+        counts.set(item.category, (counts.get(item.category) || 0) + 1);
+      }
+    }
+    return counts;
+  }
+
+  function createActionButton(label, action, id) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.dataset.action = action;
+    button.dataset.id = id;
+    return button;
+  }
+
+  function renderSubscriptions() {
+    const list = $("subscriptionList");
+    const empty = $("listEmpty");
+    list.replaceChildren();
+    empty.hidden = state.subscriptions.length > 0;
+    const categoryCounts = getKnownCategoryCounts();
+
+    for (const item of state.subscriptions) {
+      const row = document.createElement("article");
+      row.className = "subscription-row";
+      row.dataset.id = item.id;
+      row.dataset.decision = item.decision || "review";
+
+      const main = document.createElement("div");
+      main.className = "subscription-main";
+      const name = document.createElement("div");
+      name.className = "subscription-name";
+      name.textContent = item.name;
+      const meta = document.createElement("div");
+      meta.className = "subscription-meta";
+      const details = [formatMoney(item.price) + "/mo", item.category];
+      details.push("Usage history not provided");
+      if (item.transactionDate) details.push(`Transaction date: ${item.transactionDate}`);
+      meta.textContent = details.join(" · ");
+      main.append(name, meta);
+
+      if (item.category !== "Unknown" && categoryCounts.get(item.category) > 1) {
+        const overlap = document.createElement("span");
+        overlap.className = "review-tag";
+        overlap.textContent = "Possible category overlap — review";
+        main.append(overlap);
+      }
+      if (item.decision) {
+        const decision = document.createElement("span");
+        decision.className = "unknown-tag";
+        decision.textContent = item.decision === "keep" ? "Marked to keep" : "Marked to cut";
+        main.append(decision);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "subscription-actions";
+      actions.append(
+        createActionButton("Keep", "keep", item.id),
+        createActionButton("Mark cut", "cut", item.id),
+        ...(item.decision
+          ? [createActionButton("Clear decision", "clear", item.id)]
+          : []),
+        createActionButton("Manage", "edit", item.id),
+        createActionButton("Remove", "remove", item.id),
+      );
+      row.append(main, actions);
+      list.append(row);
+    }
+  }
+
+  function renderCategoryBreakdown() {
+    const container = $("categoryBreakdown");
+    const empty = $("categoryEmpty");
+    container.replaceChildren();
+    const totals = new Map();
+    for (const item of state.subscriptions) {
+      if (item.category === "Unknown") continue;
+      totals.set(item.category, (totals.get(item.category) || 0) + item.price);
+    }
+    const entries = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
+    empty.hidden = entries.length > 0;
+    const max = Math.max(...entries.map(([, total]) => total), 1);
+    for (const [category, total] of entries) {
+      const line = document.createElement("div");
+      line.className = "category-line";
+      const label = document.createElement("span");
+      label.textContent = category;
+      const amount = document.createElement("strong");
+      amount.textContent = formatMoney(total);
+      const track = document.createElement("div");
+      track.className = "category-track";
+      const fill = document.createElement("div");
+      fill.className = "category-fill";
+      fill.style.width = `${Math.max(3, (total / max) * 100)}%`;
+      track.append(fill);
+      line.append(label, amount, track);
+      container.append(line);
+    }
+  }
+
+  function render() {
+    const items = state.subscriptions;
+    const monthly = items.reduce((sum, item) => sum + item.price, 0);
+    const savings = items.reduce(
+      (sum, item) => sum + (item.decision === "cut" ? item.price : 0),
+      0,
+    );
+    const categories = getKnownCategoryCounts();
+    const overlaps = Array.from(categories.values()).filter((count) => count > 1).length;
+    $("monthlySpend").textContent = formatMoney(monthly);
+    $("subCount").textContent = String(items.length);
+    $("overlapCount").textContent = String(overlaps);
+    $("potentialSavings").textContent = formatMoney(savings);
+    $("auditUsage").textContent = isPro()
+      ? `${state.auditCount} audits completed`
+      : `${state.auditCount} of ${FREE_AUDIT_LIMIT} free audits used`;
+    $("planNote").textContent =
+      `Free limits are applied in this browser; this static app has no authenticated server quota. ` +
+      `${items.length}/${subscriptionLimit()} subscriptions.`;
+    renderSubscriptions();
+    renderCategoryBreakdown();
+  }
+
+  function openDialog(dialog) {
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function closeDialog(dialog) {
+    if (dialog.open) dialog.close();
+  }
+
+  function showLimitDialog(message) {
+    $("paywallMessage").textContent = message;
+    openDialog($("paywallDialog"));
+  }
+
+  async function saveAndRender(successMessage) {
+    try {
+      await persist();
+      render();
+      if (successMessage) showToast(successMessage);
+      return true;
+    } catch (error) {
+      showToast(`Could not save your changes: ${error.message}`);
+      return false;
+    }
+  }
+
+  function validName(name) {
+    return name.length >= 2 && name.length <= 64 && /^[\p{L}\p{N} .+\-_()]+$/u.test(name);
+  }
+
+  async function addSubscription(event) {
+    event.preventDefault();
+    const name = $("newName").value.trim();
+    const price = Number($("newPrice").value);
+    const category = $("newJob").value || "Unknown";
+    if (!validName(name)) {
+      setStatus($("addStatus"), "Use a 2–64 character name with letters, numbers, spaces, or . + - _ ( ).", true);
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
+      setStatus($("addStatus"), "Enter a monthly price greater than $0 and no more than $10,000.", true);
+      return;
+    }
+    if (state.subscriptions.length >= subscriptionLimit()) {
+      showLimitDialog("The Free experience supports three subscriptions in this browser. Remove an item or review Pro options to continue.");
+      return;
+    }
+    if (state.subscriptions.length >= MAX_SUBSCRIPTIONS) {
+      setStatus($("addStatus"), `The ${MAX_SUBSCRIPTIONS.toLocaleString()} item storage limit has been reached.`, true);
+      return;
+    }
+    const previous = state.subscriptions;
+    state.subscriptions = [
+      ...previous,
+      normalizeSubscription({ id: crypto.randomUUID(), name, price, category }),
+    ];
+    if (await saveAndRender(`${name} added.`)) {
+      $("addForm").reset();
+      setStatus($("addStatus"), "Subscription added.");
+    } else {
+      state.subscriptions = previous;
+      render();
+    }
+  }
+
+  async function runAudit() {
+    if (state.auditCount >= auditLimit()) {
+      showLimitDialog("The Free experience includes one audit in this browser. Review Pro options to continue.");
+      return;
+    }
+    const previousCount = state.auditCount;
+    state.auditCount += 1;
+    if (await saveAndRender("Audit completed. Review the possible overlaps and your decisions.")) {
+      return;
+    }
+    state.auditCount = previousCount;
+    render();
+  }
+
+  async function setDecision(id, decision) {
+    const item = state.subscriptions.find((entry) => entry.id === id);
+    if (!item) return;
+    const previous = item.decision;
+    item.decision = item.decision === decision ? null : decision;
+    if (!(await saveAndRender("Your review decision was saved."))) {
+      item.decision = previous;
+      render();
+    }
+  }
+
+  function openEdit(id) {
+    const item = state.subscriptions.find((entry) => entry.id === id);
+    if (!item) return;
+    $("editId").value = item.id;
+    $("editName").value = item.name;
+    $("editPrice").value = String(item.price);
+    $("editJob").value = item.category;
+    setStatus($("editStatus"), "");
+    openDialog($("editDialog"));
+    $("editName").focus();
+  }
+
+  async function saveEdit(event) {
+    event.preventDefault();
+    const item = state.subscriptions.find((entry) => entry.id === $("editId").value);
+    if (!item) return;
+    const name = $("editName").value.trim();
+    const price = Number($("editPrice").value);
+    if (!validName(name)) {
+      setStatus($("editStatus"), "Enter a valid 2–64 character name.", true);
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
+      setStatus($("editStatus"), "Enter a price greater than $0 and no more than $10,000.", true);
+      return;
+    }
+    const previous = { name: item.name, price: item.price, category: item.category };
+    item.name = name;
+    item.price = Math.round(price * 100) / 100;
+    item.category = $("editJob").value || "Unknown";
+    if (await saveAndRender("Subscription updated.")) {
+      closeDialog($("editDialog"));
+    } else {
+      Object.assign(item, previous);
+    }
+  }
+
+  async function removeSubscription(id) {
+    const item = state.subscriptions.find((entry) => entry.id === id);
+    if (!item || !window.confirm(`Remove "${item.name}" from your list?`)) return;
+    const previous = state.subscriptions;
+    state.subscriptions = previous.filter((entry) => entry.id !== id);
+    if (!(await saveAndRender(`${item.name} removed.`))) {
+      state.subscriptions = previous;
+      render();
+    }
+  }
+
+  async function resetAll() {
+    if (!window.confirm("Remove all subscriptions and reset audit usage for this vault?")) return;
+    const previous = state;
+    state = { subscriptions: [], auditCount: 0 };
+    if (!(await saveAndRender("Your list and audit count were reset."))) {
+      state = previous;
+      render();
+    }
+  }
+
+  async function exportJSON() {
+    const data = {
+      format: "stackcut-plaintext-export",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      auditCount: state.auditCount,
+      subscriptions: state.subscriptions,
+      notice: "This JSON export is plaintext and is not encrypted.",
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `stackcut-export-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Plaintext JSON export downloaded.");
+  }
+
+  function stopWorker() {
+    if (worker) {
+      worker.terminate();
+      worker = null;
+    }
+    currentImportId = null;
+  }
+
+  function updateImportProgress(count) {
+    const progress = $("csvProgress");
+    progress.value = Math.min(95, Math.max(progress.value, Math.round((count / MAX_IMPORT_ROWS) * 95)));
+    setStatus($("csvStatus"), `Parsed ${count.toLocaleString()} positive rows…`);
+  }
+
+  function canImportCount(count) {
+    const total = state.subscriptions.length + count;
+    if (total > MAX_SUBSCRIPTIONS) {
+      return `Import would exceed the ${MAX_SUBSCRIPTIONS.toLocaleString()} subscription storage limit. No rows were added.`;
+    }
+    if (total > subscriptionLimit()) {
+      return `Import contains ${count} rows, but only ${Math.max(0, subscriptionLimit() - state.subscriptions.length)} Free slots remain. No rows were added.`;
+    }
+    return "";
+  }
+
+  async function applyImport(rows, refundCount = 0, invalidCount = 0) {
+    const limitError = canImportCount(rows.length);
+    if (limitError) {
+      setStatus($("csvStatus"), limitError, true);
+      return false;
+    }
+    const previous = state.subscriptions;
+    state.subscriptions = [
+      ...previous,
+      ...rows.map((row) =>
+        normalizeSubscription({
+          id: crypto.randomUUID(),
+          name: row.vendor,
+          price: row.amount,
+          category: row.category || "Unknown",
+          transactionDate: row.date || "",
+        }),
+      ),
+    ];
+    if (!(await saveAndRender())) {
+      state.subscriptions = previous;
+      render();
+      setStatus($("csvStatus"), "The import could not be saved. Existing data was preserved.", true);
+      return false;
+    }
+    $("csvProgress").value = 100;
+    setStatus(
+      $("csvStatus"),
+      `Imported ${rows.length.toLocaleString()} row${rows.length === 1 ? "" : "s"}.${refundCount ? ` Skipped ${refundCount.toLocaleString()} refund or zero-value row${refundCount === 1 ? "" : "s"}.` : ""}${invalidCount ? ` Skipped ${invalidCount.toLocaleString()} row${invalidCount === 1 ? "" : "s"} with missing or invalid amounts.` : ""}`,
+    );
+    return true;
+  }
+
+  function handleWorkerMessage(event, collectedRows, importId) {
+    const message = event.data;
+    if (!message || message.id !== importId || currentImportId !== importId) return;
+    if (message.type === "progress") {
+      updateImportProgress(message.count || 0);
+      return;
+    }
+    if (message.type === "batch") {
+      if (!Array.isArray(message.rows)) {
+        setStatus($("csvStatus"), "The CSV parser returned an invalid batch.", true);
+        stopWorker();
+        return;
+      }
+      collectedRows.push(...message.rows);
+      updateImportProgress(collectedRows.length);
+      return;
+    }
+    if (message.type === "error") {
+      setStatus($("csvStatus"), message.message || "The CSV parser could not read this file.", true);
+      $("csvProgress").value = 0;
+      stopWorker();
+      return;
+    }
+    if (message.type !== "complete") {
+      setStatus($("csvStatus"), "The CSV parser returned an unknown response.", true);
+      stopWorker();
+      return;
+    }
+    if (message.count !== collectedRows.length) {
+      setStatus($("csvStatus"), "Import stopped because the parser row count did not match its batches.", true);
+      stopWorker();
+      return;
+    }
+    $("fuzzyMap").textContent =
+      `Columns: amount “${message.map.amount}”, name “${message.map.vendor}”, category “${message.map.category || "not provided"}”.`;
+    if (!message.count) {
+      const detail = message.refundCount
+        ? `No positive spend rows were found; ${message.refundCount} refund or zero-value rows were skipped.`
+        : message.invalidCount
+          ? `No positive spend rows were found; ${message.invalidCount} row${message.invalidCount === 1 ? "" : "s"} had missing or invalid amounts.`
+          : "No importable rows were found. Check that the file has a header row and positive amounts.";
+      setStatus($("csvStatus"), detail, true);
+      $("csvProgress").value = 0;
+      stopWorker();
+      return;
+    }
+    void applyImport(
+      collectedRows,
+      message.refundCount || 0,
+      message.invalidCount || 0,
+    ).then((success) => {
+      if (success) closeDialog($("uploadDialog"));
+      stopWorker();
+    });
+  }
+
+  function startCsvImport() {
+    const file = $("csvFile").files?.[0];
+    $("csvProgress").value = 0;
+    $("fuzzyMap").textContent = "";
+    if (!file) {
+      setStatus($("csvStatus"), "Choose a CSV or TXT file first.", true);
+      return;
+    }
+    if (!/\.(csv|txt)$/i.test(file.name)) {
+      setStatus($("csvStatus"), "Unsupported file type. Choose a .csv or .txt file.", true);
+      return;
+    }
+    if (file.size > MAX_IMPORT_BYTES) {
+      setStatus($("csvStatus"), "This file is larger than the 10 MB limit.", true);
+      return;
+    }
+    if (file.size === 0) {
+      setStatus($("csvStatus"), "This file is empty. Choose a CSV with a header and data rows.", true);
+      return;
+    }
+    setStatus($("csvStatus"), "Reading file…");
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setStatus($("csvStatus"), "The browser could not read this file. Try another local CSV.", true);
+    };
+    reader.onload = () => {
+      if (typeof reader.result !== "string" || !reader.result.trim()) {
+        setStatus($("csvStatus"), "This file is empty or could not be decoded as text.", true);
+        return;
+      }
+      try {
+        stopWorker();
+        worker = new Worker("/parser.worker.js");
+        currentImportId = crypto.randomUUID();
+        const importId = currentImportId;
+        const rows = [];
+        worker.onmessage = (event) => handleWorkerMessage(event, rows, importId);
+        worker.onerror = (event) => {
+          event.preventDefault();
+          setStatus($("csvStatus"), `CSV parser failed to load or run: ${event.message || "unknown worker error"}.`, true);
+          $("csvProgress").value = 0;
+          stopWorker();
+        };
+        worker.onmessageerror = () => {
+          setStatus($("csvStatus"), "The CSV parser returned unreadable data. No rows were imported.", true);
+          $("csvProgress").value = 0;
+          stopWorker();
+        };
+        setStatus($("csvStatus"), "Parsing CSV in a local worker…");
+        worker.postMessage({ type: "parse", id: importId, text: reader.result });
+      } catch (error) {
+        setStatus($("csvStatus"), `Could not start the CSV parser: ${error.message}`, true);
+        stopWorker();
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function loadSampleData() {
+    const sample = [
+      { name: "Example streaming plan", price: 12.99, category: "Streaming" },
+      { name: "Example design tool", price: 18, category: "Design" },
+      { name: "Example project tool", price: 9, category: "Project management" },
+    ];
+    const available = Math.max(0, subscriptionLimit() - state.subscriptions.length);
+    if (!available) {
+      setStatus($("csvStatus"), "No subscription slots remain. No sample data was added.", true);
+      showLimitDialog("There are no Free subscription slots available for sample data.");
+      return;
+    }
+    const records = sample.slice(0, available);
+    const success = await applyImport(records.map((item) => ({
+      vendor: item.name,
+      amount: item.price,
+      category: item.category,
+      date: "",
+    })));
+    if (success) {
+      setStatus($("csvStatus"), `Loaded ${records.length} sample records. Sample data is not verified usage history.`);
+      closeDialog($("uploadDialog"));
+    }
+  }
+
+  async function verifyProAccess() {
+    const subscriptionId = $("subscriptionId").value.trim();
+    if (!subscriptionId) {
+      setStatus($("entitlementStatus"), "Enter a PayPal subscription ID to check it with the server.", true);
+      return;
+    }
+    setStatus($("entitlementStatus"), "Checking the subscription with PayPal…");
+    try {
+      const response = await fetch("/api/pro-status", {
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: { "X-Stackcut-Subscription-Id": subscriptionId },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.reason || `Server returned HTTP ${response.status}.`);
+      }
+      if (data?.active !== true || data?.status !== "active" || data?.source !== "paypal") {
+        proActive = false;
+        $("proStatus").textContent = "Free";
+        render();
+        setStatus(
+          $("entitlementStatus"),
+          data?.reason || "The server did not verify an active entitlement. No paid features were unlocked.",
+          true,
+        );
+        return;
+      }
+      proActive = true;
+      $("proStatus").textContent = "Pro — PayPal verified for this session";
+      $("subscriptionId").value = "";
+      render();
+      setStatus($("entitlementStatus"), "PayPal verified this subscription for this session. The ID was not saved in this browser.");
+      closeDialog($("paywallDialog"));
+    } catch (error) {
+      proActive = false;
+      $("proStatus").textContent = "Free — verification unavailable";
+      render();
+      setStatus($("entitlementStatus"), `Could not verify access: ${error.message}`, true);
+    }
+  }
+
+  function setupDialogs() {
+    $("btnUpload").addEventListener("click", () => {
+      $("csvProgress").value = 0;
+      openDialog($("uploadDialog"));
+    });
+    $("btnParse").addEventListener("click", startCsvImport);
+    $("btnSample").addEventListener("click", () => void loadSampleData());
+    $("btnUnlock").addEventListener("click", () => openDialog($("paywallDialog")));
+    $("btnContinueFree").addEventListener("click", () => closeDialog($("paywallDialog")));
+    $("btnActivate").addEventListener("click", () => void verifyProAccess());
+    $("uploadDialog").addEventListener("close", stopWorker);
+    $("editDialog").addEventListener("click", (event) => {
+      if (event.target === $("editDialog")) closeDialog($("editDialog"));
+    });
+    $("btnCancelEdit").addEventListener("click", () => closeDialog($("editDialog")));
+  }
+
+  function setupAppEvents() {
+    $("btnExport").addEventListener("click", exportJSON);
+    $("btnReset").addEventListener("click", () => void resetAll());
+    $("btnRunAudit").addEventListener("click", () => void runAudit());
+    $("addForm").addEventListener("submit", (event) => void addSubscription(event));
+    $("editForm").addEventListener("submit", (event) => void saveEdit(event));
+    $("subscriptionList").addEventListener("click", (event) => {
+      const button = event.target instanceof Element
+        ? event.target.closest("button[data-action]")
+        : null;
+      if (!button) return;
+      const { action, id } = button.dataset;
+      if (action === "keep" || action === "cut") void setDecision(id, action);
+      if (action === "clear") void setDecision(id, null);
+      if (action === "edit") openEdit(id);
+      if (action === "remove") void removeSubscription(id);
+    });
+  }
+
+  async function unlockOrCreateVault(event) {
+    event.preventDefault();
+    const passphrase = $("vaultPassphrase").value;
+    if (passphrase.length < 12) {
+      setStatus($("vaultStatus"), "Use a passphrase with at least 12 characters.", true);
+      return;
+    }
+    const stored = localStorage.getItem(VAULT_KEY);
+    if (stored) {
+      try {
+        const unlocked = await decryptVault(stored, passphrase);
+        state = normalizeState(unlocked.data);
+        vaultKey = unlocked.key;
+        vaultSalt = fromBase64(JSON.parse(stored).salt);
+      } catch {
+        setStatus($("vaultStatus"), "The passphrase was incorrect or the encrypted vault could not be read. Saved data was not changed.", true);
+        return;
+      }
+    } else {
+      if ($("vaultConfirm").value !== passphrase) {
+        setStatus($("vaultStatus"), "The passphrases do not match.", true);
+        return;
+      }
+      if (legacyError && !ignoreLegacyVault) {
+        setStatus($("vaultStatus"), "The older vault could not be migrated. Choose “Create a new vault without deleting old data” to continue safely.", true);
+        return;
+      }
+      try {
+        const initialData = ignoreLegacyVault
+          ? { subscriptions: [], auditCount: 0 }
+          : legacyState || await readLegacyData();
+        state = normalizeState(initialData);
+        vaultSalt = crypto.getRandomValues(new Uint8Array(16));
+        vaultKey = await deriveVaultKey(passphrase, vaultSalt);
+        await persist();
+        if (!ignoreLegacyVault) {
+          for (const key of LEGACY_KEYS) localStorage.removeItem(key);
+          localStorage.removeItem("audit_count");
+        }
+      } catch (error) {
+        vaultKey = null;
+        vaultSalt = null;
+        setStatus($("vaultStatus"), `Could not create or migrate the encrypted vault: ${error.message}. Existing data was not deliberately removed.`, true);
+        return;
+      }
+    }
+
+    $("vaultPassphrase").value = "";
+    $("vaultConfirm").value = "";
+    $("vaultGate").hidden = true;
+    $("appContent").hidden = false;
+    setupDialogs();
+    setupAppEvents();
+    render();
+    void refreshProStatus();
+  }
+
+  function setupVaultForm() {
+    $("vaultForm").addEventListener("submit", (event) => void unlockOrCreateVault(event));
+    $("startFresh").addEventListener("click", () => {
+      ignoreLegacyVault = true;
+      legacyError = "";
+      setVaultMode("create", "A new vault will be created separately. The older data remains untouched in browser storage.");
+      $("vaultPassphrase").focus();
+    });
+  }
+
+  async function boot() {
+    setupVaultForm();
+    const stored = localStorage.getItem(VAULT_KEY);
+    if (stored) {
+      setVaultMode("unlock");
+      $("vaultPassphrase").focus();
+      return;
+    }
+    try {
+      const legacy = await readLegacyData();
+      legacyState = legacy;
+      setVaultMode("create");
+    } catch (error) {
+      legacyError = error.message;
+      setVaultMode("create", error.message);
+    }
+  }
+
+  void boot().catch((error) => {
+    setStatus($("vaultStatus"), `The app could not initialize safely: ${error.message}`, true);
+  });
+})();

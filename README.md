@@ -7,18 +7,22 @@ Live expanded Stackcut = Rocket Money (all subscriptions) + AI engine.
 - Legacy domains `stackcut.online` and `stackcutify.vercel.app` redirect to `stackcut.site` via `vercel.json`.
 
 **Stack:**
-- 100% local vault stackcut-v2, stack_tools, audit_count, isPro, stackcut-license
-- No bank login, no Plaid, 0 requests verifiable
-- Free: 3 tools + 1 audit enforced live
-- Pro: $2.84/mo PayPal Morocco-friendly — SC-PRO-XXXX license local
+- Subscription records are encrypted in a browser-local vault; imports are parsed locally.
+- No bank login or Plaid connection.
+- Free limits are browser-side UX limits, not server-enforced quotas.
+- Pro is not available until PayPal server credentials and a plan ID are configured.
+- The app checks PayPal subscription status on the server; browser storage and access-code formats are not proof of payment.
 
 **Deploy:**
 - Vercel: framework = Other, no build command, output = repository root
 
 **Files:**
-- index.html = landing LIVE production
-- app.html = app LIVE production (polished Active Stack, Ghost bug fixed)
+- index.html = landing page
+- app.html = local subscription audit app
+- api/pro-status.js = server-side entitlement verification
 - privacy.html, pro.html, sitemap.xml, robots.txt, vercel.json
+
+See [docs/BUTTON_AND_APP_AUDIT.md](./docs/BUTTON_AND_APP_AUDIT.md) for deployment comparison, tested workflows, and payment setup limitations.
 
 **Clean:**
 Remove duplicate imported files only after confirming they are not needed:

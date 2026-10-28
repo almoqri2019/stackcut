@@ -1,38 +1,95 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy — STACKCUT • 100% local</title><link rel="canonical" href="https://stackcut.site/privacy">
-<script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-<style>body{font-family:"Space Grotesk",system-ui} .mono{font-family:"JetBrains Mono",monospace}</style></head>
-<body class="bg-[#fcfbf8] text-[#0a0a0a] min-h-screen">
-<header class="max-w-[900px] mx-auto px-6 h-[64px] flex items-center justify-between border-b"><div class="flex items-center gap-2"><div class="h-8 w-8 bg-black text-white grid place-items-center rounded-lg font-bold">SC</div><b>STACKCUT</b><span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[#d6ff57] border">PRIVACY</span></div><a href="/" class="mono text-[11px] underline">← Back to stackcut.site</a></header>
-<main class="max-w-[900px] mx-auto px-6 py-12">
-<h1 class="text-[40px] font-bold tracking-tight">Privacy — 100% local, no bank login.</h1>
-<div class='mono text-[11px] p-2 bg-yellow-100 border rounded-xl'>Live PayPal: PROD-8NK50966TF029134F • Plan P-6HT714478R159110WNLBOW4Q STACKPRO ON — https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-6HT714478R159110WNLBOW4Q</div>
-<p class="mt-4 mono text-[13px] text-gray-600">STACKCUT is Stackcutify 2.0 — now beyond AI. Rocket Money for your whole stack + AI engine. We do NOT use Plaid. We do NOT require bank login.</p>
-<div class="mt-8 space-y-6 mono text-[13px] leading-[1.6]">
-<h2 class="font-bold text-[16px]">What we store — local only</h2>
-<ul class="list-disc ml-5 space-y-1">
-<li><b>stackcut-v2</b> + <b>stack_tools</b> — your subscriptions (name max 64 chars, price capped 100k, job, lastUsed 0-365, projects 0-100, keep auto/keep/cut) in browser localStorage. Never sent to server.</li>
-<li><b>audit_count</b> — number of audits completed, localStorage. Free: 1 max. Pro: unlimited.</li>
-<li><b>isPro</b> + <b>stackcut-license</b> — SC-PRO-XXXX license, localStorage. Set after PayPal $2.84/mo subscription. No server verification — checked locally with startsWith('SC-PRO-').</li>
-<li><b>CSV parser</b> — AI usage CSV you upload is parsed in page via FileReader, not persisted.</li>
-<li><b>Export</b> — Free JSON redacted (names, prices, renewal dates omitted). Pro JSON/CSV includes full records + exported ISO date.</li>
-</ul>
-<h2 class="font-bold text-[16px]">What we DON'T store</h2>
-<ul class="list-disc ml-5 space-y-1">
-<li>No bank credentials, no Plaid, no account numbers.</li>
-<li>No server, no database, no cookies tracking. Verifiable 0 requests — CSP connect-src 'none' except founders.json if used.</li>
-<li>No extension reading page content. Extension checks hostnames on AI-service domains (openai.com, claude.ai, etc.) to count tools, does not read DOM.</li>
-<li>No analytics that leaves device unless you enable Plausible (self-hosted optional).</li>
-</ul>
-<h2 class="font-bold text-[16px]">Payment — PayPal $2.84/mo</h2>
-<p>Pro $2.84/mo via PayPal subscription: cmd=_xclick-subscriptions, business=almoqri2019@gmail.com, a3=2.84, p3=1, t3=M, src=1, currency USD. After PayPal, you receive SC-PRO- license by email. Paste in /app or /pro to activate locally. Cancel anytime in PayPal. Morocco-friendly.</p>
-<h2 class="font-bold text-[16px]">Extension</h2>
-<p>Chrome extension stores isPro in chrome.storage.sync first, then chrome.storage.local fallback. Hostname detection only, no page content read, no bank connection.</p>
-<h2 class="font-bold text-[16px]">Contact</h2>
-<p>Email almoqri2019@gmail.com for deletion — delete localStorage stackcut-v2, stack_tools, audit_count, isPro, stackcut-license in DevTools > Application.</p>
-<p class="text-gray-400">Last updated: <span id="yr"></span> — stackcut.site • stackcut.site/app • stackcut.site/pro</p>
-</div>
-</main>
-<script>document.getElementById('yr').innerText=new Date().getFullYear()</script>
-</body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Learn how STACKCUT stores subscription records, imports, exports, and checks optional Pro access."
+    />
+    <title>Privacy — STACKCUT</title>
+    <link rel="canonical" href="https://stackcut.site/privacy" />
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">SC</span>
+          <span>STACKCUT</span>
+        </a>
+        <nav class="app-nav" aria-label="Page navigation">
+          <a href="/">Homepage</a>
+          <a href="/app">Open app</a>
+        </nav>
+      </header>
+      <article class="panel" style="max-width: 860px; margin: 42px auto">
+        <p class="eyebrow">Privacy</p>
+        <h1>Subscription data stays in your browser.</h1>
+        <p>
+          STACKCUT does not ask for bank credentials or connect to a bank.
+          Subscription records you add or import are processed locally and
+          encrypted in browser storage with a passphrase you choose.
+        </p>
+
+        <h2>Local records and imports</h2>
+        <p>
+          The app stores subscription names, prices, categories, transaction
+          dates supplied by an import, your keep/cut decisions, and the number
+          of audits you have run. It does not invent usage history, project
+          counts, verification status, or renewal dates. CSV files are parsed
+          by a local browser worker and are not uploaded by the app.
+        </p>
+        <p>
+          AES-GCM encryption with a passphrase-derived key protects saved data
+          at rest from someone who only has a copy of browser storage. The app
+          does not store the passphrase. This does not protect an unlocked
+          browser from active scripts, malicious extensions, or device access.
+          If you forget the passphrase, STACKCUT cannot recover the vault.
+        </p>
+
+        <h2>Exports</h2>
+        <p>
+          JSON exports are plaintext and contain the subscription information
+          you chose to export. The file is not protected by the vault
+          passphrase. Store or share it accordingly.
+        </p>
+
+        <h2>Pro access checks</h2>
+        <p>
+          The app requests <code>/api/pro-status</code> to check whether the
+          server has verified an entitlement. If you enter an access code, it
+          is sent to that endpoint for verification and is not saved by the
+          app. A configured server allowlist or signed token can be checked;
+          this build does not include a payment-provider webhook or automatic
+          subscription lifecycle integration. A successful checkout alone
+          does not automatically unlock app access.
+        </p>
+
+        <h2>Free plan limits</h2>
+        <p>
+          The static app applies free-plan limits in the browser. There is no
+          authenticated server-side quota service in this build, so those
+          limits are not a security or payment-enforcement boundary.
+        </p>
+
+        <h2>Older vaults</h2>
+        <p>
+          Older v2 data is migrated when it can be read. An older v3 encrypted
+          vault can only be migrated if its session-only key is still available
+          in that browser session. When it is not, the old stored data is left
+          untouched and the app offers a separate new vault.
+        </p>
+
+        <h2>Hosting requests</h2>
+        <p>
+          Opening the site necessarily sends a request to its web host.
+          Optional access checks also reach the site’s serverless endpoint.
+          STACKCUT does not send subscription records to that endpoint.
+        </p>
+
+        <p class="fine-print">Last updated: June 2026</p>
+      </article>
+    </main>
+  </body>
+</html>
