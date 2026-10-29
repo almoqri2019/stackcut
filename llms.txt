@@ -1,38 +1,39 @@
-# STACKCUT — stackcut.site v3.0 REAL-READY — P0 Traditional Gaps fixed — No $199/yr
-> The money app for your entire stack. Real Worker /parser.worker.js only (no Blob dup), O(n) Map duplicate killer, event delegation no XSS, encrypted vault stackcut-v3, checksum license SC-PRO-XXXX. 100% local, PayPal LIVE $2.84/mo only.
+# StackCut
 
-## Primary Domain — REAL-READY v3.0
-- Canonical Apex: https://stackcut.site/ (Production)
-- Redirect: https://www.stackcut.site/ 308 -> https://stackcut.site/
-- App: https://stackcut.site/app — Real-ready: /parser.worker.js only (no Blob dup), O(n) Map, event delegation, encrypted vault stackcut-v3, checksum license, Chart.js update not destroy, non-blocking 5k sample
-- Pricing: https://stackcut.site/#pricing — Only Free + Pro $2.84/mo (No $199/yr team seats as requested)
-- Comparison: https://stackcut.site/vs/rocket-money
+> StackCut helps individuals and small teams review recurring software
+> subscription costs, identify possible overlaps, and estimate annual spend.
 
-## v3.0 REAL-READY Fixes — P0 Traditional Gaps (Traditional Dev 12+yr)
-- Frontend: Removed Blob duplication — Worker loaded as /parser.worker.js only, no Blob URL creation, terminate only. O(n) plan() using Map for jobCounts + jobSorted, no nested filter O(n²). Event delegation for virtual list (data-id + data-action), no innerHTML onclick injection with escapeHtml in handler, escapeHtml for all user content. Chart.js update not destroy for performance. Non-blocking 5k sample generation via setTimeout chunking.
-- Backend/Security: Encrypted vault stackcut-v3 AES-GCM PBKDF2 100k iterations, fallback base64. Checksum license validation SC-PRO-XXXX: sum*7 mod97=42 OR last-char check, not just prefix. CSP worker-src blob: + object-src none, X-Frame DENY, HSTS preload, crossorigin anonymous on CDN, SHA-256 metrics-only token (no raw lines). SRI-ready with crossorigin.
-- DevOps: Apex canonical, www 308->apex, Cache HTML must-revalidate, parser.worker.js immutable, rewrites for /vs/rocket-money, /pro, /privacy, /app to avoid 404, Valid DNS A 216.198.79.1
-- Product: Removed Enterprise $199/yr team seats entirely. Only Free (3 tools +1 audit encrypted vault) + Pro $2.84/mo PayPal LIVE P-6HT714478R159110WNLBOW4Q. Modal paywall with $4,120 context, checksum license validation.
-- QA: safeDecimal handles $ , commas, (parentheses), validated rows gt0 lt1M, fuzzy QB synonyms debit/credit/open_balance/home_currency_amount/payee/memo, input validation regex /^[a-zA-Z0-9 .+\-_()]+$/, price 0-10000, job required.
-- UI/UX: No dead buttons, data-action delegation, 44px tap targets, no $199/yr card, 2-col pricing.
+## Official pages
 
-## Capabilities
-- Client-side parsing: /parser.worker.js only, real step streaming, Decimal.js exact, O(n) Map
-- Spend intelligence: O(n) duplicate killer, ghost 14d+30d, BLS, confidence verified/estimated
-- Zero-knowledge: Encrypted vault stackcut-v3 AES-GCM, raw never leaves browser, metrics-only SHA-256 token
-- Pricing: Free encrypted vault, Pro $2.84/mo PayPal LIVE P-6HT714478R159110WNLBOW4Q only — No $199/yr
+- Homepage: https://stackcut.site/
+- App: https://stackcut.site/app
+- International tax calculator: https://stackcut.site/tax-calculator
+- Pro and checkout: https://stackcut.site/pro
+- Privacy: https://stackcut.site/privacy
+- Rocket Money comparison: https://stackcut.site/vs/rocket-money
 
-## Tool Endpoints
-- Audit Engine: /app — encrypted vault stackcut-v3, O(n) Map, event delegation
-- Parser Worker: /parser.worker.js — /parser.worker.js only, no Blob dup, fuzzy QB, Decimal.js, progress events
-- License: SC-PRO-XXXX checksum validated mod97=42 + last-char check
+## What StackCut does
 
-## Privacy & Security Guarantees
-- No bank login, no raw transmission, encrypted vault stackcut-v3 AES-GCM, metrics-only SHA-256
-- CSP: default-src self + jsdelivr + tailwind + paypal, worker-src self blob:, object-src none, frame-ancestors none, crossorigin anonymous
-- GDPR/CCPA local-only encrypted vault
+- Offers a 30-second calculator for three user-entered subscriptions.
+- Annualizes costs based on selected billing intervals.
+- Lets users import supported CSV records or enter subscriptions manually.
+- Highlights possible overlap candidates with explanations for review.
+- Provides an international software-subscription tax estimator with
+  limited automated reference-rate coverage.
 
-## Contact & Infra
-- Domain: stackcut.site apex canonical, www 308->apex
-- Vercel: Valid Configuration apex, www 308->apex
-- PayPal: P-6HT714478R159110WNLBOW4Q $2.84/mo LIVE only — No $199/yr
+## Privacy and limitations
+
+- Subscription records are stored in a passphrase-encrypted browser-local vault.
+- CSV files are parsed locally by the app.
+- Specific features make server requests, including Pro entitlement checks
+  and tax-rate lookups.
+- The quick calculator does not upload or save the values entered into it.
+- Similar names or categories are heuristic signals, not proof that two tools
+  are interchangeable.
+- Potential waste is not guaranteed savings; users decide what to cancel.
+- Tax amounts are estimates, not tax advice or confirmed vendor invoice charges.
+
+## Plans
+
+See https://stackcut.site/#pricing and https://stackcut.site/pro for the
+current plan details and checkout availability.

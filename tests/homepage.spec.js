@@ -71,7 +71,7 @@ test.describe("homepage navigation and controls", () => {
     await page.goto("/");
     await page.getByRole("link", { name: "Rocket Money comparison" }).click();
     await expect(page).toHaveURL(/\/vs\/rocket-money$/);
-    await expect(page.getByRole("heading", { name: /Rocket Money vs Stackcut/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /StackCut vs Rocket Money/i })).toBeVisible();
   });
 
   test("mobile menu opens, closes with Escape, and navigates", async ({ page }) => {
