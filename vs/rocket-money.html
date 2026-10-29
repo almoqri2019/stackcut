@@ -1,50 +1,384 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Stackcut vs Rocket Money (Truebill) for AI tools — No bank login needed</title>
-<meta name="description" content="Rocket Money needs your bank login and charges 35-60% of savings. Stackcut audits AI tools locally, no account, no server. Cut duplicate ChatGPT, Claude, Perplexity in 2 seconds.">
-<style>
-body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:860px;margin:0 auto;padding:40px 20px;line-height:1.6;color:#111;background:#fff}
-h1{font-size:38px;letter-spacing:-0.03em;line-height:1.1;margin:10px 0}
-h2{font-size:22px;margin-top:40px}
-.kicker{font-size:12px;text-transform:uppercase;letter-spacing:0.14em;color:#666;font-weight:600}
-.card{border:1px solid #e5e5e5;border-radius:14px;padding:18px 20px;margin:16px 0;background:#fafafa}
-.cta{display:inline-block;background:#111;color:#fff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:12px}
-.table{width:100%;border-collapse:collapse;margin:20px 0}
-.table th,.table td{border:1px solid #e5e5e5;padding:10px 12px;text-align:left;font-size:14px}
-.badge{display:inline-block;font-size:11px;padding:3px 8px;border-radius:999px;background:#111;color:#fff;margin-left:8px}
-.mono{font-family:ui-monospace, SFMono-Regular, monospace;font-size:13px}
-a{color:#111}
-</style>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Stackcut","applicationCategory":"FinanceApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>StackCut vs Rocket Money: Subscription Auditing Compared</title>
+  <meta name="description" content="Compare StackCut and Rocket Money for subscription management. See the differences in bank connections, software overlap reviews, privacy, and pricing.">
+  <link rel="canonical" href="https://stackcut.site/vs/rocket-money">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="StackCut">
+  <meta property="og:title" content="StackCut vs Rocket Money: Which Fits Your Needs?">
+  <meta property="og:description" content="Compare privacy-conscious software subscription audits with a broader personal finance and recurring-bill management app.">
+  <meta property="og:url" content="https://stackcut.site/vs/rocket-money">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="StackCut vs Rocket Money">
+  <meta name="twitter:description" content="Compare subscription auditing, bank connections, privacy, and pricing.">
+
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211b;
+      --muted: #59665e;
+      --line: #dfe6df;
+      --surface: #f6f8f5;
+      --green: #166534;
+      --green-bg: #effaf1;
+      --white: #fff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--white);
+      color: var(--ink);
+      font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    a { color: #166534; }
+    a:focus-visible, summary:focus-visible {
+      outline: 3px solid #65a30d;
+      outline-offset: 3px;
+    }
+
+    .wrap {
+      width: min(100% - 36px, 960px);
+      margin-inline: auto;
+    }
+
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      color: var(--ink);
+      font-weight: 850;
+      letter-spacing: .06em;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .nav-links a { font-size: .9rem; }
+
+    main { padding: 44px 0 64px; }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 800px;
+      margin: 10px 0 18px;
+      font-size: clamp(2.1rem, 5.6vw, 3.7rem);
+      letter-spacing: -.045em;
+      line-height: 1.09;
+    }
+
+    h2 {
+      margin-top: 44px;
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      letter-spacing: -.025em;
+      line-height: 1.2;
+    }
+
+    h3 { line-height: 1.3; }
+
+    .lead {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1.13rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--white);
+    }
+
+    .card.featured {
+      border-color: #9ccea5;
+      background: var(--green-bg);
+    }
+
+    .card h2 { margin: 0 0 12px; font-size: 1.35rem; }
+    .card p { margin-bottom: 0; }
+    .muted { color: var(--muted); }
+
+    .button {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 11px 16px;
+      border: 1px solid var(--ink);
+      border-radius: 10px;
+      background: var(--ink);
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .button:focus-visible { outline-color: #65a30d; }
+
+    .table-scroll {
+      overflow-x: auto;
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: var(--surface); }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .note {
+      padding: 16px 18px;
+      border-left: 4px solid #84a98c;
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    details {
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    summary { cursor: pointer; font-weight: 750; }
+    details p { margin-bottom: 0; color: var(--muted); }
+
+    footer {
+      padding: 24px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 620px) {
+      main { padding-top: 30px; }
+      .cards { grid-template-columns: 1fr; }
+      .card { padding: 18px; }
+      .nav { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "StackCut vs Rocket Money",
+    "url": "https://stackcut.site/vs/rocket-money",
+    "description": "A comparison of StackCut's software subscription audit workflow and Rocket Money's personal finance and recurring-bill features.",
+    "dateModified": "2026-10-29",
+    "about": [
+      { "@type": "SoftwareApplication", "name": "StackCut", "url": "https://stackcut.site/" },
+      { "@type": "SoftwareApplication", "name": "Rocket Money", "url": "https://www.rocketmoney.com/" }
+    ]
+  }
+  </script>
 </head>
+
 <body>
-<p class="kicker">VS • Rocket Money (Truebill)</p>
-<h1>Rocket Money vs Stackcut for AI subscriptions</h1>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="/" aria-label="StackCut home">STACKCUT</a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/">Home</a>
+        <a href="/#quick-audit">30-second calculator</a>
+        <a href="/tax-calculator">Tax calculator</a>
+        <a href="/pro">Pro</a>
+        <a href="/privacy">Privacy</a>
+      </nav>
+    </div>
+  </header>
 
-<p><strong>Truebill is now Rocket Money.</strong> It links to your bank via Plaid, scans for subscriptions, and charges $7-14/mo + 35-60% of what it saves you. For $20 AI tools, that math doesn't work.</p>
-<table class="table">
-<tr><th></th><th>Rocket Money</th><th>Stackcut</th></tr>
-<tr><td>Needs bank login</td><td>Yes — Plaid</td><td><strong>No — local audit</strong></td></tr>
-<tr><td>AI overlap detection</td><td>No — just recurring charges</td><td>Yes — groups by job: Chat, Search, Code, Image</td></tr>
-<tr><td>Price</td><td>Free + $7-14/mo + 35-60% success fee</td><td>Free + $19 one-time Pro</td></tr>
-<tr><td>Privacy</td><td>Bank data on their server, 4K+ complaints about hidden charges</td><td>Nothing leaves this browser — localStorage only</td></tr>
-<tr><td>Cancel AI tools</td><td>Concierge (slow)</td><td>Direct cancel link + draft letter</td></tr>
-</table>
-<div class="card">
-<strong>The math:</strong> If Rocket Money saves you $85/mo on AI tools, you pay them $30-51/mo first year. With Stackcut you keep the full $85. $1,020/year returned.
-<br><a class="cta" href="/app">Audit your AI stack free — 2 sec →</a>
-</div>
-<h2>Why founders switch</h2>
-<ul>
-<li>You pay for ChatGPT Plus $20 + Claude Pro $20 + SuperGrok $30 doing the same Chat job — Rocket Money sees 3 charges, Stackcut sees 1 job with $50 overlap</li>
-<li>No bank connection — audit from your desk, not your bank</li>
-<li>Built for AI: 27 tools cataloged with cancel links</li>
-</ul>
+  <main class="wrap">
+    <p class="eyebrow">Subscription tools compared</p>
+    <h1>StackCut vs Rocket Money: which is right for you?</h1>
+    <p class="lead">
+      Both tools can help you review recurring costs, but they take different
+      approaches. StackCut focuses on software subscription audits and possible
+      overlap. Rocket Money is a broader personal finance app with subscription
+      tracking, budgeting, and account-linked features.
+    </p>
+    <p class="muted"><small>Comparison reviewed October 29, 2026. Features and prices can change; confirm current details with each provider.</small></p>
 
-<hr style="margin:40px 0;border:none;border-top:1px solid #eee">
-<p class="mono">Stackcut stores subscription records in your browser and does not request bank credentials. <a href="/app">Audit your stack free →</a></p>
+    <div class="cards">
+      <section class="card featured">
+        <h2>Choose StackCut if…</h2>
+        <p>You want to manually enter or import software subscription data, estimate annual spend, and review possible overlaps without connecting a bank account.</p>
+        <a class="button" href="/#quick-audit">Try the 30-second calculator</a>
+        <p><a href="/app">Open the full subscription audit</a></p>
+      </section>
+
+      <section class="card">
+        <h2>Consider Rocket Money if…</h2>
+        <p>You want broader personal finance features, including budgeting and recurring-charge monitoring through supported connected accounts.</p>
+        <a class="button" href="https://www.rocketmoney.com/" target="_blank" rel="noopener noreferrer">Visit Rocket Money</a>
+      </section>
+    </div>
+
+    <h2>Feature comparison</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">StackCut</th>
+            <th scope="col">Rocket Money</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Primary focus</th>
+            <td>Auditing software subscriptions, annualizing costs, and reviewing possible overlap.</td>
+            <td>Personal finance, recurring bills, subscription tracking, and budgeting.</td>
+          </tr>
+          <tr>
+            <th scope="row">Bank connection</th>
+            <td>Not required. Enter subscriptions manually or import a supported CSV.</td>
+            <td>Supported account connections can help detect recurring transactions automatically.</td>
+          </tr>
+          <tr>
+            <th scope="row">Possible software overlap</th>
+            <td>Flags possible matches using subscription names and categories. Findings are heuristic suggestions, not proof that tools are interchangeable.</td>
+            <td>Focuses on recurring charges and broader finances rather than StackCut's dedicated name/category overlap report.</td>
+          </tr>
+          <tr>
+            <th scope="row">Cancel services</th>
+            <td>Helps you review and decide. You are responsible for cancelling with the service provider.</td>
+            <td>Subscription cancellation assistance is available through qualifying paid features; check current plan details.</td>
+          </tr>
+          <tr>
+            <th scope="row">Budgeting and credit features</th>
+            <td>Not its main purpose.</td>
+            <td>Offers broader budgeting and credit-related features, depending on plan.</td>
+          </tr>
+          <tr>
+            <th scope="row">Quick annual cost estimate</th>
+            <td>Free homepage calculator for three subscriptions and their billing intervals.</td>
+            <td>Broader financial tracking and recurring-charge tools; not the same three-item StackCut calculator.</td>
+          </tr>
+          <tr>
+            <th scope="row">Tax estimate for software subscriptions</th>
+            <td>Includes a calculator with limited automated reference-rate coverage. Estimates are not tax advice.</td>
+            <td>Not the primary focus of its subscription-management offering.</td>
+          </tr>
+          <tr>
+            <th scope="row">Pricing</th>
+            <td>Try the free calculator. See the current app and Pro checkout for availability and terms.</td>
+            <td>Offers Free, Premium, and Premium+ plans. Premium uses sliding-scale pricing; Premium+ is listed at $15/month plus tax. Confirm current offers on its official site.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>How does Rocket Money pricing work?</h2>
+    <p>
+      Rocket Money's Help Center describes Free, Premium, and Premium+ options.
+      Premium uses sliding-scale pricing, while Premium+ is listed at
+      $15 per month plus tax. Bill negotiation has separate terms: Rocket Money
+      says new bill negotiations will move exclusively to Premium+ beginning
+      November 2, 2026, with no additional negotiation success fee for Premium+
+      members. Review its current official pricing and terms before signing up.
+    </p>
+    <p>
+      Official sources:
+      <a href="https://help.rocketmoney.com/en/articles/2217739-how-much-does-rocket-money-cost" target="_blank" rel="noopener noreferrer">Rocket Money pricing</a>
+      and
+      <a href="https://help.rocketmoney.com/en/articles/17141357-bill-negotiations-is-moving-to-premium" target="_blank" rel="noopener noreferrer">Bill Negotiation changes</a>.
+    </p>
+
+    <h2>How does StackCut handle subscription data?</h2>
+    <p>
+      The 30-second calculator runs in your browser and does not upload or save
+      the values you enter. The full app uses a browser-local vault for
+      subscription records and makes requests for specific features, including
+      tax-rate lookups and Pro entitlement verification. Read the
+      <a href="/privacy">StackCut privacy policy</a> for details.
+    </p>
+
+    <h2>Frequently asked questions</h2>
+    <details>
+      <summary>Do I need to connect my bank to use StackCut?</summary>
+      <p>No. The quick calculator works with three values you enter yourself.
+      The full app supports manual subscription entry and supported CSV imports.</p>
+    </details>
+    <details>
+      <summary>Does StackCut automatically cancel subscriptions?</summary>
+      <p>No. StackCut helps you review costs and possible overlaps. You decide
+      whether to cancel a service and complete the cancellation with its provider.</p>
+    </details>
+    <details>
+      <summary>Does a possible overlap mean I can save that full amount?</summary>
+      <p>No. Similar names or categories can indicate something worth reviewing,
+      but they do not prove two services are interchangeable. Actual savings
+      depend on what you choose to stop paying for.</p>
+    </details>
+    <details>
+      <summary>Is StackCut a replacement for a personal finance app?</summary>
+      <p>Not for everyone. StackCut focuses on software subscription reviews.
+      If you want comprehensive budgeting, credit features, and account-linked
+      transaction tracking, a broader personal finance app may suit you better.</p>
+    </details>
+
+    <p class="note">
+      Product features, pricing, and availability may change. This page is an
+      independent comparison from StackCut, not an endorsement by or affiliation
+      with Rocket Money.
+    </p>
+
+    <p>
+      <a class="button" href="/#quick-audit">Try StackCut's free 30-second calculator</a>
+    </p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a href="/">StackCut home</a> ·
+      <a href="/privacy">Privacy</a> ·
+      <a href="/pro">Pro</a>
+    </div>
+  </footer>
 </body>
 </html>
