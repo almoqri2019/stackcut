@@ -745,3 +745,48 @@ button { cursor: pointer; }
   .burn-metrics { grid-template-columns: 1fr; }
   .burn-card { padding: 15px; }
 }
+
+
+
+/* STACKCUT_AEO_FAQ */
+.home-faq {
+  max-width: 900px;
+  margin-inline: auto;
+}
+.faq-eyebrow {
+  margin-bottom: 8px;
+  color: var(--green, #166534);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.home-faq-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+.home-faq-item {
+  padding: 17px 20px;
+  border: 1px solid var(--border, #dfe6df);
+  border-radius: 14px;
+  background: var(--card, #fff);
+}
+.home-faq-item summary {
+  cursor: pointer;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.home-faq-item summary:focus-visible {
+  outline: 3px solid var(--green, #166534);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+.home-faq-item p {
+  margin: 12px 0 0;
+  color: var(--muted, #59665e);
+  line-height: 1.7;
+}
+@media (max-width: 480px) {
+  .home-faq-item { padding: 14px; }
+}

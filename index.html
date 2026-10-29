@@ -39,7 +39,88 @@
     </script>
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/scripts.js"></script>
-  </head>
+  
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is StackCut?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "StackCut helps you review recurring software subscriptions, estimate annual spending, and identify possible overlaps worth investigating. The calculator provides a quick estimate, while the app supports a more detailed subscription review."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is StackCut free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can use the 30-second calculator on the homepage without creating an account. Check the current pricing section and Pro page for the latest app features, purchase availability, and billing terms."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does StackCut connect to my bank account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No bank connection is required. You can enter subscription details manually or import a supported CSV into the app."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does StackCut upload the information entered into the 30-second calculator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The homepage calculator performs its calculations in your browser and does not upload or save the values you enter. The full app makes specific server requests, including Pro entitlement checks and tax-rate lookups. See the privacy policy for more details."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the 30-second calculator estimate annual spending?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It annualizes each price using the billing interval you select: weekly prices are multiplied by 52, monthly prices by 12, quarterly prices by 4, and annual prices by 1. The result is an estimate based on your entries."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does potential waste mean guaranteed savings?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Potential waste is the annualized cost of subscriptions you mark as rarely used or no longer used. It is spending worth reviewing, not guaranteed savings. Actual savings depend on the services you choose to cancel."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does StackCut identify possible duplicate subscriptions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "StackCut can flag similar subscription names or shared categories as potential overlaps. These are heuristic signals, not proof that two products are interchangeable. Review the evidence before deciding whether a subscription is redundant."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does StackCut automatically cancel subscriptions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. StackCut helps you review costs and make decisions. You must cancel a subscription directly with the provider."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the international tax calculator tax advice?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. It estimates VAT, GST, or sales tax using available reference rates or a rate you enter. Coverage and tax applicability vary by jurisdiction, and an estimate is not confirmation of the amount on a vendor invoice."
+      }
+    }
+  ]
+}
+</script>
+</head>
   <body>
     <header class="site-header">
       <div class="inner">
@@ -356,7 +437,55 @@
           <p>Checkout is provided through PayPal. Pro access requires verification of an eligible active subscription by the server; browser storage alone does not unlock Pro.</p>
         </div>
       </section>
-    </main>
+    
+<section class="section site-shell home-faq" id="stackcut-faq"
+         aria-labelledby="stackcutFaqTitle">
+  <div class="section-head">
+    <p class="faq-eyebrow">STACKCUT FAQ</p>
+    <h2 id="stackcutFaqTitle">Frequently asked questions</h2>
+    <p>Clear answers about subscription audits, privacy, potential savings, and tax estimates.</p>
+  </div>
+  <div class="home-faq-list">
+    <details class="home-faq-item">
+      <summary>What is StackCut?</summary>
+      <p>StackCut helps you review recurring software subscriptions, estimate annual spending, and identify possible overlaps worth investigating. The calculator provides a quick estimate, while the app supports a more detailed subscription review.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Is StackCut free?</summary>
+      <p>You can use the 30-second calculator on the homepage without creating an account. Check the current pricing section and Pro page for the latest app features, purchase availability, and billing terms.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Does StackCut connect to my bank account?</summary>
+      <p>No bank connection is required. You can enter subscription details manually or import a supported CSV into the app.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Does StackCut upload the information entered into the 30-second calculator?</summary>
+      <p>The homepage calculator performs its calculations in your browser and does not upload or save the values you enter. The full app makes specific server requests, including Pro entitlement checks and tax-rate lookups. See the privacy policy for more details.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>How does the 30-second calculator estimate annual spending?</summary>
+      <p>It annualizes each price using the billing interval you select: weekly prices are multiplied by 52, monthly prices by 12, quarterly prices by 4, and annual prices by 1. The result is an estimate based on your entries.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Does potential waste mean guaranteed savings?</summary>
+      <p>No. Potential waste is the annualized cost of subscriptions you mark as rarely used or no longer used. It is spending worth reviewing, not guaranteed savings. Actual savings depend on the services you choose to cancel.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>How does StackCut identify possible duplicate subscriptions?</summary>
+      <p>StackCut can flag similar subscription names or shared categories as potential overlaps. These are heuristic signals, not proof that two products are interchangeable. Review the evidence before deciding whether a subscription is redundant.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Does StackCut automatically cancel subscriptions?</summary>
+      <p>No. StackCut helps you review costs and make decisions. You must cancel a subscription directly with the provider.</p>
+    </details>
+    <details class="home-faq-item">
+      <summary>Is the international tax calculator tax advice?</summary>
+      <p>No. It estimates VAT, GST, or sales tax using available reference rates or a rate you enter. Coverage and tax applicability vary by jurisdiction, and an estimate is not confirmation of the amount on a vendor invoice.</p>
+    </details>
+  </div>
+</section>
+
+</main>
 
     <footer class="footer">
       <div class="footer-inner">
