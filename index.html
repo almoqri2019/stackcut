@@ -30,6 +30,7 @@
             </div>
           </div>
           <a href="#how-it-works">How it works</a>
+<a href="#quick-audit">30-second calculator</a>
           <a href="#pricing">Pricing</a>
           <a href="/tax-calculator">Tax calculator</a>
           <a href="/vs/rocket-money">Compare</a>
@@ -50,6 +51,7 @@
       <nav aria-label="Mobile navigation">
         <a href="#features">Features</a>
         <a href="#how-it-works">How it works</a>
+<a href="#quick-audit">30-second calculator</a>
         <a href="#pricing">Pricing</a>
         <a href="/tax-calculator">Tax calculator</a>
         <a href="/vs/rocket-money">Compare with Rocket Money</a>
@@ -101,7 +103,141 @@
         </div>
       </section>
 
-      <section class="section site-shell" id="how-it-works">
+      
+<section class="section site-shell burn-calculator" id="quick-audit"
+         aria-labelledby="burnCalculatorTitle">
+  <div class="section-head burn-heading">
+    <span class="burn-eyebrow">THE 30-SECOND BURN AUDIT</span>
+    <h2 id="burnCalculatorTitle">How much are your subscriptions really costing?</h2>
+    <p>Enter three software subscriptions. See your annual spend and how much is tied to tools you rarely or no longer use.</p>
+  </div>
+
+  <div class="burn-card">
+    <form id="burnCalculatorForm">
+      <div class="burn-controls">
+        <label for="burnCurrency">Currency
+          <select id="burnCurrency" name="currency">
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="CAD">CAD — Canadian Dollar</option>
+            <option value="AUD">AUD — Australian Dollar</option>
+            <option value="MAD">MAD — Moroccan Dirham</option>
+          </select>
+        </label>
+        <p class="burn-local-note">Private by design: calculations happen in your browser. Your entries are not uploaded or saved.</p>
+      </div>
+
+      <div class="burn-subscription-grid">
+        <fieldset class="burn-item">
+          <legend>Subscription 1</legend>
+          <label for="burnName1">Tool name</label>
+          <input id="burnName1" data-burn-name maxlength="80"
+                 placeholder="e.g. AI coding assistant" required />
+          <label for="burnPrice1">Price per billing period</label>
+          <input id="burnPrice1" data-burn-price type="number"
+                 min="0.01" max="100000000" step="0.01"
+                 inputmode="decimal" placeholder="20.00" required />
+          <label for="burnInterval1">Billing interval</label>
+          <select id="burnInterval1" data-burn-interval>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Yearly</option>
+            <option value="quarterly">Every 3 months</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label for="burnUsage1">How often do you use it?</label>
+          <select id="burnUsage1" data-burn-usage>
+            <option value="regular">Use it regularly</option>
+            <option value="rarely">Rarely use it</option>
+            <option value="unused">Don't use it anymore</option>
+          </select>
+        </fieldset>
+
+        <fieldset class="burn-item">
+          <legend>Subscription 2</legend>
+          <label for="burnName2">Tool name</label>
+          <input id="burnName2" data-burn-name maxlength="80"
+                 placeholder="e.g. Design tool" required />
+          <label for="burnPrice2">Price per billing period</label>
+          <input id="burnPrice2" data-burn-price type="number"
+                 min="0.01" max="100000000" step="0.01"
+                 inputmode="decimal" placeholder="15.00" required />
+          <label for="burnInterval2">Billing interval</label>
+          <select id="burnInterval2" data-burn-interval>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Yearly</option>
+            <option value="quarterly">Every 3 months</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label for="burnUsage2">How often do you use it?</label>
+          <select id="burnUsage2" data-burn-usage>
+            <option value="regular">Use it regularly</option>
+            <option value="rarely">Rarely use it</option>
+            <option value="unused">Don't use it anymore</option>
+          </select>
+        </fieldset>
+
+        <fieldset class="burn-item">
+          <legend>Subscription 3</legend>
+          <label for="burnName3">Tool name</label>
+          <input id="burnName3" data-burn-name maxlength="80"
+                 placeholder="e.g. Writing assistant" required />
+          <label for="burnPrice3">Price per billing period</label>
+          <input id="burnPrice3" data-burn-price type="number"
+                 min="0.01" max="100000000" step="0.01"
+                 inputmode="decimal" placeholder="10.00" required />
+          <label for="burnInterval3">Billing interval</label>
+          <select id="burnInterval3" data-burn-interval>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Yearly</option>
+            <option value="quarterly">Every 3 months</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <label for="burnUsage3">How often do you use it?</label>
+          <select id="burnUsage3" data-burn-usage>
+            <option value="regular">Use it regularly</option>
+            <option value="rarely">Rarely use it</option>
+            <option value="unused">Don't use it anymore</option>
+          </select>
+        </fieldset>
+      </div>
+
+      <p id="burnError" class="burn-error" role="alert" hidden></p>
+      <button class="button button-primary burn-calculate" type="submit">
+        Calculate my annual spend
+      </button>
+    </form>
+
+    <div id="burnResults" class="burn-results" aria-live="polite" hidden>
+      <p class="burn-results-label">YOUR 12-MONTH SNAPSHOT</p>
+      <div class="burn-metrics">
+        <div class="burn-metric">
+          <span>Total annual spend</span>
+          <strong id="burnAnnualTotal">—</strong>
+          <small>Across your three subscriptions</small>
+        </div>
+        <div class="burn-metric burn-metric-highlight">
+          <span>Potential waste to review</span>
+          <strong id="burnAnnualReview">—</strong>
+          <small>Annual cost of tools you rarely or no longer use</small>
+        </div>
+      </div>
+      <ul id="burnBreakdown" class="burn-breakdown"></ul>
+      <p class="burn-disclaimer">This is an estimate based on your inputs. Spend marked for review is not guaranteed savings. Check each service before cancelling it.</p>
+      <div class="burn-upgrade">
+        <div>
+          <h3>Three subscriptions are just the start.</h3>
+          <p>Review your wider software stack, investigate possible overlaps, and make better-informed keep-or-cut decisions with StackCut.</p>
+        </div>
+        <a class="button button-primary burn-pro-cta" href="/pro">
+          Get StackCut Pro <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section site-shell" id="how-it-works">
         <div class="section-head">
           <h2>How it works</h2>
           <p>Three quick steps to review your stack and decide what to keep, test, or stop paying for.</p>
