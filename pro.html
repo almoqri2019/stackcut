@@ -48,9 +48,19 @@
             <li>More audits while verified in this session</li>
             <li>Same local-only data model</li>
           </ul>
-          <button class="button button-disabled" type="button" disabled>
-            Checkout unavailable
-          </button>
+          <div
+             id="paypal-button-container"
+            aria-label="PayPal subscription checkout"
+           ></div>
+
+      <p
+       id="checkoutStatus"
+       class="status-message"
+       role="status"
+       aria-live="polite"
+  >
+    Loading PayPal checkout…
+  </p>
         </article>
       </section>
 
