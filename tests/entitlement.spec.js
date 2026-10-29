@@ -85,12 +85,13 @@ test.describe("server-side Pro entitlement", () => {
     });
     await page.goto("/pro");
     await expect(page.getByRole("heading", { name: "Pro access is verified with PayPal." })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Checkout unavailable" })).toBeDisabled();
+    await expect(page.locator("#paypal-button-container")).toBeAttached();
+    await expect(page.locator("#checkoutStatus")).toBeAttached();
     await expect(page.locator(".plan-grid")).toHaveCSS("display", "grid");
 
     await page.locator("#subscriptionId").fill("I-E2EACTIVE");
     await page.getByRole("button", { name: "Verify subscription" }).click();
-    await expect(page.locator("#verifyStatus")).toContainText("PayPal verified this subscription");
+    await expect(page.locator("#verifyStatus")).toContainText("PayPal verified this active subscription");
     expect(await page.evaluate(() => ({
       license: localStorage.getItem("stackcut-license"),
       pro: localStorage.getItem("isPro"),

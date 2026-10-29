@@ -12,7 +12,7 @@
   const taxRateCache = new Map();
   const $ = (id) => document.getElementById(id);
 
-  let state = { subscriptions: [], auditCount: 0 };
+  let state = { subscriptions: [], auditCount: 0, overlapDecisions: {} };
   let vaultKey = null;
   let vaultSalt = null;
   let proActive = false;
@@ -177,11 +177,29 @@
     if (value.subscriptions.length > MAX_SUBSCRIPTIONS) {
       throw new Error(`The vault exceeds the ${MAX_SUBSCRIPTIONS.toLocaleString()} item limit.`);
     }
+    const savedDecisions =
+      value.overlapDecisions && typeof value.overlapDecisions === "object"
+        ? value.overlapDecisions
+        : {};
+    const overlapDecisions = {};
+    for (const [id, entry] of Object.entries(savedDecisions)) {
+      const status = typeof entry === "string" ? entry : entry?.status;
+      if (
+        !id.startsWith("overlap:") ||
+        !["pending", "confirmed", "rejected", "later"].includes(status)
+      ) continue;
+      overlapDecisions[id] = {
+        status,
+        fingerprint:
+          typeof entry?.fingerprint === "string" ? entry.fingerprint : "",
+      };
+    }
     return {
       subscriptions: value.subscriptions.map(normalizeSubscription),
       auditCount: Number.isInteger(Number(value.auditCount))
         ? Math.max(0, Number(value.auditCount))
         : 0,
+      overlapDecisions,
     };
   }
 
@@ -388,7 +406,7 @@
     }
     const source = calculation.status === "manual"
       ? "Manual, user-supplied rate"
-      : `Verified standard-rate reference retrieved ${calculation.retrievedAt || "at unknown time"}`;
+      : `Verified VATcomply standard-rate reference retrieved ${calculation.retrievedAt || "at unknown time"}`;
     const region = item.jurisdictionDetail ? `${item.jurisdiction} · ${item.jurisdictionDetail}` : item.jurisdiction;
     output.textContent =
       `Estimated ${item.taxType.toUpperCase()} for ${region}: tax ${formatMoney(calculation.tax, item.currency)} per ${item.billingInterval}; ` +
@@ -494,6 +512,160 @@
     }
   }
 
+  function renderAuditReport() {
+    const list = $("auditRankedList");
+    const empty = $("auditEmpty");
+    if (!list || !empty || !window.StackcutOverlapAudit) return;
+
+    list.replaceChildren();
+
+    const candidates = window.StackcutOverlapAudit.analyze(
+      state.subscriptions,
+      state.overlapDecisions || {},
+    );
+    const visible = isPro() || state.auditCount > 0;
+
+    $("auditCandidateCount").textContent =
+      visible ? String(candidates.totalCount ?? candidates.length) : "—";
+    $("auditPendingCount").textContent = visible
+      ? String(candidates.filter((item) =>
+          ["pending", "later"].includes(item.decision),
+        ).length)
+      : "—";
+
+    if (!visible) {
+      empty.hidden = false;
+      empty.textContent = "Run your first audit to review possible overlaps.";
+      return;
+    }
+
+    empty.hidden = candidates.length > 0;
+    empty.textContent = candidates.length
+      ? ""
+      : "No possible overlaps were found using the available names and categories. This does not guarantee that every subscription is unique.";
+
+    function makeButton(label, action, recommendationId, extra = {}) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "button button-secondary audit-action";
+      button.textContent = label;
+      button.dataset.overlapAction = action;
+      button.dataset.recommendationId = recommendationId;
+      for (const [key, value] of Object.entries(extra)) {
+        button.dataset[key] = value;
+      }
+      return button;
+    }
+
+    for (const item of candidates) {
+      const card = document.createElement("article");
+      card.className = "audit-candidate";
+
+      const heading = document.createElement("div");
+      heading.className = "audit-candidate-heading";
+
+      const title = document.createElement("h3");
+      title.textContent = item.subscriptions
+        .map((subscription) => subscription.name)
+        .join(" + ");
+
+      const confidence = document.createElement("span");
+      confidence.className = "audit-confidence";
+      confidence.textContent = `${item.confidence} evidence`;
+
+      heading.append(title, confidence);
+      card.append(heading);
+
+      const services = document.createElement("div");
+      services.className = "audit-service-grid";
+
+      item.subscriptions.forEach((subscription, index) => {
+        const service = document.createElement("div");
+        service.className = "audit-service";
+
+        const name = document.createElement("strong");
+        name.textContent = subscription.name;
+
+        const currency = String(subscription.currency || "USD").toUpperCase();
+        const annual = document.createElement("p");
+        const annualValue = item.annualCosts[index];
+        annual.textContent = annualValue === null
+          ? "Annual cost unavailable"
+          : `${formatMoney(annualValue, currency)} / year`;
+
+        const category = document.createElement("p");
+        category.textContent = `Category: ${subscription.category || "Unknown"}`;
+
+        service.append(name, annual, category);
+        services.append(service);
+      });
+
+      card.append(services);
+
+      const cost = document.createElement("p");
+      cost.className = "audit-combined-cost";
+      cost.textContent =
+        item.combinedAnnualCost !== null && item.currency
+          ? `Combined annual cost under review: ${formatMoney(item.combinedAnnualCost, item.currency)}. This is not potential savings.`
+          : "Combined cost not totaled because currencies differ or an amount is unavailable.";
+      card.append(cost);
+
+      const explanation = document.createElement("ul");
+      explanation.className = "audit-evidence";
+      for (const signal of item.signals) {
+        const line = document.createElement("li");
+        line.textContent = signal.explanation;
+        explanation.append(line);
+      }
+      card.append(explanation);
+
+      const status = document.createElement("p");
+      status.className = "audit-decision-status";
+      const statusLabels = {
+        pending: "Awaiting your review",
+        confirmed: "You confirmed a possible overlap",
+        rejected: "You marked this recommendation as not redundant",
+        later: "You chose to decide later",
+      };
+      status.textContent = statusLabels[item.decision] || statusLabels.pending;
+      card.append(status);
+
+      const actions = document.createElement("div");
+      actions.className = "audit-actions";
+
+      actions.append(
+        makeButton("Confirm overlap", "decision", item.id, { decision: "confirmed" }),
+        makeButton("Not redundant", "decision", item.id, { decision: "rejected" }),
+        makeButton("Decide later", "decision", item.id, { decision: "later" }),
+      );
+
+      if (item.decision !== "pending") {
+        actions.append(
+          makeButton("Undo review decision", "decision", item.id, { decision: "pending" }),
+        );
+      }
+
+      if (item.decision === "confirmed") {
+        item.subscriptions.forEach((subscription) => {
+          const alreadyCut = subscription.decision === "cut";
+          actions.append(
+            makeButton(
+              alreadyCut
+                ? `Undo planned cut: ${subscription.name}`
+                : `Plan to cut: ${subscription.name}`,
+              "plan-cut",
+              item.id,
+              { subscriptionId: String(subscription.id) },
+            ),
+          );
+        });
+      }
+
+      card.append(actions);
+      list.append(card);
+    }
+  }
+
   function render() {
     const items = state.subscriptions;
     const monthly = new Map();
@@ -517,6 +689,7 @@
       `${items.length}/${subscriptionLimit()} subscriptions.`;
     renderSubscriptions();
     renderCategoryBreakdown();
+    renderAuditReport();
   }
 
   function openDialog(dialog) {
@@ -711,7 +884,7 @@
   async function resetAll() {
     if (!window.confirm("Remove all subscriptions and reset audit usage for this vault?")) return;
     const previous = state;
-    state = { subscriptions: [], auditCount: 0 };
+    state = { subscriptions: [], auditCount: 0, overlapDecisions: {} };
     if (!(await saveAndRender("Your list and audit count were reset."))) {
       state = previous;
       render();
@@ -1035,6 +1208,56 @@
       if (action === "clear") void setDecision(id, null);
       if (action === "edit") openEdit(id);
       if (action === "remove") void removeSubscription(id);
+    });
+
+    $("auditRankedList").addEventListener("click", async (event) => {
+      const button = event.target instanceof Element
+        ? event.target.closest("button[data-overlap-action]")
+        : null;
+      if (!button) return;
+
+      const action = button.dataset.overlapAction;
+      const recommendationId = button.dataset.recommendationId;
+      const candidates = window.StackcutOverlapAudit.analyze(
+        state.subscriptions,
+        state.overlapDecisions || {},
+      );
+      const candidate = candidates.find((item) => item.id === recommendationId);
+      if (!candidate) {
+        showToast("This recommendation changed. Run the audit again.");
+        renderAuditReport();
+        return;
+      }
+
+      if (action === "decision") {
+        const previous = state.overlapDecisions[recommendationId];
+        state.overlapDecisions[recommendationId] = {
+          status: button.dataset.decision,
+          fingerprint: candidate.fingerprint || "",
+        };
+        if (!(await saveAndRender("Review decision saved in your local vault."))) {
+          if (previous === undefined) delete state.overlapDecisions[recommendationId];
+          else state.overlapDecisions[recommendationId] = previous;
+          render();
+        }
+        return;
+      }
+
+      if (action === "plan-cut") {
+        const subscription = state.subscriptions.find(
+          (item) => String(item.id) === button.dataset.subscriptionId,
+        );
+        if (!subscription) return;
+
+        if (
+          subscription.decision !== "cut" &&
+          !window.confirm(
+            `Mark "${subscription.name}" as a planned cut? This will not cancel the service.`,
+          )
+        ) return;
+
+        await setDecision(subscription.id, "cut");
+      }
     });
   }
 

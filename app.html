@@ -11,6 +11,7 @@
     <link rel="canonical" href="https://stackcut.site/app" />
     <link rel="stylesheet" href="/app.css" />
     <script defer src="/shared/tax-engine.js"></script>
+    <script defer src="/shared/overlap-audit.js"></script>
     <script defer src="/app-runtime.js"></script>
   </head>
   <body>
@@ -243,6 +244,32 @@
         </aside>
       </section>
 
+      <section class="panel audit-report" aria-labelledby="auditReportTitle">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">STACKCUT AUDIT</p>
+            <h2 id="auditReportTitle">Potential subscription overlaps</h2>
+          </div>
+          <span class="audit-report-count" id="auditCandidateCount">—</span>
+        </div>
+        <p class="audit-report-intro">
+          Review the top 40 possible overlaps ranked by combined annual cost within each
+          currency. A flag is a suggestion, not proof that services are
+          interchangeable. Combined costs are not savings.
+        </p>
+        <p class="audit-report-summary">
+          <strong id="auditPendingCount">—</strong> awaiting review
+        </p>
+        <p id="auditEmpty" class="empty-state">
+          Run your audit to see potential overlaps.
+        </p>
+        <div id="auditRankedList" class="audit-ranked-list"
+          aria-live="polite"></div>
+        <p class="fine-print">
+          Confirming an overlap does not cancel a subscription. Planned cuts
+          are estimates only. You must cancel the service separately.
+        </p>
+      </section>
       <footer class="app-footer">
         <span>STACKCUT keeps subscription data in your browser.</span>
         <a href="/privacy">Privacy</a>

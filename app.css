@@ -357,3 +357,120 @@ input:focus, select:focus { border-color: var(--green); }
     animation-duration: 0.01ms !important;
   }
 }
+
+
+/* Ranked overlap audit report */
+.audit-report {
+  margin-top: 24px;
+  border: 1px solid var(--line, #dce2e8);
+}
+.audit-report-intro,
+.audit-report .fine-print {
+  max-width: 80ch;
+  color: var(--muted, #64748b);
+  line-height: 1.6;
+}
+.audit-report-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  background: var(--surface-muted, #f1f5f9);
+  font-weight: 700;
+}
+.audit-report-summary {
+  margin: 12px 0;
+}
+.audit-ranked-list {
+  display: grid;
+  gap: 14px;
+}
+.audit-candidate {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line, #dce2e8);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+}
+.audit-candidate-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.audit-candidate-heading h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.audit-confidence {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-muted, #f1f5f9);
+  color: var(--muted, #475569);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+.audit-service-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.audit-service {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--surface-muted, #f8fafc);
+  overflow-wrap: anywhere;
+}
+.audit-service p {
+  margin: 7px 0 0;
+  color: var(--muted, #64748b);
+  font-size: 0.875rem;
+}
+.audit-combined-cost {
+  margin: 14px 0 8px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.audit-evidence {
+  padding-left: 1.25rem;
+  line-height: 1.55;
+}
+.audit-evidence li + li {
+  margin-top: 5px;
+}
+.audit-decision-status {
+  font-weight: 600;
+}
+.audit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.audit-action {
+  max-width: 100%;
+  min-height: 40px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 540px) {
+  .audit-service-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .audit-candidate-heading {
+    flex-direction: column;
+  }
+  .audit-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .audit-action {
+    width: 100%;
+  }
+}
