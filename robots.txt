@@ -4,7 +4,7 @@ Disallow: /extension/
 Disallow: /api/private/
 Sitemap: https://stackcut.site/sitemap.xml
 
-# AI Crawlers — v3.0 real-ready, no $199
+# AI search and assistant crawlers
 User-agent: GPTBot
 Allow: /
 User-agent: PerplexityBot
@@ -18,5 +18,5 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-# llms.txt manifest
-# https://stackcut.site/llms.txt — v3.0 REAL-READY — No $199/yr — PayPal P-6HT714478R159110WNLBOW4Q only
+# Product information reference
+# https://stackcut.site/llms.txt
